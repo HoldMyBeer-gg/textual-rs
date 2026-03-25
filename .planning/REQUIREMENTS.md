@@ -46,11 +46,11 @@
 
 ### Reactive System
 
-- [ ] **REACT-01**: `Reactive<T>` property type that triggers re-render on change
-- [ ] **REACT-02**: `watch_` method convention: method called automatically when reactive property changes
-- [ ] **REACT-03**: `validate_` method convention: validate and coerce reactive property on set
-- [ ] **REACT-04**: `compute_` method convention: derive a property from one or more reactive sources
-- [ ] **REACT-05**: Render batching — multiple reactive changes in one tick produce one render pass
+- [x] **REACT-01**: `Reactive<T>` property type that triggers re-render on change
+- [x] **REACT-02**: `watch_` method convention: method called automatically when reactive property changes
+- [x] **REACT-03**: `validate_` method convention: validate and coerce reactive property on set
+- [x] **REACT-04**: `compute_` method convention: derive a property from one or more reactive sources
+- [x] **REACT-05**: Render batching — multiple reactive changes in one tick produce one render pass
 
 ### Event System
 
