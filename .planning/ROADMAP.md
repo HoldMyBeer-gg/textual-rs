@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Cargo workspace setup, dependencies, basic App skeleton, Tokio LocalSet event loop with crossterm EventStream and flume channel
+- [x] 01-01: Cargo workspace setup, dependencies, basic App skeleton, Tokio LocalSet event loop with crossterm EventStream and flume channel
 - [ ] 01-02: Terminal management — alt-screen entry/exit, raw mode, panic hook with terminal restore, resize event handling, TestBackend integration
 
 ### Phase 2: Widget Tree, Layout, and Styling
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/2 | Not started | - |
+| 1. Foundation | 1/2 | In Progress|  |
 | 2. Widget Tree, Layout, and Styling | 0/3 | Not started | - |
 | 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
