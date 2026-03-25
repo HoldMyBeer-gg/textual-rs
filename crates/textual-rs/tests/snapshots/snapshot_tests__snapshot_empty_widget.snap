@@ -1,0 +1,7 @@
+---
+source: crates/textual-rs/tests/snapshot_tests.rs
+expression: "format!(\"{}\", test_app.backend())"
+---
+"          "
+"          "
+"          "

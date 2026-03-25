@@ -11,7 +11,7 @@ use super::TestApp;
 /// Obtain a Pilot via [`TestApp::pilot()`]. Methods are async to support `settle()`.
 ///
 /// # Example
-/// ```no_run
+/// ```ignore
 /// let mut pilot = test_app.pilot();
 /// pilot.press(KeyCode::Tab).await;
 /// pilot.type_text("hello").await;

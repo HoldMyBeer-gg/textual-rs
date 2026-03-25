@@ -12,7 +12,7 @@ use ratatui::buffer::Buffer;
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use textual_rs::testing::assertions::assert_buffer_lines;
 /// assert_buffer_lines(test_app.buffer(), &["Hello", "World"]);
 /// ```

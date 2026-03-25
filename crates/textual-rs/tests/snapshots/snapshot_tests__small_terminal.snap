@@ -1,0 +1,6 @@
+---
+source: crates/textual-rs/tests/snapshot_tests.rs
+expression: "format!(\"{}\", small.backend())"
+---
+"Hello, Wor"
+"          "

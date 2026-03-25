@@ -17,7 +17,7 @@ pub use pilot::Pilot;
 /// synchronously via `process_event`, allowing tests to control timing precisely.
 ///
 /// # Example
-/// ```no_run
+/// ```ignore
 /// use textual_rs::testing::TestApp;
 /// let test_app = TestApp::new(80, 24, || Box::new(MyScreen));
 /// ```
