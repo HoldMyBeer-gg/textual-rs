@@ -1,7 +1,7 @@
 use anyhow::Result;
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
 use futures::StreamExt;
-use ratatui::backend::CrosstermBackend;
+use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::text::Text;
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
@@ -32,6 +32,15 @@ impl App {
         local.block_on(&rt, self.run_async())
     }
 
+    /// Render one frame to the given terminal. Public for TestBackend integration tests.
+    pub fn render_frame<B: Backend>(terminal: &mut Terminal<B>) -> Result<()>
+    where
+        B::Error: Send + Sync + 'static,
+    {
+        terminal.draw(|f| Self::render(f))?;
+        Ok(())
+    }
+
     async fn run_async(&self) -> Result<()> {
         let _guard = TerminalGuard::new()?;
         let backend = CrosstermBackend::new(std::io::stdout());
@@ -57,7 +66,7 @@ impl App {
         });
 
         // Initial render
-        terminal.draw(|f| Self::render(f))?;
+        Self::render_frame(&mut terminal)?;
 
         // Main event loop: blocks on flume receive per D-10
         loop {
@@ -70,7 +79,7 @@ impl App {
                     break;
                 }
                 Ok(AppEvent::Resize(_, _)) => {
-                    terminal.draw(|f| Self::render(f))?;
+                    Self::render_frame(&mut terminal)?;
                 }
                 Ok(_) => {}
                 Err(_) => break, // channel closed
