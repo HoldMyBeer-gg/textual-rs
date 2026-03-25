@@ -186,6 +186,10 @@ pub enum TcssValue {
     Bool(bool),
     DockEdge(DockEdge),
     LayoutDirection(LayoutDirection),
+    /// Shorthand with all 4 sides (padding/margin with 2+ values)
+    Sides(Sides<f32>),
+    /// List of dimensions (grid-template-columns/rows)
+    Dimensions(Vec<TcssDimension>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
