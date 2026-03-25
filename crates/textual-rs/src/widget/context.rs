@@ -2,6 +2,7 @@ use slotmap::{DenseSlotMap, SecondaryMap};
 use super::WidgetId;
 use super::Widget;
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
+use crate::event::AppEvent;
 
 pub struct AppContext {
     pub arena: DenseSlotMap<WidgetId, Box<dyn Widget>>,
@@ -16,6 +17,8 @@ pub struct AppContext {
     pub pending_mounts: Vec<WidgetId>,
     /// Temporary input buffer for demo purposes (Phase 3 replaces with proper reactive state).
     pub input_buffer: String,
+    /// Event bus sender — widgets and reactive effects post events here.
+    pub event_tx: Option<flume::Sender<AppEvent>>,
 }
 
 impl AppContext {
@@ -32,6 +35,7 @@ impl AppContext {
             screen_stack: Vec::new(),
             pending_mounts: Vec::new(),
             input_buffer: String::new(),
+            event_tx: None,
         }
     }
 }

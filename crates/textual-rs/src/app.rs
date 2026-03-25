@@ -3,6 +3,7 @@ use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind, KeyModifiers};
 use futures::StreamExt;
 use ratatui::backend::{Backend, CrosstermBackend, TestBackend};
 use ratatui::{Frame, Terminal};
+use reactive_graph::owner::Owner;
 use tokio::runtime::Builder;
 use tokio::task;
 use tokio::task::LocalSet;
@@ -24,6 +25,10 @@ pub struct App {
     stylesheets: Vec<Stylesheet>,
     hit_map: Option<MouseHitMap>,
     root_screen_factory: Option<Box<dyn FnOnce() -> Box<dyn Widget>>>,
+    /// Reactive graph owner — keeps signals and effects alive.
+    /// Must be `Some` while the app is running. Stored as Option because
+    /// it is initialized in run_async(), not in new().
+    _owner: Option<Owner>,
 }
 
 impl App {
@@ -53,6 +58,7 @@ impl App {
             stylesheets: Vec::new(),
             hit_map: None,
             root_screen_factory: Some(Box::new(screen_factory)),
+            _owner: None,
         }
     }
 
@@ -76,6 +82,13 @@ impl App {
     }
 
     async fn run_async(&mut self) -> Result<()> {
+        // Initialize reactive_graph's executor (uses tokio::task::spawn_local under the hood).
+        // Safe to call multiple times — returns Err on subsequent calls which we ignore.
+        let _ = any_spawner::Executor::init_tokio();
+        // Create reactive Owner scope — all signals/effects created during app lifetime
+        // are tied to this owner. Dropping it cancels all effects.
+        self._owner = Some(Owner::new());
+
         let _guard = TerminalGuard::new()?;
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
@@ -90,6 +103,9 @@ impl App {
         self.full_render_pass(&mut terminal)?;
 
         let (tx, rx) = flume::unbounded::<AppEvent>();
+
+        // Store event sender on AppContext so widgets and effects can post events.
+        self.ctx.event_tx = Some(tx.clone());
 
         // Spawn EventStream reader task on LocalSet (does not need Send)
         task::spawn_local(async move {
@@ -138,6 +154,11 @@ impl App {
                     }
                 }
                 Ok(AppEvent::Resize(_, _)) => {
+                    self.full_render_pass(&mut terminal)?;
+                }
+                Ok(AppEvent::RenderRequest) => {
+                    // Coalesce: drain any additional RenderRequests queued in the same tick
+                    while let Ok(AppEvent::RenderRequest) = rx.try_recv() {}
                     self.full_render_pass(&mut terminal)?;
                 }
                 Ok(_) => {}
