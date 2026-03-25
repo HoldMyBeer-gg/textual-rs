@@ -12,7 +12,10 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Cross-platform terminal backend (ratatui + crossterm) — Validated in Phase 1: Foundation
+- [x] Async event loop with Tokio LocalSet — Validated in Phase 1: Foundation
+- [x] Stable Rust (no nightly features required) — Validated in Phase 1: Foundation
+- [x] Cross-platform: Windows 10+ confirmed (FOUND-01, FOUND-02) — Validated in Phase 1: Foundation
 
 ### Active
 
@@ -62,9 +65,9 @@ The Python Textual codebase (in `textual/` subdirectory) serves as the primary r
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Research ratatui before building | Popular, well-maintained — may eliminate need to build low-level terminal backend | — Pending |
-| TDD approach | User requirement: tests before code | — Pending |
-| Async runtime choice (tokio vs async-std vs smol) | Event loop and message passing require async | — Pending |
+| Research ratatui before building | Popular, well-maintained — may eliminate need to build low-level terminal backend | ✓ Adopted: ratatui 0.30.0 + crossterm 0.29.0 (Phase 1) |
+| TDD approach | User requirement: tests before code | ✓ Applied: TestBackend integration tests written TDD-style (Phase 1) |
+| Async runtime choice (tokio vs async-std vs smol) | Event loop and message passing require async | ✓ Decided: tokio current_thread + LocalSet; avoids Send pressure on future widget state (Phase 1) |
 
 ## Evolution
 
@@ -84,4 +87,8 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after initialization*
+## Current State
+
+Phase 1 (Foundation) complete — Cargo workspace scaffolded, ratatui + crossterm + Tokio LocalSet event loop wired end-to-end, RAII terminal guard + panic hook implemented, 5 integration tests pass. Ready for Phase 2: Widget Tree, Layout, and Styling.
+
+*Last updated: 2026-03-24 after Phase 1: Foundation*
