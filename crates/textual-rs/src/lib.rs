@@ -1,6 +1,7 @@
 pub mod app;
 pub mod css;
 pub mod event;
+pub mod layout;
 pub mod terminal;
 pub mod widget;
 
