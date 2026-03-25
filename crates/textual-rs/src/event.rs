@@ -9,4 +9,6 @@ pub enum AppEvent {
     Resize(u16, u16),
     /// Reserved for future periodic tick events (Phase 3).
     Tick,
+    /// Reactive signal change detected — triggers a render pass.
+    RenderRequest,
 }
