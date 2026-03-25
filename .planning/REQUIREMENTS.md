@@ -90,12 +90,12 @@
 
 ### Testing Infrastructure
 
-- [ ] **TEST-01**: `TestApp` harness using ratatui `TestBackend` — no real terminal required
-- [ ] **TEST-02**: `Pilot` type for simulating key presses, mouse clicks, and focus changes
-- [ ] **TEST-03**: `settle().await` primitive that drains pending messages before assertions
-- [ ] **TEST-04**: Snapshot testing with `insta` for visual regression tests
-- [ ] **TEST-05**: `assert_buffer_lines()` and cell-level assertions for widget output
-- [ ] **TEST-06**: Property-based tests for CSS parser and layout engine using `proptest`
+- [x] **TEST-01**: `TestApp` harness using ratatui `TestBackend` — no real terminal required
+- [x] **TEST-02**: `Pilot` type for simulating key presses, mouse clicks, and focus changes
+- [x] **TEST-03**: `settle().await` primitive that drains pending messages before assertions
+- [x] **TEST-04**: Snapshot testing with `insta` for visual regression tests
+- [x] **TEST-05**: `assert_buffer_lines()` and cell-level assertions for widget output
+- [x] **TEST-06**: Property-based tests for CSS parser and layout engine using `proptest`
 
 ### Developer Experience
 

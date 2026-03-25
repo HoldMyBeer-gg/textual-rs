@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Terminal layer, async event loop, and project scaffolding (completed 2026-03-25)
 - [ ] **Phase 2: Widget Tree, Layout, and Styling** - SlotMap widget arena, Taffy layout engine, and TCSS styling engine
-- [ ] **Phase 3: Reactive System, Events, and Testing** - Reactive<T> properties, typed message passing, and TestApp harness
+- [x] **Phase 3: Reactive System, Events, and Testing** - Reactive<T> properties, typed message passing, and TestApp harness (completed 2026-03-25)
 - [ ] **Phase 4: Built-in Widget Library** - All 22 v1 widgets with styling, interaction, and snapshot tests
 - [ ] **Phase 5: Developer Experience and Polish** - Proc-macro derive, Worker API, command palette, documentation
 
@@ -78,7 +78,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Reactive property system: Reactive<T>, ComputedReactive<T>, reactive_graph integration, Executor/Owner init, RenderRequest batching
 - [x] 03-02-PLAN.md — Event system: Message trait, on_event dispatch, bubbling, keyboard/mouse routing, key bindings, timer/interval
-- [ ] 03-03-PLAN.md — Test infrastructure: TestApp/Pilot harness, settle(), insta snapshots, assert_buffer_lines, proptest CSS fuzzing
+- [x] 03-03-PLAN.md — Test infrastructure: TestApp/Pilot harness, settle(), insta snapshots, assert_buffer_lines, proptest CSS fuzzing
 
 **Research note — Phase 3 planning requires a spike:** `reactive_graph` + Tokio `LocalSet` integration has MEDIUM confidence. Verify `Executor::init_tokio()` works with `LocalSet` and that effects can be debounced into a single render tick before committing to the API design. Run this spike before `/gsd:plan-phase 3`.
 
@@ -119,6 +119,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
-| 3. Reactive System, Events, and Testing | 2/3 | In Progress|  |
+| 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
