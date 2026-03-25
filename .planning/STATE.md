@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
-status: Ready to plan
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-03-25T18:23:50.830Z"
+status: In progress
+stopped_at: Completed 02-01-PLAN.md — Widget tree foundation
+last_updated: "2026-03-25T19:44:05Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,35 +19,39 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust — declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — widget tree, layout, styling
 
 ## Current Position
 
 Phase: 2
-Plan: Not started
+Plan: 2 (next)
+
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 4min
+- Total execution time: 0.07 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 01-foundation | 2 plans | - | - |
+| Phase 02-widget-tree P01 | 4min | 2 tasks | 7 files |
 
 **Recent Trend:**
 
-- Last 5 plans: none yet
-- Trend: -
+- Last 5 plans: 4min
+- Trend: establishing baseline
 
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 2 | 2 tasks | 7 files |
 | Phase 01-foundation P02 | 4 | 3 tasks | 2 files |
+| Phase 02-widget-tree P01 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -65,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: App::run() renders initial frame before event loop — box visible immediately without waiting for first event
 - [Phase 01-foundation]: render_frame requires B::Error: Send + Sync + 'static to satisfy anyhow::Error From conversion
 - [Phase 01-foundation]: run_async refactored to use render_frame for both initial render and resize redraw keeping render path DRY
+- [Phase 02-widget-tree-layout-and-styling]: on_mount/on_unmount take &self only — avoids borrow conflict; ctx-mutating lifecycle deferred to Phase 3
+- [Phase 02-widget-tree-layout-and-styling]: ctx-passing pattern confirmed: AppContext owns all widget state, Widget trait takes &AppContext for reads — resolves SlotMap borrow ergonomics blocker
 
 ### Pending Todos
 
@@ -72,11 +78,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 2]: SlotMap borrow ergonomics spike required before planning — HopSlotMap vs AppContext pattern must be verified (cannot hold &mut Widget and &mut Arena simultaneously)
+- [RESOLVED Phase 2]: SlotMap borrow ergonomics spike required before planning — RESOLVED: ctx-passing pattern (AppContext) confirmed working. HopSlotMap not needed.
 - [Phase 3]: reactive_graph + Tokio LocalSet spike required before planning — Executor::init_tokio() + any_spawner API must be verified against current published version; effect batching for render debounce needs POC
 
 ## Session Continuity
 
-Last session: 2026-03-25T18:23:50.827Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-widget-tree-layout-and-styling/02-UI-SPEC.md
+Last session: 2026-03-25T19:44:05Z
+Stopped at: Completed 02-01-PLAN.md — Widget tree foundation
+Resume file: .planning/phases/02-widget-tree-layout-and-styling/02-02-PLAN.md
