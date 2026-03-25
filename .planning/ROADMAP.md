@@ -53,12 +53,13 @@ Plans:
   3. A layout with `dock: top`, `dock: bottom`, and a flex-column center region renders correctly at multiple terminal sizes with fractional (`1fr`, `2fr`) sizing
   4. A `.tcss` stylesheet with type, class, and ID selectors applies correct cascade and specificity — inline styles win over class styles, which win over type styles
   5. Border styles (`solid`, `rounded`, `heavy`, `double`, `ascii`), padding, color, and background properties render correctly when declared in TCSS
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [ ] 02-01-PLAN.md — Widget tree: SlotMap arena, Widget trait, AppContext, CSS type definitions, screen stack, focus management
 - [ ] 02-02-PLAN.md — Layout engine: TaffyBridge, ComputedStyle-to-Taffy conversion, flex/grid/dock layouts, dirty-flag incremental relayout, mouse hit map
 - [ ] 02-03-PLAN.md — CSS/TCSS styling engine: cssparser tokenizer, selector parser/matcher, property parser, cascade resolver, pseudo-classes, default CSS
+- [ ] 02-04-PLAN.md — Render loop integration: wire AppContext + TaffyBridge + Stylesheet into App, IRC demo example
 
 **UI hint**: yes
 
@@ -117,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
-| 2. Widget Tree, Layout, and Styling | 0/3 | Planning complete | - |
+| 2. Widget Tree, Layout, and Styling | 0/4 | Planning complete | - |
 | 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
