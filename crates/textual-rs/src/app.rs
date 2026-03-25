@@ -9,6 +9,7 @@ use tokio::task;
 use tokio::task::LocalSet;
 
 use crate::css::cascade::{apply_cascade_to_tree, Stylesheet};
+use crate::event::dispatch::dispatch_message;
 use crate::event::AppEvent;
 use crate::layout::bridge::TaffyBridge;
 use crate::layout::hit_map::MouseHitMap;
@@ -113,6 +114,7 @@ impl App {
             while let Some(Ok(event)) = stream.next().await {
                 let app_event = match event {
                     Event::Key(k) => Some(AppEvent::Key(k)),
+                    Event::Mouse(m) => Some(AppEvent::Mouse(m)),
                     Event::Resize(c, r) => Some(AppEvent::Resize(c, r)),
                     _ => None,
                 };
@@ -127,32 +129,78 @@ impl App {
         // Main event loop
         loop {
             match rx.recv_async().await {
+                // Ignore non-press key events (release, repeat on some platforms)
                 Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
-                Ok(AppEvent::Key(k)) if k.code == KeyCode::Char('q') => break,
-                Ok(AppEvent::Key(k))
-                    if k.code == KeyCode::Char('c')
-                        && k.modifiers.contains(KeyModifiers::CONTROL) =>
-                {
-                    break;
-                }
-                Ok(AppEvent::Key(k)) if k.code == KeyCode::Tab => {
-                    if k.modifiers.contains(KeyModifiers::SHIFT) {
-                        advance_focus_backward(&mut self.ctx);
-                    } else {
-                        advance_focus(&mut self.ctx);
+
+                Ok(AppEvent::Key(k)) => {
+                    // 1. Check global quit bindings first
+                    if k.code == KeyCode::Char('q')
+                        || (k.code == KeyCode::Char('c')
+                            && k.modifiers.contains(KeyModifiers::CONTROL))
+                    {
+                        break;
                     }
+
+                    // 2. Check focused widget's key bindings
+                    let mut handled = false;
+                    if let Some(focused_id) = self.ctx.focused_widget {
+                        if let Some(widget) = self.ctx.arena.get(focused_id) {
+                            for binding in widget.key_bindings() {
+                                if binding.matches(k.code, k.modifiers) {
+                                    widget.on_action(binding.action, &self.ctx);
+                                    handled = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. If not handled by binding, dispatch as key event to focused widget, then bubble
+                    if !handled {
+                        if let Some(focused_id) = self.ctx.focused_widget {
+                            dispatch_message(focused_id, &k, &self.ctx);
+                            handled = true;
+                        }
+                    }
+
+                    // 4. App-level key handling (Tab for focus cycling)
+                    if !handled || matches!(k.code, KeyCode::Tab) {
+                        match k.code {
+                            KeyCode::Tab if k.modifiers.contains(KeyModifiers::SHIFT) => {
+                                advance_focus_backward(&mut self.ctx);
+                            }
+                            KeyCode::Tab => {
+                                advance_focus(&mut self.ctx);
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    // 5. Drain message queue (widget handlers may have posted messages)
+                    self.drain_message_queue();
+
                     self.full_render_pass(&mut terminal)?;
                 }
-                Ok(AppEvent::Key(k)) if k.code == KeyCode::Backspace => {
-                    self.ctx.input_buffer.pop();
-                    self.full_render_pass(&mut terminal)?;
-                }
-                Ok(AppEvent::Key(k)) if matches!(k.code, KeyCode::Char(c) if c != 'q') => {
-                    if let KeyCode::Char(c) = k.code {
-                        self.ctx.input_buffer.push(c);
-                        self.full_render_pass(&mut terminal)?;
+
+                Ok(AppEvent::Mouse(m)) => {
+                    use crossterm::event::MouseEventKind;
+                    match m.kind {
+                        MouseEventKind::Down(_)
+                        | MouseEventKind::ScrollDown
+                        | MouseEventKind::ScrollUp => {
+                            // Hit test to find target widget
+                            if let Some(ref hit_map) = self.hit_map {
+                                if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                                    dispatch_message(target_id, &m, &self.ctx);
+                                    self.drain_message_queue();
+                                    self.full_render_pass(&mut terminal)?;
+                                }
+                            }
+                        }
+                        _ => {} // Ignore drag, hover, move for now
                     }
                 }
+
                 Ok(AppEvent::Resize(_, _)) => {
                     self.full_render_pass(&mut terminal)?;
                 }
@@ -255,6 +303,27 @@ impl App {
     /// Expose TaffyBridge for test assertions (e.g., verifying computed Rects).
     pub fn bridge(&self) -> &TaffyBridge {
         &self.bridge
+    }
+
+    /// Drain the message queue, dispatching each message through bubbling.
+    /// Handles recursive message posting (widget handlers posting new messages)
+    /// up to a depth of 100 iterations to prevent infinite loops.
+    fn drain_message_queue(&self) {
+        // Take all messages out of the RefCell (avoids borrow conflict during dispatch)
+        let messages: Vec<_> = self.ctx.message_queue.borrow_mut().drain(..).collect();
+        for (source, message) in messages {
+            dispatch_message(source, message.as_ref(), &self.ctx);
+        }
+        // Check if dispatching produced new messages (recursive drain, bounded)
+        for _ in 0..100 {
+            let more: Vec<_> = self.ctx.message_queue.borrow_mut().drain(..).collect();
+            if more.is_empty() {
+                break;
+            }
+            for (source, message) in more {
+                dispatch_message(source, message.as_ref(), &self.ctx);
+            }
+        }
     }
 }
 
