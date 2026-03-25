@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: In progress
-stopped_at: Completed 02-01-PLAN.md — Widget tree foundation
-last_updated: "2026-03-25T19:44:05Z"
+stopped_at: Completed 02-04-PLAN.md Tasks 1-2 — IRC demo integration; Task 3 checkpoint awaiting visual verify
+last_updated: "2026-03-25T19:38:00Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 5
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 Phase: 2
 Plan: 2 (next)
 
-Progress: [███░░░░░░░] 33%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -71,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: run_async refactored to use render_frame for both initial render and resize redraw keeping render path DRY
 - [Phase 02-widget-tree-layout-and-styling]: on_mount/on_unmount take &self only — avoids borrow conflict; ctx-mutating lifecycle deferred to Phase 3
 - [Phase 02-widget-tree-layout-and-styling]: ctx-passing pattern confirmed: AppContext owns all widget state, Widget trait takes &AppContext for reads — resolves SlotMap borrow ergonomics blocker
+- [Phase 02-widget-tree-layout-and-styling]: App owns AppContext + TaffyBridge + Stylesheet vec as integration layer; full_render_pass implements cascade→layout→render sequence
+- [Phase 02-widget-tree-layout-and-styling]: TaffyBridge forces root screen node to Dimension::length(cols/rows) — prevents Auto-sized root from shrinking to content
+- [Phase 02-widget-tree-layout-and-styling]: compose_subtree (recursive) replaces single-level compose_children in push_screen — required for multi-level widget hierarchies
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:44:05Z
-Stopped at: Completed 02-01-PLAN.md — Widget tree foundation
-Resume file: .planning/phases/02-widget-tree-layout-and-styling/02-02-PLAN.md
+Last session: 2026-03-25T19:38:00Z
+Stopped at: Completed 02-04-PLAN.md Tasks 1-2 — IRC demo integration; Task 3 checkpoint awaiting visual verify
+Resume file: .planning/phases/02-widget-tree-layout-and-styling/02-04-PLAN.md (Task 3)
