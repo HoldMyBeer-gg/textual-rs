@@ -11,6 +11,7 @@ tokio = { version = "1", features = ["rt", "macros", "time"] }
 flume = "0.12"
 anyhow = "1.0"
 futures = "0.3"
+slotmap = "1.0"
 
 [[example]]
 name = "demo"
