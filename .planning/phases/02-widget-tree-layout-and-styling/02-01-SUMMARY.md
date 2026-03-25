@@ -133,3 +133,16 @@ None — no external service configuration required.
 ---
 *Phase: 02-widget-tree-layout-and-styling*
 *Completed: 2026-03-25*
+
+## Self-Check: PASSED
+
+- FOUND: crates/textual-rs/src/css/types.rs
+- FOUND: crates/textual-rs/src/css/mod.rs
+- FOUND: crates/textual-rs/src/widget/mod.rs
+- FOUND: crates/textual-rs/src/widget/context.rs
+- FOUND: crates/textual-rs/src/widget/tree.rs
+- FOUND: commit e87fbfd (Task 1 — CSS types + Widget trait + AppContext)
+- FOUND: commit 5c28337 (Task 2 — tree operations)
+- FOUND: commit ee94a74 (docs — SUMMARY.md + STATE.md)
+- cargo test --lib -p textual-rs: 19 passed, 0 failed
+- cargo build -p textual-rs: clean, no warnings
