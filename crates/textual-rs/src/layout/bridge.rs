@@ -88,7 +88,7 @@ impl TaffyBridge {
     /// Compute layout for the entire tree rooted at `screen_id`.
     /// The available space is `cols` × `rows` terminal cells.
     /// After this call, `rect_for()` returns valid `Rect` values.
-    pub fn compute_layout(&mut self, screen_id: WidgetId, cols: u16, rows: u16) {
+    pub fn compute_layout(&mut self, screen_id: WidgetId, cols: u16, rows: u16, ctx: &AppContext) {
         let root = match self.node_map.get(&screen_id) {
             Some(&nid) => nid,
             None => return, // not synced yet
@@ -114,16 +114,32 @@ impl TaffyBridge {
 
         self.tree.compute_layout(root, available_space).unwrap();
 
-        // Update layout cache from Taffy's computed layouts
-        for (&wid, &nid) in &self.node_map {
-            if let Ok(layout) = self.tree.layout(nid) {
-                self.layout_cache.insert(wid, Rect {
-                    x: layout.location.x.floor() as u16,
-                    y: layout.location.y.floor() as u16,
-                    width: layout.size.width.round() as u16,
-                    height: layout.size.height.round() as u16,
-                });
-            }
+        // Update layout cache with absolute positions (Taffy positions are parent-relative)
+        self.layout_cache.clear();
+        self.collect_absolute_rects(screen_id, 0.0, 0.0, ctx);
+    }
+
+    /// Walk the widget tree DFS, accumulating absolute x/y offsets from parent positions.
+    fn collect_absolute_rects(&mut self, wid: WidgetId, offset_x: f32, offset_y: f32, ctx: &AppContext) {
+        let nid = match self.node_map.get(&wid) {
+            Some(&n) => n,
+            None => return,
+        };
+        let layout = match self.tree.layout(nid) {
+            Ok(l) => *l,
+            Err(_) => return,
+        };
+        let abs_x = offset_x + layout.location.x;
+        let abs_y = offset_y + layout.location.y;
+        self.layout_cache.insert(wid, Rect {
+            x: abs_x.floor() as u16,
+            y: abs_y.floor() as u16,
+            width: layout.size.width.round() as u16,
+            height: layout.size.height.round() as u16,
+        });
+        let children = ctx.children.get(wid).cloned().unwrap_or_default();
+        for child in children {
+            self.collect_absolute_rects(child, abs_x, abs_y, ctx);
         }
     }
 

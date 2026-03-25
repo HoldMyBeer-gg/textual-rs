@@ -106,7 +106,15 @@ impl Widget for ChannelList {
             .borders(Borders::ALL)
             .border_type(border_type)
             .border_style(Style::default().fg(color));
-        let channels = vec!["#general", "#rust", "#tui", "#help"];
+        let channels = vec![
+            " #general",
+            " #rust",
+            " #tui-dev",
+            " #help",
+            " #off-topic",
+            " #announcements",
+            " #code-review",
+        ];
         let text = channels.join("\n");
         let para = Paragraph::new(text).block(block);
         RatatuiWidget::render(para, area, buf);
@@ -126,9 +134,19 @@ impl Widget for ChatArea {
             .borders(Borders::ALL)
             .border_type(BorderType::Plain);
         let messages = vec![
-            "alice: Hello from textual-rs!",
-            "bob: Looking great!",
-            "carol: Tab to cycle focus",
+            "<alice>  hey everyone, just pushed the new layout engine",
+            "<bob>    nice! does it handle flex and grid?",
+            "<alice>  yep, taffy does the heavy lifting. flex-grow, fixed widths, the works",
+            "<carol>  what about dock layout? I need top/bottom bars",
+            "<alice>  dock:top and dock:bottom both work — check the header and input bar",
+            "<dave>   just pulled. the CSS cascade is slick — specificity ordering and all",
+            "<bob>    how's focus traversal?",
+            "<alice>  Tab cycles through focusable widgets. try it — channels and input bar",
+            "<carol>  love the catppuccin vibes on the header",
+            "<dave>   we should add :hover next. and mouse hit testing",
+            "<bob>    one step at a time :) phase 2 is looking solid",
+            "<alice>  agreed. phase 3 will add event dispatch and reactive state",
+            "<carol>  can't wait. this is going to be a great TUI framework",
         ];
         let text = messages.join("\n");
         let para = Paragraph::new(text).block(block);
@@ -148,7 +166,15 @@ impl Widget for UserList {
             .title("Users")
             .borders(Borders::ALL)
             .border_type(BorderType::Plain);
-        let users = vec!["alice", "bob", "carol", "dave"];
+        let users = vec![
+            " @alice   [op]",
+            " @bob",
+            " @carol",
+            " @dave",
+            "  erin",
+            "  frank",
+            "  grace",
+        ];
         let text = users.join("\n");
         let para = Paragraph::new(text).block(block);
         RatatuiWidget::render(para, area, buf);
@@ -179,7 +205,12 @@ impl Widget for InputBar {
             .borders(Borders::ALL)
             .border_type(border_type)
             .border_style(Style::default().fg(color));
-        let para = Paragraph::new("Type a message...").block(block);
+        let display_text = if ctx.input_buffer.is_empty() {
+            "Type a message...".to_string()
+        } else {
+            format!("{}▏", ctx.input_buffer)
+        };
+        let para = Paragraph::new(display_text).block(block);
         RatatuiWidget::render(para, area, buf);
     }
 }
@@ -201,18 +232,13 @@ IrcScreen {
     layout-direction: vertical;
 }
 Header {
-    dock: top;
     height: 1;
     background: rgb(30, 30, 46);
     color: rgb(137, 180, 250);
 }
-InputBar {
-    dock: bottom;
-    height: 3;
-    border: rounded;
-}
 MainRegion {
     layout-direction: horizontal;
+    flex-grow: 1;
 }
 ChannelList {
     width: 18;
@@ -225,6 +251,10 @@ ChatArea {
 UserList {
     width: 22;
     border: solid;
+}
+InputBar {
+    height: 3;
+    border: rounded;
 }
 ChannelList:focus {
     border: rounded;

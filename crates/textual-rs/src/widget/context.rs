@@ -14,6 +14,8 @@ pub struct AppContext {
     pub focused_widget: Option<WidgetId>,
     pub screen_stack: Vec<WidgetId>,
     pub pending_mounts: Vec<WidgetId>,
+    /// Temporary input buffer for demo purposes (Phase 3 replaces with proper reactive state).
+    pub input_buffer: String,
 }
 
 impl AppContext {
@@ -29,6 +31,7 @@ impl AppContext {
             focused_widget: None,
             screen_stack: Vec::new(),
             pending_mounts: Vec::new(),
+            input_buffer: String::new(),
         }
     }
 }

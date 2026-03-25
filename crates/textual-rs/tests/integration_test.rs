@@ -1,15 +1,28 @@
-use ratatui::backend::TestBackend;
-use ratatui::Terminal;
+use ratatui::{buffer::Buffer, layout::Rect};
 use textual_rs::terminal::init_panic_hook;
-use textual_rs::App;
+use textual_rs::widget::context::AppContext;
+use textual_rs::{App, Widget};
+
+/// Minimal screen widget for integration tests.
+struct TestScreen;
+
+impl Widget for TestScreen {
+    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::prelude::Widget as RatatuiWidget;
+        let para = ratatui::widgets::Paragraph::new("Hello from textual-rs!");
+        RatatuiWidget::render(para, area, buf);
+    }
+
+    fn widget_type_name(&self) -> &'static str {
+        "TestScreen"
+    }
+}
 
 #[test]
 fn test_render_hello() {
-    let backend = TestBackend::new(80, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    App::render_frame(&mut terminal).unwrap();
+    let mut app = App::new(|| Box::new(TestScreen));
+    let buffer = app.render_to_test_backend(80, 24);
 
-    let buffer = terminal.backend().buffer().clone();
     let content: String = buffer.content().iter()
         .map(|cell| cell.symbol())
         .collect();
@@ -22,58 +35,40 @@ fn test_render_hello() {
 
 #[test]
 fn test_render_has_title() {
-    let backend = TestBackend::new(80, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    App::render_frame(&mut terminal).unwrap();
+    let mut app = App::new(|| Box::new(TestScreen));
+    let buffer = app.render_to_test_backend(80, 24);
 
-    let buffer = terminal.backend().buffer().clone();
     let content: String = buffer.content().iter()
         .map(|cell| cell.symbol())
         .collect();
     assert!(
         content.contains("textual-rs"),
-        "Buffer should contain border title 'textual-rs'"
+        "Buffer should contain 'textual-rs'"
     );
 }
 
 #[test]
 fn test_panic_hook_is_installed() {
-    // Verify that init_panic_hook can be called without panicking.
-    // We cannot test actual terminal restoration in CI (no real terminal),
-    // but we verify the hook installs and the original hook is preserved.
     init_panic_hook();
-    // If we get here without panic, the hook installed successfully.
-    // The hook captures the previous hook via take_hook/set_hook.
 }
 
 #[test]
 fn test_terminal_guard_drop_is_idempotent() {
-    // TerminalGuard::new() enters raw mode + alt screen.
-    // In a test environment (no real terminal), this may fail.
-    // But Drop should be safe to call regardless.
-    // We test the Drop path by creating a guard-like cleanup scenario.
-    // On CI/TestBackend, we verify disable_raw_mode is a no-op when not in raw mode.
     let result = crossterm::terminal::disable_raw_mode();
-    // disable_raw_mode when not in raw mode should not panic (may return Ok or Err)
     let _ = result;
 }
 
 #[test]
 fn test_render_at_different_sizes() {
-    // Verify that rendering at different terminal sizes produces different layouts
-    // (content is re-centered), proving resize would trigger correct re-render.
-    let backend_small = TestBackend::new(50, 15);
-    let mut term_small = Terminal::new(backend_small).unwrap();
-    App::render_frame(&mut term_small).unwrap();
+    let mut app_small = App::new(|| Box::new(TestScreen));
+    let buf_small = app_small.render_to_test_backend(50, 15);
 
-    let backend_large = TestBackend::new(120, 40);
-    let mut term_large = Terminal::new(backend_large).unwrap();
-    App::render_frame(&mut term_large).unwrap();
+    let mut app_large = App::new(|| Box::new(TestScreen));
+    let buf_large = app_large.render_to_test_backend(120, 40);
 
-    // Both should contain the text
-    let small_content: String = term_small.backend().buffer().content().iter()
+    let small_content: String = buf_small.content().iter()
         .map(|cell| cell.symbol()).collect();
-    let large_content: String = term_large.backend().buffer().content().iter()
+    let large_content: String = buf_large.content().iter()
         .map(|cell| cell.symbol()).collect();
 
     assert!(small_content.contains("Hello from textual-rs!"),
@@ -81,10 +76,6 @@ fn test_render_at_different_sizes() {
     assert!(large_content.contains("Hello from textual-rs!"),
         "Large terminal should render the hello text");
 
-    // Buffer sizes differ, proving layout adapts to terminal size
-    assert_ne!(
-        term_small.backend().buffer().area(),
-        term_large.backend().buffer().area(),
-        "Different terminal sizes should produce different buffer areas"
-    );
+    assert_ne!(buf_small.area(), buf_large.area(),
+        "Different terminal sizes should produce different buffer areas");
 }

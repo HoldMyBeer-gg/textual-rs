@@ -117,7 +117,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let r1 = bridge.rect_for(child1).expect("child1 should have rect");
         let r2 = bridge.rect_for(child2).expect("child2 should have rect");
@@ -146,7 +146,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let r1 = bridge.rect_for(c1).expect("c1 rect");
         let r2 = bridge.rect_for(c2).expect("c2 rect");
@@ -183,7 +183,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let r1 = bridge.rect_for(c1).expect("c1 rect");
         let r2 = bridge.rect_for(c2).expect("c2 rect");
@@ -228,7 +228,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let header_rect = bridge.rect_for(header).expect("header rect");
         assert_eq!(header_rect, Rect { x: 0, y: 0, width: 80, height: 1 });
@@ -259,7 +259,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let r_fixed = bridge.rect_for(fixed).expect("fixed rect");
         let r_auto = bridge.rect_for(auto_fill).expect("auto rect");
@@ -287,7 +287,7 @@ mod bridge_tests {
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         let r = bridge.rect_for(child).expect("child rect");
         assert_eq!(r.width, 40);
@@ -314,7 +314,7 @@ mod bridge_tests {
 
         // First sync: all dirty
         bridge.sync_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
         assert!(bridge.rect_for(child).is_some());
 
         // Mark clean, then change child style (but dirty_sync should skip it)
@@ -330,7 +330,7 @@ mod bridge_tests {
 
         // sync_dirty_subtree should skip clean widgets
         bridge.sync_dirty_subtree(screen, &ctx);
-        bridge.compute_layout(screen, 80, 24);
+        bridge.compute_layout(screen, 80, 24, &ctx);
 
         // Layout should NOT have changed (child was not re-synced)
         // The child's taffy node still has the old style

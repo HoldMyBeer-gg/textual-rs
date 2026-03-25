@@ -1,5 +1,5 @@
 use anyhow::Result;
-use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
+use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind, KeyModifiers};
 use futures::StreamExt;
 use ratatui::backend::{Backend, CrosstermBackend, TestBackend};
 use ratatui::{Frame, Terminal};
@@ -111,6 +111,7 @@ impl App {
         // Main event loop
         loop {
             match rx.recv_async().await {
+                Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
                 Ok(AppEvent::Key(k)) if k.code == KeyCode::Char('q') => break,
                 Ok(AppEvent::Key(k))
                     if k.code == KeyCode::Char('c')
@@ -125,6 +126,16 @@ impl App {
                         advance_focus(&mut self.ctx);
                     }
                     self.full_render_pass(&mut terminal)?;
+                }
+                Ok(AppEvent::Key(k)) if k.code == KeyCode::Backspace => {
+                    self.ctx.input_buffer.pop();
+                    self.full_render_pass(&mut terminal)?;
+                }
+                Ok(AppEvent::Key(k)) if matches!(k.code, KeyCode::Char(c) if c != 'q') => {
+                    if let KeyCode::Char(c) = k.code {
+                        self.ctx.input_buffer.push(c);
+                        self.full_render_pass(&mut terminal)?;
+                    }
                 }
                 Ok(AppEvent::Resize(_, _)) => {
                     self.full_render_pass(&mut terminal)?;
@@ -155,7 +166,7 @@ impl App {
 
         // c. Compute layout
         let size = terminal.size()?;
-        self.bridge.compute_layout(screen_id, size.width, size.height);
+        self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
 
         // d. Clear dirty flags
         clear_dirty_subtree(screen_id, &mut self.ctx);
@@ -196,7 +207,7 @@ impl App {
         // Cascade + layout
         apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
         self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
-        self.bridge.compute_layout(screen_id, cols, rows);
+        self.bridge.compute_layout(screen_id, cols, rows, &self.ctx);
         clear_dirty_subtree(screen_id, &mut self.ctx);
 
         // Build hit map
