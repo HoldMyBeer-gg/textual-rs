@@ -303,10 +303,14 @@ impl ComputedStyle {
                     }
                 }
                 "grid-template-columns" => {
-                    // handled via Vec<TcssDimension> stored as String for now
+                    if let TcssValue::Dimensions(dims) = &decl.value {
+                        self.grid_columns = Some(dims.clone());
+                    }
                 }
                 "grid-template-rows" => {
-                    // handled via Vec<TcssDimension> stored as String for now
+                    if let TcssValue::Dimensions(dims) = &decl.value {
+                        self.grid_rows = Some(dims.clone());
+                    }
                 }
                 "layout-direction" => {
                     if let TcssValue::LayoutDirection(d) = decl.value {
