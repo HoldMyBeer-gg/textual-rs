@@ -7,10 +7,10 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: Library compiles on stable Rust (no nightly features)
-- [ ] **FOUND-02**: Cross-platform: Windows 10+, macOS, Linux (via crossterm backend)
-- [ ] **FOUND-03**: ratatui-based rendering pipeline with async Tokio event loop
-- [ ] **FOUND-04**: `App` struct as root entry point with `run()` method
+- [x] **FOUND-01**: Library compiles on stable Rust (no nightly features)
+- [x] **FOUND-02**: Cross-platform: Windows 10+, macOS, Linux (via crossterm backend)
+- [x] **FOUND-03**: ratatui-based rendering pipeline with async Tokio event loop
+- [x] **FOUND-04**: `App` struct as root entry point with `run()` method
 - [ ] **FOUND-05**: Alt-screen terminal management (enter/exit cleanly on panic)
 - [ ] **FOUND-06**: Terminal resize events trigger layout recomputation
 
