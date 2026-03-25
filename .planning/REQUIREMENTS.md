@@ -16,33 +16,33 @@
 
 ### Widget Tree
 
-- [ ] **TREE-01**: Index-arena widget tree (`SlotMap<WidgetId, Box<dyn Widget>>`) with no unsafe parent pointers
+- [x] **TREE-01**: Index-arena widget tree (`SlotMap<WidgetId, Box<dyn Widget>>`) with no unsafe parent pointers
 - [ ] **TREE-02**: `Widget` trait with `render()`, `compose()`, `on_mount()`, `on_unmount()` lifecycle
-- [ ] **TREE-03**: `App > Screen > Widget` hierarchy with screen stack (push/pop for modals)
+- [x] **TREE-03**: `App > Screen > Widget` hierarchy with screen stack (push/pop for modals)
 - [ ] **TREE-04**: Dynamic widget composition — widgets can add/remove children at runtime
-- [ ] **TREE-05**: Keyboard focus management with tab order traversal
+- [x] **TREE-05**: Keyboard focus management with tab order traversal
 
 ### Layout Engine
 
-- [ ] **LAYOUT-01**: Taffy-backed layout engine supporting CSS Flexbox and CSS Grid
-- [ ] **LAYOUT-02**: Vertical and horizontal layout containers
-- [ ] **LAYOUT-03**: Grid layout with configurable rows/columns
-- [ ] **LAYOUT-04**: Dock layout (dock widgets to top/bottom/left/right edges)
-- [ ] **LAYOUT-05**: Fractional units (`1fr`, `2fr`) for proportional sizing
-- [ ] **LAYOUT-06**: Fixed, percentage, and auto sizing modes
-- [ ] **LAYOUT-07**: Dirty flag system — only recompute layout for changed subtrees
+- [x] **LAYOUT-01**: Taffy-backed layout engine supporting CSS Flexbox and CSS Grid
+- [x] **LAYOUT-02**: Vertical and horizontal layout containers
+- [x] **LAYOUT-03**: Grid layout with configurable rows/columns
+- [x] **LAYOUT-04**: Dock layout (dock widgets to top/bottom/left/right edges)
+- [x] **LAYOUT-05**: Fractional units (`1fr`, `2fr`) for proportional sizing
+- [x] **LAYOUT-06**: Fixed, percentage, and auto sizing modes
+- [x] **LAYOUT-07**: Dirty flag system — only recompute layout for changed subtrees
 
 ### CSS Styling Engine
 
-- [ ] **CSS-01**: TCSS parser (subset of CSS) using `cssparser` tokenizer
-- [ ] **CSS-02**: Type, class, and ID selector matching
-- [ ] **CSS-03**: Style cascade with CSS specificity rules
-- [ ] **CSS-04**: Inline styles on widget instances (highest specificity)
-- [ ] **CSS-05**: Pseudo-class states: `:focus`, `:hover`, `:disabled`
-- [ ] **CSS-06**: Supported properties: `color`, `background`, `border`, `border-title`, `padding`, `margin`, `width`, `height`, `min-width`, `min-height`, `max-width`, `max-height`, `display`, `visibility`, `opacity`, `text-align`, `overflow`, `scrollbar-gutter`
-- [ ] **CSS-07**: Named colors, hex colors (`#rgb`, `#rrggbb`), `rgb()`, `rgba()` syntax
-- [ ] **CSS-08**: Border styles: `solid`, `rounded`, `heavy`, `double`, `ascii`, `none`
-- [ ] **CSS-09**: Default CSS defined on widget types, overridable by user stylesheets
+- [x] **CSS-01**: TCSS parser (subset of CSS) using `cssparser` tokenizer
+- [x] **CSS-02**: Type, class, and ID selector matching
+- [x] **CSS-03**: Style cascade with CSS specificity rules
+- [x] **CSS-04**: Inline styles on widget instances (highest specificity)
+- [x] **CSS-05**: Pseudo-class states: `:focus`, `:hover`, `:disabled`
+- [x] **CSS-06**: Supported properties: `color`, `background`, `border`, `border-title`, `padding`, `margin`, `width`, `height`, `min-width`, `min-height`, `max-width`, `max-height`, `display`, `visibility`, `opacity`, `text-align`, `overflow`, `scrollbar-gutter`
+- [x] **CSS-07**: Named colors, hex colors (`#rgb`, `#rrggbb`), `rgb()`, `rgba()` syntax
+- [x] **CSS-08**: Border styles: `solid`, `rounded`, `heavy`, `double`, `ascii`, `none`
+- [x] **CSS-09**: Default CSS defined on widget types, overridable by user stylesheets
 
 ### Reactive System
 

@@ -56,9 +56,9 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Widget tree: SlotMap arena, Widget trait, AppContext, CSS type definitions, screen stack, focus management
-- [ ] 02-02-PLAN.md — Layout engine: TaffyBridge, ComputedStyle-to-Taffy conversion, flex/grid/dock layouts, dirty-flag incremental relayout, mouse hit map
-- [ ] 02-03-PLAN.md — CSS/TCSS styling engine: cssparser tokenizer, selector parser/matcher, property parser, cascade resolver, pseudo-classes, default CSS
+- [x] 02-01-PLAN.md — Widget tree: SlotMap arena, Widget trait, AppContext, CSS type definitions, screen stack, focus management
+- [x] 02-02-PLAN.md — Layout engine: TaffyBridge, ComputedStyle-to-Taffy conversion, flex/grid/dock layouts, dirty-flag incremental relayout, mouse hit map
+- [x] 02-03-PLAN.md — CSS/TCSS styling engine: cssparser tokenizer, selector parser/matcher, property parser, cascade resolver, pseudo-classes, default CSS
 - [ ] 02-04-PLAN.md — Render loop integration: wire AppContext + TaffyBridge + Stylesheet into App, IRC demo example
 
 **UI hint**: yes
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
-| 2. Widget Tree, Layout, and Styling | 0/4 | Planning complete | - |
+| 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
