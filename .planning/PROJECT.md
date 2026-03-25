@@ -16,22 +16,22 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 - [x] Async event loop with Tokio LocalSet — Validated in Phase 1: Foundation
 - [x] Stable Rust (no nightly features required) — Validated in Phase 1: Foundation
 - [x] Cross-platform: Windows 10+ confirmed (FOUND-01, FOUND-02) — Validated in Phase 1: Foundation
+- [x] Reactive property system that triggers re-renders on state change — Validated in Phase 3: Reactive System, Events, and Testing
+- [x] Async event loop with message passing between widgets — Validated in Phase 3: Reactive System, Events, and Testing
+- [x] Keyboard and mouse input handling — Validated in Phase 3: Reactive System, Events, and Testing
+- [x] Snapshot testing infrastructure for visual regression tests — Validated in Phase 3: Reactive System, Events, and Testing
+- [x] Test pilot system for simulating user interaction in tests — Validated in Phase 3: Reactive System, Events, and Testing
 
 ### Active
 
 - [ ] CSS-like styling system (TCSS-equivalent) for widget appearance and layout
 - [ ] Widget tree with App > Screen > Widget hierarchy
-- [ ] Reactive property system that triggers re-renders on state change
-- [ ] Async event loop with message passing between widgets
 - [ ] Layout engine: vertical, horizontal, grid, dock layouts
 - [ ] Built-in widget library: Button, Input, Label, Checkbox, Select, DataTable, TextArea, ListView, Tree, Tabs, ProgressBar, Sparkline, Log, Markdown, Switch, RadioButton, Collapsible, TabbedContent, ContentSwitcher, Footer, Header
-- [ ] Keyboard and mouse input handling
 - [ ] Scrollable containers with scrollbar widgets
 - [ ] Screen stack for modal dialogs and navigation
 - [ ] Border styles, padding, margin (box model)
 - [ ] Color themes and dark/light mode support
-- [ ] Snapshot testing infrastructure for visual regression tests
-- [ ] Test pilot system for simulating user interaction in tests
 - [ ] Cross-platform: Windows 10+, macOS, Linux
 
 ### Out of Scope
@@ -68,6 +68,9 @@ The Python Textual codebase (in `textual/` subdirectory) serves as the primary r
 | Research ratatui before building | Popular, well-maintained — may eliminate need to build low-level terminal backend | ✓ Adopted: ratatui 0.30.0 + crossterm 0.29.0 (Phase 1) |
 | TDD approach | User requirement: tests before code | ✓ Applied: TestBackend integration tests written TDD-style (Phase 1) |
 | Async runtime choice (tokio vs async-std vs smol) | Event loop and message passing require async | ✓ Decided: tokio current_thread + LocalSet; avoids Send pressure on future widget state (Phase 1) |
+| reactive_graph for reactive signals | Battle-tested signals from Leptos; ArcRwSignal/ArcMemo for widget state | ✓ Adopted: reactive_graph 0.2.13 + any_spawner 0.3.0; Executor::init_tokio() verified with LocalSet (Phase 3) |
+| Event dispatch via on_event + dyn Any | Simple, extensible, no TypeId registry needed | ✓ Applied: Widget::on_event with downcast, parent-chain bubbling (Phase 3) |
+| insta for snapshot testing | Human-readable diffs, ratatui TestBackend Display integration | ✓ Adopted: insta 1.42, plain-text buffer snapshots (Phase 3) |
 
 ## Evolution
 
@@ -89,6 +92,6 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 ## Current State
 
-Phase 1 (Foundation) complete — Cargo workspace scaffolded, ratatui + crossterm + Tokio LocalSet event loop wired end-to-end, RAII terminal guard + panic hook implemented, 5 integration tests pass. Ready for Phase 2: Widget Tree, Layout, and Styling.
+Phase 3 (Reactive System, Events, and Testing) complete — Reactive<T>/ComputedReactive<T> with reactive_graph signals, typed message dispatch with parent-chain bubbling, keyboard/mouse event routing, key binding action dispatch, TestApp/Pilot harness with settle(), insta snapshot testing, proptest CSS fuzzing. 121 tests pass. Ready for Phase 4: Built-in Widget Library.
 
-*Last updated: 2026-03-24 after Phase 1: Foundation*
+*Last updated: 2026-03-25 after Phase 3: Reactive System, Events, and Testing*
