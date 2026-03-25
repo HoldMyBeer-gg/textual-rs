@@ -230,8 +230,10 @@ fn find_focused_widget_type(ctx: &AppContext, type_name: &str) -> bool {
 const IRC_STYLESHEET: &str = r#"
 IrcScreen {
     layout-direction: vertical;
+    padding: 1 0 3 0;
 }
 Header {
+    dock: top;
     height: 1;
     background: rgb(30, 30, 46);
     color: rgb(137, 180, 250);
@@ -253,6 +255,7 @@ UserList {
     border: solid;
 }
 InputBar {
+    dock: bottom;
     height: 3;
     border: rounded;
 }
