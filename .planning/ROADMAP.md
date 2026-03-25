@@ -41,7 +41,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01: Cargo workspace setup, dependencies, basic App skeleton, Tokio LocalSet event loop with crossterm EventStream and flume channel
-- [ ] 01-02: Terminal management — alt-screen entry/exit, raw mode, panic hook with terminal restore, resize event handling, TestBackend integration
+- [x] 01-02: Terminal management — alt-screen entry/exit, raw mode, panic hook with terminal restore, resize event handling, TestBackend integration
 
 ### Phase 2: Widget Tree, Layout, and Styling
 **Goal**: Developers can declare a widget tree (`App > Screen > Widget`) with parent/child relationships, lay it out using Taffy Flexbox/Grid/Dock, and style widgets using a `.tcss` stylesheet — and see the correct visual result rendered via ratatui.

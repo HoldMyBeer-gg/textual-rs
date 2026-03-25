@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
-status: Ready to execute
-stopped_at: Completed 01-foundation/01-01-PLAN.md
-last_updated: "2026-03-25T06:11:41.366Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 01-foundation/01-02-PLAN.md
+last_updated: "2026-03-25T06:18:05.284Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Plan: 2 of 2
 
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 2 | 2 tasks | 7 files |
+| Phase 01-foundation P02 | 4 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - [Pre-Phase 1]: reactive_graph for signals — MEDIUM confidence; needs Executor::init_tokio + LocalSet spike before Phase 3 planning
 - [Phase 01-foundation]: futures 0.3 added as full dependency (not dev-only) — StreamExt used in library code app.rs, not test code only
 - [Phase 01-foundation]: App::run() renders initial frame before event loop — box visible immediately without waiting for first event
+- [Phase 01-foundation]: render_frame requires B::Error: Send + Sync + 'static to satisfy anyhow::Error From conversion
+- [Phase 01-foundation]: run_async refactored to use render_frame for both initial render and resize redraw keeping render path DRY
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T06:11:41.361Z
-Stopped at: Completed 01-foundation/01-01-PLAN.md
+Last session: 2026-03-25T06:18:05.279Z
+Stopped at: Completed 01-foundation/01-02-PLAN.md
 Resume file: None
