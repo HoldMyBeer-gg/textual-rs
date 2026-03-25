@@ -76,9 +76,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Reactive property system — Reactive<T> type, watch_/validate_/compute_ method conventions, reactive_graph RwSignal/Memo/Effect integration with Tokio LocalSet (Executor::init_tokio), RenderRequest in flume event bus, dirty-flag batching for single render per tick
-- [ ] 03-02: Event system — typed Message trait, on_ dispatch convention, event bubbling with EventPropagation, keyboard routing to focused widget, mouse routing via hit map, key bindings with action dispatch, timer/interval support
-- [ ] 03-03: Test infrastructure — TestApp harness with TestBackend, Pilot type (press/type_text/click/focus), settle() async drain loop, assert_buffer_lines and cell-level assertions, insta snapshot integration, proptest for CSS parser and layout engine
+- [ ] 03-01-PLAN.md — Reactive property system: Reactive<T>, ComputedReactive<T>, reactive_graph integration, Executor/Owner init, RenderRequest batching
+- [ ] 03-02-PLAN.md — Event system: Message trait, on_event dispatch, bubbling, keyboard/mouse routing, key bindings, timer/interval
+- [ ] 03-03-PLAN.md — Test infrastructure: TestApp/Pilot harness, settle(), insta snapshots, assert_buffer_lines, proptest CSS fuzzing
 
 **Research note — Phase 3 planning requires a spike:** `reactive_graph` + Tokio `LocalSet` integration has MEDIUM confidence. Verify `Executor::init_tokio()` works with `LocalSet` and that effects can be debounced into a single render tick before committing to the API design. Run this spike before `/gsd:plan-phase 3`.
 
