@@ -111,6 +111,7 @@ Developers can declare a widget tree (`App > Screen > Widget`) with parent/child
 - Dock layout via nested flex avoids a custom layout algorithm while still giving users the familiar `dock: top` / `dock: bottom` API from Python Textual.
 - Direct ratatui Buffer rendering means every ratatui widget (Block, Paragraph, List, Table, etc.) is usable inside textual-rs widgets with zero wrapping. This is a major ecosystem advantage over building an intermediate representation.
 - DEFAULT_CSS as `&'static str` means widget default styles are compiled into the binary — no file I/O, no runtime parsing overhead for defaults (they're parsed once at app startup).
+- Phase 2 should end with layout demo examples that prove the engine works for real-world apps. Key demo: an IRC client layout (weechat-style) with channel list sidebar, main chat text area, user list sidebar, input bar at bottom, title bar at top, and context menu overlay. This exercises dock layout, multi-pane flex, and nested containers simultaneously.
 
 </specifics>
 
