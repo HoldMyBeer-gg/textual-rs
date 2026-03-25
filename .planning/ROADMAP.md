@@ -76,7 +76,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Reactive property system: Reactive<T>, ComputedReactive<T>, reactive_graph integration, Executor/Owner init, RenderRequest batching
+- [x] 03-01-PLAN.md — Reactive property system: Reactive<T>, ComputedReactive<T>, reactive_graph integration, Executor/Owner init, RenderRequest batching
 - [ ] 03-02-PLAN.md — Event system: Message trait, on_event dispatch, bubbling, keyboard/mouse routing, key bindings, timer/interval
 - [ ] 03-03-PLAN.md — Test infrastructure: TestApp/Pilot harness, settle(), insta snapshots, assert_buffer_lines, proptest CSS fuzzing
 
@@ -119,6 +119,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
-| 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
+| 3. Reactive System, Events, and Testing | 1/3 | In Progress|  |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
