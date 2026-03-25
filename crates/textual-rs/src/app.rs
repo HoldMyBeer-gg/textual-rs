@@ -305,10 +305,88 @@ impl App {
         &self.bridge
     }
 
+    /// Set the event sender on AppContext. Used by TestApp for headless testing.
+    pub fn set_event_tx(&mut self, tx: flume::Sender<AppEvent>) {
+        self.ctx.event_tx = Some(tx);
+    }
+
+    /// Mount the root screen. Calls the stored factory and pushes the screen onto the stack.
+    /// No-op if the factory was already consumed (screen already mounted).
+    pub fn mount_root_screen(&mut self) {
+        if let Some(factory) = self.root_screen_factory.take() {
+            let root_screen = factory();
+            push_screen(root_screen, &mut self.ctx);
+        }
+    }
+
+    /// Render one frame to the provided terminal. Public for TestApp.
+    pub fn render_to_terminal<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()>
+    where
+        B::Error: Send + Sync + 'static,
+    {
+        self.full_render_pass(terminal)
+    }
+
+    /// Handle a key event: check bindings, dispatch to focused widget, advance focus on Tab.
+    /// Returns true if the event was handled by a binding or on_event handler.
+    pub fn handle_key_event(&mut self, k: crossterm::event::KeyEvent) -> bool {
+        // 1. Check focused widget's key bindings
+        let mut handled = false;
+        if let Some(focused_id) = self.ctx.focused_widget {
+            if let Some(widget) = self.ctx.arena.get(focused_id) {
+                for binding in widget.key_bindings() {
+                    if binding.matches(k.code, k.modifiers) {
+                        widget.on_action(binding.action, &self.ctx);
+                        handled = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. If not handled by binding, dispatch as key event to focused widget, then bubble
+        if !handled {
+            if let Some(focused_id) = self.ctx.focused_widget {
+                dispatch_message(focused_id, &k, &self.ctx);
+                handled = true;
+            }
+        }
+
+        // 3. App-level key handling (Tab for focus cycling)
+        if !handled || matches!(k.code, KeyCode::Tab) {
+            match k.code {
+                KeyCode::Tab if k.modifiers.contains(KeyModifiers::SHIFT) => {
+                    advance_focus_backward(&mut self.ctx);
+                }
+                KeyCode::Tab => {
+                    advance_focus(&mut self.ctx);
+                }
+                _ => {}
+            }
+        }
+
+        handled
+    }
+
+    /// Handle a mouse event: hit-test and dispatch to target widget.
+    pub fn handle_mouse_event(&mut self, m: crossterm::event::MouseEvent) {
+        use crossterm::event::MouseEventKind;
+        match m.kind {
+            MouseEventKind::Down(_) | MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                if let Some(ref hit_map) = self.hit_map {
+                    if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                        dispatch_message(target_id, &m, &self.ctx);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// Drain the message queue, dispatching each message through bubbling.
     /// Handles recursive message posting (widget handlers posting new messages)
     /// up to a depth of 100 iterations to prevent infinite loops.
-    fn drain_message_queue(&self) {
+    pub fn drain_message_queue(&self) {
         // Take all messages out of the RefCell (avoids borrow conflict during dispatch)
         let messages: Vec<_> = self.ctx.message_queue.borrow_mut().drain(..).collect();
         for (source, message) in messages {
