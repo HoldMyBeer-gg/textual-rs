@@ -19,7 +19,7 @@ proven. Every phase closes with observable, user-verifiable outcomes — not jus
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Terminal layer, async event loop, and project scaffolding
+- [x] **Phase 1: Foundation** - Terminal layer, async event loop, and project scaffolding (completed 2026-03-25)
 - [ ] **Phase 2: Widget Tree, Layout, and Styling** - SlotMap widget arena, Taffy layout engine, and TCSS styling engine
 - [ ] **Phase 3: Reactive System, Events, and Testing** - Reactive<T> properties, typed message passing, and TestApp harness
 - [ ] **Phase 4: Built-in Widget Library** - All 22 v1 widgets with styling, interaction, and snapshot tests
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | In Progress|  |
+| 1. Foundation | 1/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 0/3 | Not started | - |
 | 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
