@@ -56,11 +56,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Widget tree — SlotMap arena (WidgetId, Box<dyn Widget>), Widget trait with render/compose/on_mount/on_unmount, SecondaryMap for parent/children/dirty flags, AppContext pattern for arena access, screen stack (push/pop for modals), EventPropagation enum
-- [ ] 02-02: Layout engine — Taffy integration (TaffyBridge, TaffyTree lifecycle in sync with WidgetArena), vertical/horizontal/grid/dock layouts, fractional units, fixed/percentage/auto sizing, dirty-flag system, mouse hit map (col×row → WidgetId), Rect conversion to terminal cells
-- [ ] 02-03: CSS/TCSS styling engine — cssparser tokenizer, hand-rolled SelectorParser and PropertyParser, CascadeResolver with specificity ordering, ComputedStyle SecondaryMap, pseudo-classes (:focus/:hover/:disabled), inline style override, full TCSS property set, default CSS per widget type
-
-**Research note — Phase 2 planning requires a spike:** The SlotMap borrow problem (cannot hold `&mut Widget` and `&mut Arena` simultaneously) needs a verified concrete pattern (HopSlotMap vs AppContext) before the API is locked. Run this spike before `/gsd:plan-phase 2`.
+- [ ] 02-01-PLAN.md — Widget tree: SlotMap arena, Widget trait, AppContext, CSS type definitions, screen stack, focus management
+- [ ] 02-02-PLAN.md — Layout engine: TaffyBridge, ComputedStyle-to-Taffy conversion, flex/grid/dock layouts, dirty-flag incremental relayout, mouse hit map
+- [ ] 02-03-PLAN.md — CSS/TCSS styling engine: cssparser tokenizer, selector parser/matcher, property parser, cascade resolver, pseudo-classes, default CSS
 
 **UI hint**: yes
 
@@ -114,12 +112,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | Complete    | 2026-03-25 |
-| 2. Widget Tree, Layout, and Styling | 0/3 | Not started | - |
+| 1. Foundation | 2/2 | Complete    | 2026-03-25 |
+| 2. Widget Tree, Layout, and Styling | 0/3 | Planning complete | - |
 | 3. Reactive System, Events, and Testing | 0/3 | Not started | - |
 | 4. Built-in Widget Library | 0/2 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
