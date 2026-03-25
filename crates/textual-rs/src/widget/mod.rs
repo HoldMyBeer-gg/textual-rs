@@ -5,6 +5,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use slotmap::new_key_type;
 use context::AppContext;
+use crate::event::keybinding::KeyBinding;
 
 new_key_type! { pub struct WidgetId; }
 
@@ -37,6 +38,21 @@ pub trait Widget: 'static {
     {
         ""
     }
+
+    /// Handle a dispatched event/message. Downcast to concrete types to handle.
+    /// Return Stop to consume the message, Continue to let it bubble.
+    fn on_event(&self, _event: &dyn std::any::Any, _ctx: &AppContext) -> EventPropagation {
+        EventPropagation::Continue
+    }
+
+    /// Declare key bindings for this widget.
+    /// Checked when this widget has focus and a key event arrives.
+    fn key_bindings(&self) -> &[KeyBinding] {
+        &[]
+    }
+
+    /// Handle a key binding action. Called when a key matching a binding is pressed.
+    fn on_action(&self, _action: &str, _ctx: &AppContext) {}
 }
 
 #[cfg(test)]
