@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to execute
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-25T23:30:33.662Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-25T23:38:03.851Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 03 (reactive-system-events-and-testing) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: 2 of 3
 | Phase 01-foundation P02 | 4 | 3 tasks | 2 files |
 | Phase 02-widget-tree P01 | 4min | 2 tasks | 7 files |
 | Phase 03-reactive-system-events-and-testing P01 | 4 | 2 tasks | 7 files |
+| Phase 03-reactive-system-events-and-testing P02 | 4 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 03-reactive-system-events-and-testing]: Owner stored as Option<Owner> on App — initialized in run_async not new() since tokio runtime not yet live at construction
 - [Phase 03-reactive-system-events-and-testing]: event_tx stored on AppContext (not App) — widgets receive AppContext in handlers making it the natural reactive injection point
 - [Phase 03-reactive-system-events-and-testing]: RenderRequest coalescing uses try_recv drain loop — cheapest single-tick batching with zero overhead
+- [Phase 03-reactive-system-events-and-testing]: message_queue uses RefCell<Vec<...>> on AppContext — allows post_message(&self) from on_event/on_action without borrow conflict
+- [Phase 03-reactive-system-events-and-testing]: AppEvent::Message variant rejected — Box<dyn Any> breaks Clone/Debug on AppEvent; message_queue field is cleaner
+- [Phase 03-reactive-system-events-and-testing]: drain_message_queue bounded at 100 iterations to prevent infinite message loops while supporting recursive dispatch
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T23:30:33.658Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-25T23:38:03.847Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

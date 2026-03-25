@@ -54,14 +54,14 @@
 
 ### Event System
 
-- [ ] **EVENT-01**: Typed message system — messages are Rust structs implementing `Message` trait
-- [ ] **EVENT-02**: `on_` method convention for message handling (e.g., `on_button_pressed`)
-- [ ] **EVENT-03**: Event bubbling — unhandled messages propagate up the widget tree
-- [ ] **EVENT-04**: Event stopping — handlers can consume a message to prevent bubbling
-- [ ] **EVENT-05**: Keyboard event routing to focused widget
-- [ ] **EVENT-06**: Mouse event routing with hit testing against rendered widget regions
-- [ ] **EVENT-07**: Key bindings — declare key bindings on widgets with action dispatch
-- [ ] **EVENT-08**: Timer/interval support for periodic updates
+- [x] **EVENT-01**: Typed message system — messages are Rust structs implementing `Message` trait
+- [x] **EVENT-02**: `on_` method convention for message handling (e.g., `on_button_pressed`)
+- [x] **EVENT-03**: Event bubbling — unhandled messages propagate up the widget tree
+- [x] **EVENT-04**: Event stopping — handlers can consume a message to prevent bubbling
+- [x] **EVENT-05**: Keyboard event routing to focused widget
+- [x] **EVENT-06**: Mouse event routing with hit testing against rendered widget regions
+- [x] **EVENT-07**: Key bindings — declare key bindings on widgets with action dispatch
+- [x] **EVENT-08**: Timer/interval support for periodic updates
 
 ### Built-in Widgets
 
