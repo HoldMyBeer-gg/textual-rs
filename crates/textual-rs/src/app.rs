@@ -214,6 +214,16 @@ impl App {
 
         terminal.backend().buffer().clone()
     }
+
+    /// Expose AppContext for test assertions (e.g., finding widget IDs, inspecting focus).
+    pub fn ctx(&self) -> &AppContext {
+        &self.ctx
+    }
+
+    /// Expose TaffyBridge for test assertions (e.g., verifying computed Rects).
+    pub fn bridge(&self) -> &TaffyBridge {
+        &self.bridge
+    }
 }
 
 // ---- Internal helpers ----

@@ -94,6 +94,19 @@ impl TaffyBridge {
             None => return, // not synced yet
         };
 
+        // Force the root screen node to fill the entire terminal.
+        // Screen widgets have `size: Auto` by default (shrinks to content).
+        // We override to Definite so the flex children get the full available space.
+        {
+            use taffy::prelude::Dimension;
+            let mut root_style = self.tree.style(root).cloned().unwrap_or_default();
+            root_style.size = taffy::geometry::Size {
+                width: Dimension::length(cols as f32),
+                height: Dimension::length(rows as f32),
+            };
+            self.tree.set_style(root, root_style).unwrap();
+        }
+
         let available_space = Size {
             width: AvailableSpace::Definite(cols as f32),
             height: AvailableSpace::Definite(rows as f32),

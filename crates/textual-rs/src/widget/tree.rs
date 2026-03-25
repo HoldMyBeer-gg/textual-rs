@@ -98,22 +98,30 @@ pub fn unmount_widget(id: WidgetId, ctx: &mut AppContext) {
     }
 }
 
-/// Mount all children returned by widget.compose() under parent_id.
+/// Mount all children returned by widget.compose() under parent_id (one level only).
 pub fn compose_children(parent_id: WidgetId, ctx: &mut AppContext) {
-    // Temporarily take widget out, call compose(), re-insert
-    // We need the children list first — use a clone of the widget to call compose
-    // Since Widget: 'static and we need to borrow arena, use index to get reference
     let children = ctx.arena[parent_id].compose();
     for child in children {
         mount_widget(child, Some(parent_id), ctx);
     }
 }
 
-/// Push a new screen onto the screen stack and compose its children.
+/// Recursively compose the entire subtree rooted at `root_id`.
+/// Calls compose_children on root, then on each mounted child, depth-first.
+pub fn compose_subtree(root_id: WidgetId, ctx: &mut AppContext) {
+    compose_children(root_id, ctx);
+    // Collect child ids to avoid borrow issues while recursing
+    let child_ids: Vec<WidgetId> = ctx.children.get(root_id).cloned().unwrap_or_default();
+    for child_id in child_ids {
+        compose_subtree(child_id, ctx);
+    }
+}
+
+/// Push a new screen onto the screen stack and compose its entire subtree.
 pub fn push_screen(screen: Box<dyn Widget>, ctx: &mut AppContext) -> WidgetId {
     let id = mount_widget(screen, None, ctx);
     ctx.screen_stack.push(id);
-    compose_children(id, ctx);
+    compose_subtree(id, ctx);
     id
 }
 

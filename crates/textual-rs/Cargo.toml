@@ -19,3 +19,7 @@ cssparser-color = "0.5.0"
 [[example]]
 name = "demo"
 path = "examples/demo.rs"
+
+[[example]]
+name = "irc_demo"
+path = "examples/irc_demo.rs"
