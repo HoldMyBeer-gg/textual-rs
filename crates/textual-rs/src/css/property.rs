@@ -601,6 +601,41 @@ mod tests {
         assert!(matches!(val3, TcssValue::Color(TcssColor::Rgb(0, 255, 0))));
     }
 
+    // --- Border + variable tests ---
+
+    #[test]
+    fn parse_border_tall_variable() {
+        let val = parse_decl_value("border: tall $primary");
+        assert_eq!(
+            val,
+            TcssValue::BorderWithVariable(BorderStyle::Tall, "primary".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_border_rounded_variable_with_suffix() {
+        let val = parse_decl_value("border: rounded $accent-lighten-2");
+        assert_eq!(
+            val,
+            TcssValue::BorderWithVariable(BorderStyle::Rounded, "accent-lighten-2".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_border_solid_hex_still_works() {
+        let val = parse_decl_value("border: solid #ff0000");
+        match val {
+            TcssValue::BorderWithColor(BorderStyle::Solid, TcssColor::Rgb(255, 0, 0)) => {}
+            other => panic!("expected BorderWithColor(Solid, Rgb(255,0,0)), got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn parse_border_heavy_no_color() {
+        let val = parse_decl_value("border: heavy");
+        assert_eq!(val, TcssValue::Border(BorderStyle::Heavy));
+    }
+
     #[test]
     fn parse_unknown_variable_produces_variable_variant() {
         // Unknown variables are stored as Variable; resolution happens at cascade time

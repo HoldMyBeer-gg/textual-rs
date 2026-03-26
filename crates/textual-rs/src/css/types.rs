@@ -198,6 +198,9 @@ pub enum TcssValue {
     Sides(Sides<f32>),
     /// List of dimensions (grid-template-columns/rows)
     Dimensions(Vec<TcssDimension>),
+    /// Border style + unresolved theme variable (e.g. "border: tall $primary").
+    /// Resolved to BorderWithColor during cascade via Theme::resolve().
+    BorderWithVariable(BorderStyle, String),
     /// Unresolved theme variable reference (e.g., "primary", "accent-darken-1").
     /// Stored during parsing, resolved to Color during cascade via Theme::resolve().
     Variable(String),

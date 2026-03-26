@@ -533,6 +533,23 @@ mod tests {
     }
 
     #[test]
+    fn mcgugan_box_right_border_uses_fallback() {
+        // The right border should use RIGHT_BORDER_FALLBACK (U+2595) for broad
+        // terminal compatibility, not RIGHT_ONE_QUARTER (U+1FB87).
+        let area = Rect::new(0, 0, 6, 4);
+        let mut buf = Buffer::empty(area);
+        let border = Color::Rgb(255, 255, 255);
+        let inside = Color::Rgb(30, 30, 30);
+        let outside = Color::Rgb(0, 0, 0);
+
+        mcgugan_box(&mut buf, 0, 0, 6, 4, border, inside, outside);
+
+        // Right edge inner rows should use the fallback character
+        assert_eq!(buf.cell((5, 1)).unwrap().symbol(), RIGHT_BORDER_FALLBACK);
+        assert_eq!(buf.cell((5, 2)).unwrap().symbol(), RIGHT_BORDER_FALLBACK);
+    }
+
+    #[test]
     fn braille_dot_index_layout() {
         // top-left = 0, top-right = 1
         assert_eq!(braille_dot_index(0, 0), 0);
