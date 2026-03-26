@@ -31,33 +31,26 @@ impl Widget for Footer {
             return;
         }
 
-        // Read the focused widget's key bindings
-        let binding_text = if let Some(focused_id) = ctx.focused_widget {
-            if let Some(widget) = ctx.arena.get(focused_id) {
-                let bindings: Vec<String> = widget
-                    .key_bindings()
-                    .iter()
-                    .filter(|kb| kb.show)
-                    .map(|kb| {
-                        // Format key code as display string
-                        let key_str = format_key_code(&kb.key);
-                        format!(" {} {} ", key_str, kb.description)
-                    })
-                    .collect();
-                bindings.join("  ")
-            } else {
-                String::new()
-            }
-        } else {
-            String::new()
-        };
+        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
 
-        if binding_text.is_empty() {
-            return;
+        // Collect focused widget's visible key bindings
+        let mut parts: Vec<String> = Vec::new();
+        if let Some(focused_id) = ctx.focused_widget {
+            if let Some(widget) = ctx.arena.get(focused_id) {
+                for kb in widget.key_bindings().iter().filter(|kb| kb.show) {
+                    let key_str = format_key_code(&kb.key);
+                    parts.push(format!(" {} {} ", key_str, kb.description));
+                }
+            }
         }
 
-        let display: String = binding_text.chars().take(area.width as usize).collect();
-        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        // Always show global hints
+        parts.push(" Tab Focus ".to_string());
+        parts.push(" Ctrl+P Palette ".to_string());
+        parts.push(" q Quit ".to_string());
+
+        let text = parts.join(" ");
+        let display: String = text.chars().take(area.width as usize).collect();
         buf.set_string(area.x, area.y, &display, style);
     }
 }

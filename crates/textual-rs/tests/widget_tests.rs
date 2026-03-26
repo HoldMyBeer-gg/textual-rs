@@ -1197,17 +1197,15 @@ fn snapshot_footer_empty() {
 }
 
 #[test]
-fn footer_empty_when_no_focused_widget() {
-    let test_app = TestApp::new(40, 1, || Box::new(Footer));
+fn footer_shows_global_hints() {
+    let test_app = TestApp::new(60, 1, || Box::new(Footer));
     let buf = test_app.buffer();
-    // All cells should be space (no binding text rendered)
     let row: String = (0..buf.area.width)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    assert_eq!(
-        row.trim_end(),
-        "",
-        "Footer with no focused widget should render empty, got: {:?}",
+    assert!(
+        row.contains("Quit"),
+        "Footer should always show global hints, got: {:?}",
         row.trim_end()
     );
 }
