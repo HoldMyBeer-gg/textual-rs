@@ -186,6 +186,9 @@ impl App {
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
 
+        #[cfg(debug_assertions)]
+        eprintln!("[textual-rs] Terminal: {:?}", self.ctx.terminal_caps);
+
         // Mount root screen
         if let Some(factory) = self.root_screen_factory.take() {
             let root_screen = factory();
@@ -236,16 +239,42 @@ impl App {
                         Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
 
                         Ok(AppEvent::Key(k)) => {
+                            // 0a. If overlay is active, route key event to it
+                            if self.ctx.active_overlay.borrow().is_some() {
+                                {
+                                    let overlay = self.ctx.active_overlay.borrow();
+                                    if let Some(ref widget) = *overlay {
+                                        // First try key bindings
+                                        let mut binding_handled = false;
+                                        for binding in widget.key_bindings() {
+                                            if binding.matches(k.code, k.modifiers) {
+                                                widget.on_action(binding.action, &self.ctx);
+                                                binding_handled = true;
+                                                break;
+                                            }
+                                        }
+                                        if !binding_handled {
+                                            // Then try on_event (for char input, etc.)
+                                            widget.on_event(&k as &dyn std::any::Any, &self.ctx);
+                                        }
+                                    }
+                                }
+                                // Drain deferred dismiss
+                                if self.ctx.pending_overlay_dismiss.get() {
+                                    self.ctx.pending_overlay_dismiss.set(false);
+                                    *self.ctx.active_overlay.borrow_mut() = None;
+                                }
+                                self.full_render_pass(&mut terminal)?;
+                                continue;
+                            }
+
                             // 0. Ctrl+P: open command palette
                             if k.code == KeyCode::Char('p')
                                 && k.modifiers.contains(KeyModifiers::CONTROL)
                             {
                                 let commands = self.command_registry.discover_all(&self.ctx);
                                 let palette = crate::command::CommandPalette::new(commands);
-                                self.ctx.push_screen_deferred(Box::new(palette));
-                                self.process_deferred_screens();
-                                // Auto-focus the palette widget on the new overlay screen
-                                advance_focus(&mut self.ctx);
+                                *self.ctx.active_overlay.borrow_mut() = Some(Box::new(palette));
                                 self.full_render_pass(&mut terminal)?;
                                 continue;
                             }
@@ -433,6 +462,7 @@ impl App {
                         }
 
                         Ok(AppEvent::Resize(_, _)) => {
+                            self.needs_full_sync = true;
                             self.full_render_pass(&mut terminal)?;
                         }
                         Ok(AppEvent::RenderRequest) => {
@@ -582,20 +612,24 @@ impl App {
             {
                 let overlay = self.ctx.active_overlay.borrow();
                 if let Some(ref widget) = *overlay {
+                    // First try key bindings
+                    let mut binding_handled = false;
                     for binding in widget.key_bindings() {
                         if binding.matches(k.code, k.modifiers) {
                             widget.on_action(binding.action, &self.ctx);
+                            binding_handled = true;
                             break;
                         }
+                    }
+                    if !binding_handled {
+                        // Then try on_event (for char input, etc.)
+                        widget.on_event(&k as &dyn std::any::Any, &self.ctx);
                     }
                 }
             }
             // Drain deferred dismiss
             if self.ctx.pending_overlay_dismiss.get() {
                 self.ctx.pending_overlay_dismiss.set(false);
-                *self.ctx.active_overlay.borrow_mut() = None;
-            } else {
-                // Any unhandled key dismisses the overlay
                 *self.ctx.active_overlay.borrow_mut() = None;
             }
             return true;
@@ -605,10 +639,7 @@ impl App {
         if k.code == KeyCode::Char('p') && k.modifiers.contains(KeyModifiers::CONTROL) {
             let commands = self.command_registry.discover_all(&self.ctx);
             let palette = crate::command::CommandPalette::new(commands);
-            self.ctx.push_screen_deferred(Box::new(palette));
-            self.process_deferred_screens();
-            // Auto-focus the palette on the new screen
-            advance_focus(&mut self.ctx);
+            *self.ctx.active_overlay.borrow_mut() = Some(Box::new(palette));
             return true;
         }
 

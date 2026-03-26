@@ -73,10 +73,6 @@ impl Widget for CommandPalette {
         true
     }
 
-    fn is_overlay(&self) -> bool {
-        true
-    }
-
     fn default_css() -> &'static str
     where
         Self: Sized,
@@ -103,7 +99,7 @@ impl Widget for CommandPalette {
             }
             match k.code {
                 KeyCode::Esc => {
-                    ctx.pop_screen_deferred();
+                    ctx.dismiss_overlay();
                     return EventPropagation::Stop;
                 }
                 KeyCode::Enter => {
@@ -118,7 +114,7 @@ impl Widget for CommandPalette {
                         }
                         // For app-level commands (no target_id), log for now
                     }
-                    ctx.pop_screen_deferred();
+                    ctx.dismiss_overlay();
                     return EventPropagation::Stop;
                 }
                 KeyCode::Up => {

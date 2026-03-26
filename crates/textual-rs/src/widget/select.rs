@@ -91,7 +91,7 @@ impl Widget for Select {
                 source_id: self.own_id.get(),
                 last_area_y: Cell::new(0),
             };
-            ctx.push_screen_deferred(Box::new(overlay));
+            *ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
         }
     }
 
@@ -177,10 +177,6 @@ impl Widget for SelectOverlay {
         true
     }
 
-    fn is_overlay(&self) -> bool {
-        true
-    }
-
     fn key_bindings(&self) -> &[KeyBinding] {
         OVERLAY_BINDINGS
     }
@@ -197,7 +193,7 @@ impl Widget for SelectOverlay {
                     return super::EventPropagation::Stop;
                 }
                 // Click outside dropdown — close it
-                ctx.pop_screen_deferred();
+                ctx.dismiss_overlay();
                 return super::EventPropagation::Stop;
             }
         }
@@ -246,10 +242,10 @@ impl Widget for SelectOverlay {
                         }
                     }
                 }
-                ctx.pop_screen_deferred();
+                ctx.dismiss_overlay();
             }
             "cancel" => {
-                ctx.pop_screen_deferred();
+                ctx.dismiss_overlay();
             }
             _ => {}
         }
