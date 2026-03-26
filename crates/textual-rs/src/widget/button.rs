@@ -150,12 +150,28 @@ impl Widget for Button {
             }
         }
 
-        // Centered label, bold
+        // Align label according to text-align CSS property (default: center)
+        let text_align = self.own_id.get()
+            .and_then(|id| ctx.computed_styles.get(id))
+            .map(|cs| cs.text_align)
+            .unwrap_or(crate::css::types::TextAlign::Center);
         let label_len = self.label.chars().count() as u16;
-        let x = if area.width > label_len {
-            area.x + (area.width - label_len) / 2
-        } else {
-            area.x
+        let x = match text_align {
+            crate::css::types::TextAlign::Center => {
+                if area.width > label_len {
+                    area.x + (area.width - label_len) / 2
+                } else {
+                    area.x
+                }
+            }
+            crate::css::types::TextAlign::Right => {
+                if area.width > label_len {
+                    area.x + area.width - label_len
+                } else {
+                    area.x
+                }
+            }
+            crate::css::types::TextAlign::Left => area.x,
         };
         let y = if area.height > 1 {
             area.y + area.height / 2

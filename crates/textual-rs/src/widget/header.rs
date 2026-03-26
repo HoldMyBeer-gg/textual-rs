@@ -1,9 +1,10 @@
+use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 
 use super::context::AppContext;
-use super::Widget;
+use super::{Widget, WidgetId};
 use crate::canvas;
 use crate::reactive::Reactive;
 

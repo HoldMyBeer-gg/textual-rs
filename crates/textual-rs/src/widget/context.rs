@@ -61,6 +61,9 @@ pub struct AppContext {
     /// Detected terminal capabilities (color depth, unicode, mouse, title).
     /// Widgets can inspect this to degrade gracefully on limited terminals.
     pub terminal_caps: TerminalCaps,
+    /// When true, animations snap to their target value instead of interpolating.
+    /// Set by TestApp to ensure deterministic rendering in tests.
+    pub skip_animations: bool,
 }
 
 impl AppContext {
@@ -90,6 +93,7 @@ impl AppContext {
             active_overlay: RefCell::new(None),
             pending_overlay_dismiss: Cell::new(false),
             terminal_caps: crate::terminal::detect_capabilities(),
+            skip_animations: false,
         }
     }
 

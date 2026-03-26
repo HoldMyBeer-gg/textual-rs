@@ -1,4 +1,5 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::time::Duration;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
@@ -6,6 +7,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
+use crate::animation::{Tween, ease_out_cubic};
 use crate::css::render_style::{fill_background, text_style as css_text_style};
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
@@ -31,6 +33,8 @@ pub struct Tabs {
     pub tab_labels: Vec<String>,
     pub active: Reactive<usize>,
     own_id: Cell<Option<WidgetId>>,
+    /// Tween for the underline x-position when switching tabs.
+    underline_tween: RefCell<Option<Tween>>,
 }
 
 impl Tabs {
@@ -39,7 +43,26 @@ impl Tabs {
             tab_labels: labels,
             active: Reactive::new(0),
             own_id: Cell::new(None),
+            underline_tween: RefCell::new(None),
         }
+    }
+
+    /// Compute the x-offset of a tab label within the bar.
+    fn tab_x_offset(&self, tab_idx: usize) -> f64 {
+        let separator = " | ";
+        let mut x: f64 = 0.0;
+        for (i, label) in self.tab_labels.iter().enumerate() {
+            if i == tab_idx {
+                return x;
+            }
+            if i > 0 {
+                x += separator.len() as f64;
+            }
+            x += 1.0; // leading space
+            x += label.chars().count() as f64;
+            x += 1.0; // trailing space
+        }
+        x
     }
 }
 
@@ -90,28 +113,26 @@ impl Widget for Tabs {
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
         let current = self.active.get_untracked();
-        match action {
-            "prev_tab" => {
-                if current > 0 {
-                    let new_idx = current - 1;
-                    self.active.set(new_idx);
-                    if let Some(id) = self.own_id.get() {
-                        let label = self.tab_labels.get(new_idx).cloned().unwrap_or_default();
-                        ctx.post_message(id, messages::TabChanged { index: new_idx, label });
-                    }
-                }
-            }
-            "next_tab" => {
-                if current + 1 < self.tab_labels.len() {
-                    let new_idx = current + 1;
-                    self.active.set(new_idx);
-                    if let Some(id) = self.own_id.get() {
-                        let label = self.tab_labels.get(new_idx).cloned().unwrap_or_default();
-                        ctx.post_message(id, messages::TabChanged { index: new_idx, label });
-                    }
-                }
-            }
-            _ => {}
+        let new_idx = match action {
+            "prev_tab" if current > 0 => current - 1,
+            "next_tab" if current + 1 < self.tab_labels.len() => current + 1,
+            _ => return,
+        };
+
+        // Start underline animation from old tab position to new tab position
+        let from_x = self.tab_x_offset(current);
+        let to_x = self.tab_x_offset(new_idx);
+        *self.underline_tween.borrow_mut() = Some(Tween::new(
+            from_x,
+            to_x,
+            Duration::from_millis(200),
+            ease_out_cubic,
+        ));
+
+        self.active.set(new_idx);
+        if let Some(id) = self.own_id.get() {
+            let label = self.tab_labels.get(new_idx).cloned().unwrap_or_default();
+            ctx.post_message(id, messages::TabChanged { index: new_idx, label });
         }
     }
 

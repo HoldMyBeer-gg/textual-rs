@@ -14,7 +14,7 @@ use crate::css::cascade::{apply_cascade_to_tree, Stylesheet};
 /// so user stylesheets always win. This replaces the per-widget default_css()
 /// static method which was never actually collected by the framework.
 const BUILTIN_CSS: &str = r#"
-Button { border: heavy; min-width: 16; height: 3; }
+Button { border: heavy; min-width: 16; height: 3; text-align: center; }
 Checkbox { height: 1; }
 Collapsible { min-height: 1; }
 DataTable { border: rounded; min-height: 5; }
@@ -655,6 +655,12 @@ impl App {
     /// Set the event sender on AppContext. Used by TestApp for headless testing.
     pub fn set_event_tx(&mut self, tx: flume::Sender<AppEvent>) {
         self.ctx.event_tx = Some(tx);
+    }
+
+    /// Enable or disable animation snapping. When true, animations snap to their
+    /// target value instead of interpolating. Used by TestApp for deterministic rendering.
+    pub fn set_skip_animations(&mut self, skip: bool) {
+        self.ctx.skip_animations = skip;
     }
 
     /// Mount the root screen. Calls the stored factory and pushes the screen onto the stack.

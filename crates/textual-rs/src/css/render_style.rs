@@ -316,6 +316,29 @@ pub fn paint_chrome(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
     draw_border(cs, area, buf)
 }
 
+/// Align text within a given width according to the text-align CSS property.
+///
+/// Returns a new string with leading spaces to achieve the desired alignment.
+/// For Left alignment, returns the text unchanged.
+pub fn align_text(text: &str, width: usize, align: super::types::TextAlign) -> String {
+    use super::types::TextAlign;
+    let text_width = text.chars().count();
+    if text_width >= width {
+        return text.to_string();
+    }
+    match align {
+        TextAlign::Left => text.to_string(),
+        TextAlign::Center => {
+            let pad = (width - text_width) / 2;
+            format!("{}{}", " ".repeat(pad), text)
+        }
+        TextAlign::Right => {
+            let pad = width - text_width;
+            format!("{}{}", " ".repeat(pad), text)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

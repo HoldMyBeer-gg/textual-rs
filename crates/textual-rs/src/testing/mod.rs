@@ -44,6 +44,8 @@ impl TestApp {
         let _ = any_spawner::Executor::init_tokio();
 
         let mut app = App::new_bare(factory);
+        // Skip animations in tests for deterministic rendering
+        app.set_skip_animations(true);
 
         let (tx, rx) = flume::unbounded::<AppEvent>();
         app.set_event_tx(tx.clone());
@@ -67,6 +69,7 @@ impl TestApp {
     ) -> Self {
         let _ = any_spawner::Executor::init_tokio();
         let mut app = App::new(factory).with_css(css);
+        app.set_skip_animations(true);
         let (tx, rx) = flume::unbounded::<AppEvent>();
         app.set_event_tx(tx.clone());
         let backend = TestBackend::new(cols, rows);
