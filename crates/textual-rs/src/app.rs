@@ -90,6 +90,8 @@ pub struct App {
     needs_full_sync: bool,
     /// Timestamp of last Ctrl+C press for double-tap quit detection.
     last_ctrl_c: Option<std::time::Instant>,
+    /// Current theme index in the builtin_themes list (for Ctrl+T cycling).
+    theme_index: usize,
 }
 
 impl App {
@@ -129,6 +131,7 @@ impl App {
             command_registry: crate::command::CommandRegistry::new(),
             needs_full_sync: false,
             last_ctrl_c: None,
+            theme_index: 0,
         }
     }
 
@@ -155,6 +158,7 @@ impl App {
             command_registry: crate::command::CommandRegistry::new(),
             needs_full_sync: false,
             last_ctrl_c: None,
+            theme_index: 0,
         }
     }
 
@@ -167,6 +171,20 @@ impl App {
         self.stylesheets.push(stylesheet.clone());
         self.ctx.stylesheets.push(stylesheet);
         self
+    }
+
+    /// Set the active theme, triggering a full re-cascade of all widget styles.
+    pub fn set_theme(&mut self, theme: crate::css::theme::Theme) {
+        self.ctx.set_theme(theme);
+        self.needs_full_sync = true;
+    }
+
+    /// Cycle to the next built-in theme (wraps around). Used by Ctrl+T.
+    fn cycle_theme(&mut self) {
+        let themes = crate::css::theme::builtin_themes();
+        self.theme_index = (self.theme_index + 1) % themes.len();
+        let theme = themes.into_iter().nth(self.theme_index).unwrap();
+        self.set_theme(theme);
     }
 
     /// Run the application. Blocks the calling thread until the user quits.
@@ -279,6 +297,15 @@ impl App {
                                 let commands = self.command_registry.discover_all(&self.ctx);
                                 let palette = crate::command::CommandPalette::new(commands);
                                 *self.ctx.active_overlay.borrow_mut() = Some(Box::new(palette));
+                                self.full_render_pass(&mut terminal)?;
+                                continue;
+                            }
+
+                            // 0b. Ctrl+T: cycle through built-in themes
+                            if k.code == KeyCode::Char('t')
+                                && k.modifiers.contains(KeyModifiers::CONTROL)
+                            {
+                                self.cycle_theme();
                                 self.full_render_pass(&mut terminal)?;
                                 continue;
                             }
@@ -456,11 +483,15 @@ impl App {
                                     }
                                 }
                                 MouseEventKind::ScrollDown
-                                | MouseEventKind::ScrollUp => {
-                                    let action = if m.kind == MouseEventKind::ScrollUp {
-                                        "scroll_up"
-                                    } else {
-                                        "scroll_down"
+                                | MouseEventKind::ScrollUp
+                                | MouseEventKind::ScrollLeft
+                                | MouseEventKind::ScrollRight => {
+                                    let action = match m.kind {
+                                        MouseEventKind::ScrollUp => "scroll_up",
+                                        MouseEventKind::ScrollDown => "scroll_down",
+                                        MouseEventKind::ScrollLeft => "scroll_left",
+                                        MouseEventKind::ScrollRight => "scroll_right",
+                                        _ => unreachable!(),
                                     };
                                     if let Some(ref hit_map) = self.hit_map {
                                         if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
@@ -682,6 +713,12 @@ impl App {
             return true;
         }
 
+        // 0b. Ctrl+T: cycle through built-in themes
+        if k.code == KeyCode::Char('t') && k.modifiers.contains(KeyModifiers::CONTROL) {
+            self.cycle_theme();
+            return true;
+        }
+
         // 1. Check focused widget's key bindings
         let mut handled = false;
         if let Some(focused_id) = self.ctx.focused_widget {
@@ -774,11 +811,14 @@ impl App {
                     }
                 }
             }
-            MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
-                let action = if m.kind == MouseEventKind::ScrollUp {
-                    "scroll_up"
-                } else {
-                    "scroll_down"
+            MouseEventKind::ScrollDown | MouseEventKind::ScrollUp
+            | MouseEventKind::ScrollLeft | MouseEventKind::ScrollRight => {
+                let action = match m.kind {
+                    MouseEventKind::ScrollUp => "scroll_up",
+                    MouseEventKind::ScrollDown => "scroll_down",
+                    MouseEventKind::ScrollLeft => "scroll_left",
+                    MouseEventKind::ScrollRight => "scroll_right",
+                    _ => unreachable!(),
                 };
                 if let Some(ref hit_map) = self.hit_map {
                     if let Some(target_id) = hit_map.hit_test(m.column, m.row) {

@@ -207,6 +207,173 @@ pub fn default_dark_theme() -> Theme {
     }
 }
 
+/// Returns the default light theme matching Python Textual's `textual-light` palette.
+pub fn default_light_theme() -> Theme {
+    let primary = (0, 120, 212);
+    let surface = (242, 242, 242);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "textual-light".to_string(),
+        primary,
+        secondary: (26, 95, 180),
+        accent: (214, 122, 0),
+        surface,
+        panel,
+        background: (255, 255, 255),
+        foreground: (36, 36, 36),
+        success: (22, 128, 57),
+        warning: (214, 122, 0),
+        error: (196, 43, 28),
+        dark: false,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Tokyo Night color scheme — a clean, dark theme inspired by Tokyo at night.
+pub fn tokyo_night_theme() -> Theme {
+    let bg = (26, 27, 38);
+    let primary = (122, 162, 247);
+    let surface = (36, 40, 59);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "tokyo-night".to_string(),
+        primary,
+        secondary: (125, 207, 255),
+        accent: (187, 154, 247),
+        surface,
+        panel,
+        background: bg,
+        foreground: (192, 202, 245),
+        success: (115, 218, 202),
+        warning: (224, 175, 104),
+        error: (247, 118, 142),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Nord color scheme — an arctic, north-bluish clean palette.
+pub fn nord_theme() -> Theme {
+    let bg = (46, 52, 64);
+    let primary = (136, 192, 208);
+    let surface = (59, 66, 82);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "nord".to_string(),
+        primary,
+        secondary: (129, 161, 193),
+        accent: (235, 203, 139),
+        surface,
+        panel,
+        background: bg,
+        foreground: (236, 239, 244),
+        success: (163, 190, 140),
+        warning: (235, 203, 139),
+        error: (191, 97, 106),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Gruvbox Dark color scheme — retro groove with warm earth tones.
+pub fn gruvbox_dark_theme() -> Theme {
+    let bg = (40, 40, 40);
+    let primary = (69, 133, 136);
+    let surface = (50, 48, 47);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "gruvbox".to_string(),
+        primary,
+        secondary: (131, 165, 152),
+        accent: (215, 153, 33),
+        surface,
+        panel,
+        background: bg,
+        foreground: (235, 219, 178),
+        success: (152, 151, 26),
+        warning: (215, 153, 33),
+        error: (204, 36, 29),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Dracula color scheme — a dark theme with vibrant colors.
+pub fn dracula_theme() -> Theme {
+    let bg = (40, 42, 54);
+    let primary = (189, 147, 249);
+    let surface = (68, 71, 90);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "dracula".to_string(),
+        primary,
+        secondary: (139, 233, 253),
+        accent: (255, 121, 198),
+        surface,
+        panel,
+        background: bg,
+        foreground: (248, 248, 242),
+        success: (80, 250, 123),
+        warning: (241, 250, 140),
+        error: (255, 85, 85),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Catppuccin Mocha color scheme — a soothing pastel theme for the high-spirited.
+pub fn catppuccin_mocha_theme() -> Theme {
+    let bg = (30, 30, 46);
+    let primary = (137, 180, 250);
+    let surface = (49, 50, 68);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "catppuccin".to_string(),
+        primary,
+        secondary: (116, 199, 236),
+        accent: (245, 194, 231),
+        surface,
+        panel,
+        background: bg,
+        foreground: (205, 214, 244),
+        success: (166, 227, 161),
+        warning: (249, 226, 175),
+        error: (243, 139, 168),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
+}
+
+/// Returns all built-in themes (dark, light, and named community themes).
+pub fn builtin_themes() -> Vec<Theme> {
+    vec![
+        default_dark_theme(),
+        default_light_theme(),
+        tokyo_night_theme(),
+        nord_theme(),
+        gruvbox_dark_theme(),
+        dracula_theme(),
+        catppuccin_mocha_theme(),
+    ]
+}
+
+/// Look up a built-in theme by name.
+pub fn theme_by_name(name: &str) -> Option<Theme> {
+    builtin_themes().into_iter().find(|t| t.name == name)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -468,5 +635,142 @@ mod tests {
 
         let named = TcssColor::Named("red");
         assert_eq!(lighten_color(named, 0.5), TcssColor::Named("red"));
+    }
+
+    // --- Light theme tests ---
+
+    #[test]
+    fn default_light_theme_colors() {
+        let theme = default_light_theme();
+        assert_eq!(theme.name, "textual-light");
+        assert_eq!(theme.primary, (0, 120, 212));
+        assert_eq!(theme.background, (255, 255, 255));
+        assert_eq!(theme.foreground, (36, 36, 36));
+        assert!(!theme.dark);
+    }
+
+    #[test]
+    fn light_theme_resolves_variables() {
+        let theme = default_light_theme();
+        assert_eq!(
+            theme.resolve("primary"),
+            Some(TcssColor::Rgb(0, 120, 212))
+        );
+        assert_eq!(
+            theme.resolve("background"),
+            Some(TcssColor::Rgb(255, 255, 255))
+        );
+        assert!(theme.resolve("primary-lighten-1").is_some());
+    }
+
+    // --- Named theme tests ---
+
+    #[test]
+    fn tokyo_night_theme_colors() {
+        let theme = tokyo_night_theme();
+        assert_eq!(theme.name, "tokyo-night");
+        assert_eq!(theme.background, (26, 27, 38));
+        assert_eq!(theme.primary, (122, 162, 247));
+        assert!(theme.dark);
+    }
+
+    #[test]
+    fn nord_theme_colors() {
+        let theme = nord_theme();
+        assert_eq!(theme.name, "nord");
+        assert_eq!(theme.background, (46, 52, 64));
+        assert_eq!(theme.primary, (136, 192, 208));
+        assert!(theme.dark);
+    }
+
+    #[test]
+    fn gruvbox_dark_theme_colors() {
+        let theme = gruvbox_dark_theme();
+        assert_eq!(theme.name, "gruvbox");
+        assert_eq!(theme.background, (40, 40, 40));
+        assert_eq!(theme.primary, (69, 133, 136));
+        assert!(theme.dark);
+    }
+
+    #[test]
+    fn dracula_theme_colors() {
+        let theme = dracula_theme();
+        assert_eq!(theme.name, "dracula");
+        assert_eq!(theme.background, (40, 42, 54));
+        assert_eq!(theme.primary, (189, 147, 249));
+        assert!(theme.dark);
+    }
+
+    #[test]
+    fn catppuccin_mocha_theme_colors() {
+        let theme = catppuccin_mocha_theme();
+        assert_eq!(theme.name, "catppuccin");
+        assert_eq!(theme.background, (30, 30, 46));
+        assert_eq!(theme.primary, (137, 180, 250));
+        assert!(theme.dark);
+    }
+
+    // --- builtin_themes and theme_by_name ---
+
+    #[test]
+    fn builtin_themes_count() {
+        let themes = builtin_themes();
+        assert_eq!(themes.len(), 7);
+    }
+
+    #[test]
+    fn builtin_themes_unique_names() {
+        let themes = builtin_themes();
+        let names: Vec<&str> = themes.iter().map(|t| t.name.as_str()).collect();
+        let mut unique = names.clone();
+        unique.sort();
+        unique.dedup();
+        assert_eq!(names.len(), unique.len(), "theme names must be unique");
+    }
+
+    #[test]
+    fn theme_by_name_found() {
+        assert!(theme_by_name("textual-dark").is_some());
+        assert!(theme_by_name("textual-light").is_some());
+        assert!(theme_by_name("tokyo-night").is_some());
+        assert!(theme_by_name("nord").is_some());
+        assert!(theme_by_name("gruvbox").is_some());
+        assert!(theme_by_name("dracula").is_some());
+        assert!(theme_by_name("catppuccin").is_some());
+    }
+
+    #[test]
+    fn theme_by_name_not_found() {
+        assert!(theme_by_name("nonexistent").is_none());
+    }
+
+    #[test]
+    fn all_themes_resolve_all_base_names() {
+        let base_names = [
+            "primary", "secondary", "accent", "surface", "panel",
+            "background", "foreground", "success", "warning", "error",
+        ];
+        for theme in builtin_themes() {
+            for name in &base_names {
+                assert!(
+                    theme.resolve(name).is_some(),
+                    "theme '{}' failed to resolve '{}'",
+                    theme.name,
+                    name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn all_themes_resolve_shades() {
+        for theme in builtin_themes() {
+            // Every theme should produce distinct lighten/darken shades
+            let base = theme.resolve("primary").unwrap();
+            let lighter = theme.resolve("primary-lighten-1").unwrap();
+            let darker = theme.resolve("primary-darken-1").unwrap();
+            assert_ne!(base, lighter, "theme '{}' lighten-1 == base", theme.name);
+            assert_ne!(base, darker, "theme '{}' darken-1 == base", theme.name);
+        }
     }
 }

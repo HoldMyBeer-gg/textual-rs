@@ -12,4 +12,4 @@ pub use property::parse_declaration_block;
 pub use parser::{parse_stylesheet, Rule};
 pub use cascade::{Stylesheet, resolve_cascade, apply_cascade_to_tree, stylesheet_from_css_strings};
 pub use render_style::{paint_chrome, text_style, to_ratatui_color};
-pub use theme::{Theme, default_dark_theme};
+pub use theme::{Theme, default_dark_theme, default_light_theme, builtin_themes, theme_by_name};
