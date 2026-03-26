@@ -4,18 +4,94 @@ use super::types::TcssColor;
 
 /// Convert RGB (0-255) to HSL (H: 0-360, S: 0.0-1.0, L: 0.0-1.0).
 fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
-    todo!()
+    let rf = r as f64 / 255.0;
+    let gf = g as f64 / 255.0;
+    let bf = b as f64 / 255.0;
+
+    let max = rf.max(gf).max(bf);
+    let min = rf.min(gf).min(bf);
+    let delta = max - min;
+
+    let l = (max + min) / 2.0;
+
+    if delta < 1e-10 {
+        return (0.0, 0.0, l);
+    }
+
+    let s = if l <= 0.5 {
+        delta / (max + min)
+    } else {
+        delta / (2.0 - max - min)
+    };
+
+    let h = if (max - rf).abs() < 1e-10 {
+        let mut h = (gf - bf) / delta;
+        if h < 0.0 {
+            h += 6.0;
+        }
+        h * 60.0
+    } else if (max - gf).abs() < 1e-10 {
+        ((bf - rf) / delta + 2.0) * 60.0
+    } else {
+        ((rf - gf) / delta + 4.0) * 60.0
+    };
+
+    (h, s, l)
 }
 
 /// Convert HSL (H: 0-360, S: 0.0-1.0, L: 0.0-1.0) back to RGB (0-255).
 fn hsl_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
-    todo!()
+    if s < 1e-10 {
+        let v = (l * 255.0).round() as u8;
+        return (v, v, v);
+    }
+
+    let q = if l < 0.5 {
+        l * (1.0 + s)
+    } else {
+        l + s - l * s
+    };
+    let p = 2.0 * l - q;
+    let h_norm = h / 360.0;
+
+    let hue_to_rgb = |t: f64| -> f64 {
+        let mut t = t;
+        if t < 0.0 {
+            t += 1.0;
+        }
+        if t > 1.0 {
+            t -= 1.0;
+        }
+        if t < 1.0 / 6.0 {
+            p + (q - p) * 6.0 * t
+        } else if t < 0.5 {
+            q
+        } else if t < 2.0 / 3.0 {
+            p + (q - p) * (2.0 / 3.0 - t) * 6.0
+        } else {
+            p
+        }
+    };
+
+    let r = (hue_to_rgb(h_norm + 1.0 / 3.0) * 255.0).round() as u8;
+    let g = (hue_to_rgb(h_norm) * 255.0).round() as u8;
+    let b = (hue_to_rgb(h_norm - 1.0 / 3.0) * 255.0).round() as u8;
+
+    (r, g, b)
 }
 
 /// Adjust the luminosity of a color by `delta` (positive = lighten, negative = darken).
 /// Only operates on `TcssColor::Rgb`; other variants are returned unchanged.
 pub fn lighten_color(color: TcssColor, delta: f64) -> TcssColor {
-    todo!()
+    match color {
+        TcssColor::Rgb(r, g, b) => {
+            let (h, s, l) = rgb_to_hsl(r, g, b);
+            let new_l = (l + delta).clamp(0.0, 1.0);
+            let (nr, ng, nb) = hsl_to_rgb(h, s, new_l);
+            TcssColor::Rgb(nr, ng, nb)
+        }
+        other => other,
+    }
 }
 
 /// A semantic theme with named color slots and shade generation.
@@ -49,13 +125,86 @@ impl Theme {
     /// (`"primary-lighten-2"`, `"accent-darken-1"`).
     /// Checks `variables` HashMap first for user overrides.
     pub fn resolve(&self, name: &str) -> Option<TcssColor> {
-        todo!()
+        // Check user overrides first
+        if let Some(color) = self.variables.get(name) {
+            return Some(*color);
+        }
+
+        // Try to parse shade suffix: "base-lighten-N" or "base-darken-N"
+        let (base_name, shade_delta) = if let Some(rest) = name.strip_suffix("-lighten-1") {
+            (rest, Some(1))
+        } else if let Some(rest) = name.strip_suffix("-lighten-2") {
+            (rest, Some(2))
+        } else if let Some(rest) = name.strip_suffix("-lighten-3") {
+            (rest, Some(3))
+        } else if let Some(rest) = name.strip_suffix("-darken-1") {
+            (rest, Some(-1))
+        } else if let Some(rest) = name.strip_suffix("-darken-2") {
+            (rest, Some(-2))
+        } else if let Some(rest) = name.strip_suffix("-darken-3") {
+            (rest, Some(-3))
+        } else {
+            (name, None)
+        };
+
+        // Look up the base color from struct fields
+        let base_rgb = match base_name {
+            "primary" => Some(self.primary),
+            "secondary" => Some(self.secondary),
+            "accent" => Some(self.accent),
+            "surface" => Some(self.surface),
+            "panel" => Some(self.panel),
+            "background" => Some(self.background),
+            "foreground" => Some(self.foreground),
+            "success" => Some(self.success),
+            "warning" => Some(self.warning),
+            "error" => Some(self.error),
+            _ => None,
+        }?;
+
+        let base_color = TcssColor::Rgb(base_rgb.0, base_rgb.1, base_rgb.2);
+
+        match shade_delta {
+            None => Some(base_color),
+            Some(n) => {
+                let step = self.luminosity_spread / 2.0;
+                let delta = n as f64 * step;
+                Some(lighten_color(base_color, delta))
+            }
+        }
     }
+}
+
+/// Blend two RGB colors: result = a * (1 - factor) + b * factor
+fn blend_rgb(a: (u8, u8, u8), b: (u8, u8, u8), factor: f64) -> (u8, u8, u8) {
+    let r = (a.0 as f64 * (1.0 - factor) + b.0 as f64 * factor).round() as u8;
+    let g = (a.1 as f64 * (1.0 - factor) + b.1 as f64 * factor).round() as u8;
+    let b_val = (a.2 as f64 * (1.0 - factor) + b.2 as f64 * factor).round() as u8;
+    (r, g, b_val)
 }
 
 /// Returns the default dark theme matching Python Textual's `textual-dark` palette.
 pub fn default_dark_theme() -> Theme {
-    todo!()
+    let primary = (1, 120, 212);
+    let surface = (30, 30, 30);
+    let panel = blend_rgb(surface, primary, 0.1);
+
+    Theme {
+        name: "textual-dark".to_string(),
+        primary,
+        secondary: (0, 69, 120),
+        accent: (255, 166, 43),
+        surface,
+        panel,
+        background: (18, 18, 18),
+        foreground: (224, 224, 224),
+        success: (78, 191, 113),
+        warning: (255, 166, 43),
+        error: (186, 60, 91),
+        dark: true,
+        luminosity_spread: 0.15,
+        variables: HashMap::new(),
+    }
 }
 
 #[cfg(test)]
