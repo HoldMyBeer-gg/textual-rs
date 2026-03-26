@@ -179,20 +179,22 @@ impl Widget for Log {
             buf.set_string(area.x, y, &line_text, style);
         }
 
-        // Draw vertical scrollbar in rightmost column
+        // Draw sub-cell vertical scrollbar in rightmost column
         if count > area.height as usize && area.width > 0 {
-            let max_offset = count - area.height as usize;
             let scroll_x = area.x + area.width - 1;
-            for row in 0..area.height {
-                let y = area.y + row;
-                let thumb_row = if max_offset > 0 {
-                    (offset as f32 / max_offset as f32 * (area.height - 1) as f32) as u16
-                } else {
-                    0
-                };
-                let ch = if row == thumb_row { "█" } else { "│" };
-                buf.set_string(scroll_x, y, ch, style);
-            }
+            let bar_color = ratatui::style::Color::Rgb(0, 255, 163); // accent green
+            let track_color = ratatui::style::Color::Rgb(30, 30, 40);
+            crate::canvas::vertical_scrollbar(
+                buf,
+                scroll_x,
+                area.y,
+                area.height,
+                count,
+                area.height as usize,
+                offset,
+                bar_color,
+                track_color,
+            );
         }
     }
 }

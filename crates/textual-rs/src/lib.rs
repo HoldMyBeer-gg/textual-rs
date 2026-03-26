@@ -29,6 +29,7 @@
 //! ```
 
 pub mod app;
+pub mod canvas;
 pub mod command;
 pub mod css;
 pub mod event;
