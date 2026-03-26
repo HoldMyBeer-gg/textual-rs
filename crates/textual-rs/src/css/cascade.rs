@@ -476,6 +476,20 @@ mod tests {
     }
 
     #[test]
+    fn resolve_cascade_border_with_variable_resolves_to_color() {
+        let (ctx, id) = setup_single_widget(btn());
+        let css = "Button { border: tall $primary; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        // border style should be Tall
+        assert_eq!(style.border, BorderStyle::Tall);
+        // color should be resolved from $primary (1, 120, 212)
+        assert_eq!(style.color, TcssColor::Rgb(1, 120, 212));
+    }
+
+    #[test]
     fn appcontext_has_default_dark_theme() {
         let ctx = AppContext::new();
         assert_eq!(ctx.theme.name, "textual-dark");
