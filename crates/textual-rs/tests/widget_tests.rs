@@ -5,7 +5,7 @@ use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::Widget;
-use textual_rs::{Button, Checkbox, Label, Switch, TextArea};
+use textual_rs::{Button, Checkbox, Label, Select, Switch, TextArea};
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
 
 // ---------------------------------------------------------------------------
@@ -469,4 +469,132 @@ async fn text_area_newline_splits_line() {
         "row 0 should not contain full 'abcd', got: {:?}",
         row0
     );
+}
+
+// ---------------------------------------------------------------------------
+// Select tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn select_renders_current_option() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let test_app = TestApp::new(20, 3, || Box::new(Select::new(options)));
+
+    // The rendered buffer should show "▼ Alpha" (the first option)
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    assert!(
+        row0.contains("Alpha"),
+        "Select should render '▼ Alpha' as current option, got: {:?}",
+        row0
+    );
+    assert!(
+        row0.contains('\u{25bc}'),
+        "Select should render '▼' prefix, got: {:?}",
+        row0
+    );
+}
+
+#[tokio::test]
+async fn select_open_pushes_overlay() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let mut test_app = TestApp::new(40, 10, || Box::new(Select::new(options)));
+
+    // Focus the Select
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+    assert!(test_app.ctx().focused_widget.is_some(), "Select should have focus");
+
+    // Press Enter to open — this should push to pending_screen_pushes
+    test_app.inject_key_event(KeyEvent {
+        code: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::NONE,
+    });
+
+    // Verify overlay was queued in pending_screen_pushes
+    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
+    assert_eq!(
+        overlay_count, 1,
+        "Opening Select should push 1 overlay to pending_screen_pushes, got: {}",
+        overlay_count
+    );
+
+    // Verify the overlay has correct widget_type_name
+    let overlay_name = test_app
+        .ctx()
+        .pending_screen_pushes
+        .borrow()
+        .first()
+        .map(|w| w.widget_type_name())
+        .unwrap_or("")
+        .to_string();
+    assert_eq!(
+        overlay_name, "SelectOverlay",
+        "Pushed overlay should be SelectOverlay, got: {:?}",
+        overlay_name
+    );
+}
+
+#[tokio::test]
+async fn select_choose_option_queues_overlay() {
+    // This test verifies the overlay push mechanism works end-to-end.
+    // We open the Select, verify overlay is queued with correct options,
+    // then check the overlay widget_type_name and can_focus.
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let mut test_app = TestApp::new(40, 10, move || Box::new(Select::new(options.clone())));
+
+    // Focus the Select
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Press Enter to open the overlay (inject without draining)
+    test_app.inject_key_event(KeyEvent {
+        code: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::NONE,
+    });
+
+    // Verify overlay is in pending_screen_pushes
+    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
+    assert_eq!(
+        overlay_count, 1,
+        "Opening Select should queue 1 overlay, got: {}",
+        overlay_count
+    );
+
+    // Verify the overlay is focusable and has correct type
+    let overlay_focusable = test_app
+        .ctx()
+        .pending_screen_pushes
+        .borrow()
+        .first()
+        .map(|w| w.can_focus())
+        .unwrap_or(false);
+    assert!(overlay_focusable, "SelectOverlay should be focusable");
+
+    // Clear the pending pushes
+    test_app.ctx().pending_screen_pushes.borrow_mut().clear();
+
+    // Select should still show Alpha on the current screen
+    test_app.drain_messages();
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    assert!(
+        row0.contains("Alpha"),
+        "Select should still show Alpha before overlay resolves, got: {:?}",
+        row0
+    );
+}
+
+#[tokio::test]
+async fn snapshot_select_initial() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let test_app = TestApp::new(20, 5, || Box::new(Select::new(options)));
+
+    assert_snapshot!(format!("{}", test_app.backend()));
 }
