@@ -33,6 +33,11 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 - [ ] Border styles, padding, margin (box model)
 - [ ] Color themes and dark/light mode support
 - [ ] Cross-platform: Windows 10+, macOS, Linux
+- [x] Derive macros (#[derive(Widget)], #[widget_impl]) — Validated in Phase 5: Developer Experience
+- [x] Worker API for background tasks — Validated in Phase 5: Developer Experience
+- [x] Command palette (Ctrl+P) — Validated in Phase 5: Developer Experience
+- [x] Demo apps and tutorial examples — Validated in Phase 5: Developer Experience
+- [x] Rustdoc on key public types — Validated in Phase 5: Developer Experience
 
 ### Out of Scope
 
@@ -92,6 +97,6 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 ## Current State
 
-Phase 4 (Built-in Widget Library) complete — all 22 v1 widgets implemented with keyboard interaction, snapshot tests, message emission, and scrolling. Input validation added via gap closure. 218 tests pass. Ready for Phase 5: Developer Experience and Polish.
+v1.0 milestone complete — all 5 phases done. Phase 5 added derive macros, Worker API, command palette, demo apps (widget showcase + IRC client), 5 tutorial examples, and rustdoc. 144+ tests pass across all crates. All examples compile and run.
 
-*Last updated: 2026-03-26 after Phase 4: Built-in Widget Library*
+*Last updated: 2026-03-26 after Phase 5: Developer Experience and Polish*
