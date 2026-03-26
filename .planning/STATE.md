@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to execute
-stopped_at: Completed 04-03-PLAN.md (TextArea and Select widgets)
-last_updated: "2026-03-26T00:50:32.161Z"
+stopped_at: Completed 04-08-PLAN.md (Input widget validation)
+last_updated: "2026-03-26T02:00:32.805Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 16
-  completed_plans: 11
+  total_plans: 18
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 04 (built-in-widget-library) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: 3 of 7
 | Phase 03-reactive-system-events-and-testing P03 | 5 | 2 tasks | 13 files |
 | Phase 04-built-in-widget-library P01 | 5 | 2 tasks | 14 files |
 | Phase 04-built-in-widget-library P03 | 8 | 2 tasks | 8 files |
+| Phase 04-built-in-widget-library P08 | 10 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 04-built-in-widget-library]: pending_screen_pushes RefCell on AppContext with push_screen_deferred() — deferred screen push from on_action(&self) for Select widget overlay pattern
 - [Phase 04-built-in-widget-library]: TextArea tests verify state via rendered buffer rows — message queue is drained by process_event before assertions
 - [Phase 04-built-in-widget-library]: pending_screen_pops: Cell<usize> and pop_screen_deferred() added to AppContext for Select overlay dismissal
+- [Phase 04-built-in-widget-library]: Cell<bool> for valid state in Input — consistent with Cell<usize> cursor pattern, avoids &mut in event handlers
+- [Phase 04-built-in-widget-library]: run_validation() called inside emit_changed() — single call site keeps validity fresh before message emission
+- [Phase 04-built-in-widget-library]: Input validation tests use inject_key_event() not pilot.type_text() — type_text drains queue via settle(), leaving nothing to inspect
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T00:50:32.157Z
-Stopped at: Completed 04-03-PLAN.md (TextArea and Select widgets)
+Last session: 2026-03-26T02:00:32.801Z
+Stopped at: Completed 04-08-PLAN.md (Input widget validation)
 Resume file: None
