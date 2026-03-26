@@ -315,11 +315,14 @@ fn render_pane_tree(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &mut
                 // Give fixed-height widgets their natural height
                 let h = match name {
                     "Button" => 3u16,
-                    "Input" => 3,
-                    "Label" | "Checkbox" | "Switch" | "ProgressBar" | "Sparkline" => 1,
-                    "RadioSet" | "RadioButton" => 3,
+                    "Input" | "Select" => 3,
+                    "Label" | "Checkbox" | "Switch" | "ProgressBar" | "Sparkline" | "RadioButton" => 1,
                     "Collapsible" => 2,
-                    _ => 1,
+                    _ => {
+                        // For containers, count composed children
+                        let child_count = child.compose().len() as u16;
+                        if child_count > 0 { child_count } else { 1 }
+                    }
                 };
                 heights.push(h);
                 used_height += h;

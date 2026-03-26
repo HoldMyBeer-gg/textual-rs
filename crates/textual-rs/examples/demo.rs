@@ -49,7 +49,7 @@ impl Widget for InputsPane {
             Box::new(Label::new("Form Controls")),
             Box::new(Input::new("Type something...")),
             Box::new(Input::new("email@example.com").with_validator(|v| v.contains('@'))),
-            Box::new(Checkbox::new("Enable notifications", true)),
+            Box::new(Checkbox::new("Enable notifications", false)),
             Box::new(Switch::new(false)),
             Box::new(RadioSet::new(vec![
                 "Option A".to_string(),
