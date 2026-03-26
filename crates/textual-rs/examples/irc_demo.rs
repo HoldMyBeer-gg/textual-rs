@@ -69,6 +69,9 @@ impl Widget for ChatLog {
         log.push_line("[12:10] <alice>  textual-rs: declare widgets, style with CSS, react to events".to_string());
         log.push_line("[12:11] <frank>  the 22-widget library is impressive. data table, sparkline, tree...".to_string());
         log.push_line("[12:12] <grace>  reactive state with signals too! this is Textual quality for Rust".to_string());
+        log.push_line("[12:13] <alice>  let's do a demo recording this weekend".to_string());
+        log.push_line("[12:14] <bob>    i'll prep the irc demo. it already looks great".to_string());
+        log.push_line("[12:15] <carol>  the half-block borders really make a difference".to_string());
         vec![Box::new(log)]
     }
 
