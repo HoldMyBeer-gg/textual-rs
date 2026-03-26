@@ -33,6 +33,12 @@ pub enum BorderStyle {
     Heavy,
     Double,
     Ascii,
+    /// Half-block border (▀▄▐▌) — thin frames using half-block characters.
+    Tall,
+    /// McGugan Box — 1/8-cell-thick borders with independent inside/outside colors.
+    /// Uses one-eighth block characters (▁▔▎) for the thinnest possible border lines.
+    /// The signature Textual rendering technique.
+    McguganBox,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

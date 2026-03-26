@@ -62,7 +62,7 @@ impl Widget for Select {
     where
         Self: Sized,
     {
-        "Select { border: tall; height: 3; }"
+        "Select { border: inner; height: 3; }"
     }
 
     fn on_mount(&self, id: WidgetId) {
@@ -77,6 +77,10 @@ impl Widget for Select {
         SELECT_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("open")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "open" {
             let current = self.selected.get_untracked();
@@ -85,9 +89,18 @@ impl Widget for Select {
                 current,
                 cursor: Cell::new(current),
                 source_id: self.own_id.get(),
+                last_area_y: Cell::new(0),
             };
             ctx.push_screen_deferred(Box::new(overlay));
         }
+    }
+
+    fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> super::EventPropagation {
+        if let Some(changed) = event.downcast_ref::<messages::Changed>() {
+            self.selected.set(changed.index);
+            return super::EventPropagation::Stop;
+        }
+        super::EventPropagation::Continue
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
@@ -120,6 +133,8 @@ struct SelectOverlay {
     cursor: Cell<usize>,
     /// The WidgetId of the originating Select widget (to post Changed back).
     source_id: Option<WidgetId>,
+    /// Last rendered area origin for mouse hit-testing.
+    last_area_y: Cell<u16>,
 }
 
 static OVERLAY_BINDINGS: &[KeyBinding] = &[
@@ -164,6 +179,22 @@ impl Widget for SelectOverlay {
 
     fn key_bindings(&self) -> &[KeyBinding] {
         OVERLAY_BINDINGS
+    }
+
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
+        use crossterm::event::{MouseEvent, MouseEventKind};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(_)) {
+                // Convert absolute screen row to option index
+                let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
+                if local_row < self.options.len() {
+                    self.cursor.set(local_row);
+                    self.on_action("select", ctx);
+                    return super::EventPropagation::Stop;
+                }
+            }
+        }
+        super::EventPropagation::Continue
     }
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
@@ -221,6 +252,7 @@ impl Widget for SelectOverlay {
         if area.height == 0 || area.width == 0 {
             return;
         }
+        self.last_area_y.set(area.y);
 
         let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
 
@@ -230,16 +262,19 @@ impl Widget for SelectOverlay {
             if y >= area.y + area.height {
                 break;
             }
-            let display: String = option.chars().take(area.width as usize).collect();
-            let style = if i == cursor {
-                base_style.add_modifier(Modifier::REVERSED)
-            } else {
-                base_style
-            };
-            // Clear the row first
+            // Clear the row
             let blank: String = " ".repeat(area.width as usize);
             buf.set_string(area.x, y, &blank, base_style);
-            buf.set_string(area.x, y, &display, style);
+
+            let display: String = option.chars().take(area.width as usize).collect();
+            if i == cursor {
+                let hl_style = base_style
+                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                    .add_modifier(Modifier::BOLD);
+                buf.set_string(area.x, y, &display, hl_style);
+            } else {
+                buf.set_string(area.x, y, &display, base_style);
+            }
         }
     }
 }

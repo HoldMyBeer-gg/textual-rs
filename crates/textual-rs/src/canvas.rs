@@ -242,6 +242,160 @@ pub fn vertical_scrollbar(
     }
 }
 
+// ---------------------------------------------------------------------------
+// McGugan Box characters — 1/8-thick borders with independent inside/outside colors
+// ---------------------------------------------------------------------------
+
+/// Lower one-eighth block — thin bottom border line.
+pub const LOWER_ONE_EIGHTH: &str = "\u{2581}";
+/// Upper one-eighth block — thin top border line.
+pub const UPPER_ONE_EIGHTH: &str = "\u{2594}";
+/// Left one-quarter block — thin left border line.
+pub const LEFT_ONE_QUARTER: &str = "\u{258E}";
+/// Right one-quarter block — thin right border line (Unicode 13 Legacy Computing).
+pub const RIGHT_ONE_QUARTER: &str = "\u{1FB87}";
+
+/// Draw a McGugan Box — a 1/8-cell-thick border with independent inside and outside colors.
+///
+/// This is the signature Textual rendering technique. The border is drawn using
+/// one-eighth block characters with carefully assigned fg/bg colors so the border,
+/// inside, and outside all have distinct colors in a single character cell.
+///
+/// Returns the inner content area.
+pub fn mcgugan_box(
+    buf: &mut Buffer,
+    x: u16,
+    y: u16,
+    width: u16,
+    height: u16,
+    border_color: Color,
+    inside_color: Color,
+    outside_color: Color,
+) -> (u16, u16, u16, u16) {
+    if width < 2 || height < 2 {
+        return (x, y, width, height);
+    }
+
+    let x2 = x + width - 1;
+    let y2 = y + height - 1;
+
+    // Top edge: LOWER_ONE_EIGHTH with fg=border, bg=outside
+    // The thin line appears at the bottom of the cell (the actual border line),
+    // the rest of the cell shows the outside color as bg.
+    let top_style = Style::default().fg(border_color).bg(outside_color);
+    for cx in x..=x2 {
+        buf.set_string(cx, y, LOWER_ONE_EIGHTH, top_style);
+    }
+
+    // Bottom edge: UPPER_ONE_EIGHTH with fg=border, bg=outside
+    let bottom_style = Style::default().fg(border_color).bg(outside_color);
+    for cx in x..=x2 {
+        buf.set_string(cx, y2, UPPER_ONE_EIGHTH, bottom_style);
+    }
+
+    // Left edge (inner rows): LEFT_ONE_QUARTER with fg=border, bg=inside
+    let left_style = Style::default().fg(border_color).bg(inside_color);
+    for cy in (y + 1)..y2 {
+        buf.set_string(x, cy, LEFT_ONE_QUARTER, left_style);
+    }
+
+    // Right edge (inner rows): RIGHT_ONE_QUARTER with fg=border, bg=inside
+    let right_style = Style::default().fg(border_color).bg(inside_color);
+    for cy in (y + 1)..y2 {
+        buf.set_string(x2, cy, RIGHT_ONE_QUARTER, right_style);
+    }
+
+    // Inner content area (shrunk by 1 on each side)
+    (x + 1, y + 1, width.saturating_sub(2), height.saturating_sub(2))
+}
+
+// ---------------------------------------------------------------------------
+// Quadrant characters — 2x2 sub-cell resolution (4 pixels per cell)
+// ---------------------------------------------------------------------------
+
+/// Quadrant block characters indexed by bitmask.
+/// Bit 0 = top-left, bit 1 = top-right, bit 2 = bottom-left, bit 3 = bottom-right.
+pub const QUADRANT_CHARS: [&str; 16] = [
+    " ",         // 0b0000
+    "\u{2598}",  // 0b0001 ▘ top-left
+    "\u{259D}",  // 0b0010 ▝ top-right
+    "\u{2580}",  // 0b0011 ▀ upper half
+    "\u{2596}",  // 0b0100 ▖ bottom-left
+    "\u{258C}",  // 0b0101 ▌ left half
+    "\u{259E}",  // 0b0110 ▞ diagonal
+    "\u{259B}",  // 0b0111 ▛ top-left + top-right + bottom-left
+    "\u{2597}",  // 0b1000 ▗ bottom-right
+    "\u{259A}",  // 0b1001 ▚ anti-diagonal
+    "\u{2590}",  // 0b1010 ▐ right half
+    "\u{259C}",  // 0b1011 ▜ top-left + top-right + bottom-right
+    "\u{2584}",  // 0b1100 ▄ lower half
+    "\u{2599}",  // 0b1101 ▙ top-left + bottom-left + bottom-right
+    "\u{259F}",  // 0b1110 ▟ top-right + bottom-left + bottom-right
+    "\u{2588}",  // 0b1111 █ full block
+];
+
+/// Set a single quadrant cell. `mask` is a 4-bit value where:
+/// bit 0 = top-left, bit 1 = top-right, bit 2 = bottom-left, bit 3 = bottom-right.
+/// `fg` is the filled quadrant color, `bg` is the empty quadrant color.
+pub fn quadrant_cell(buf: &mut Buffer, x: u16, y: u16, mask: u8, fg: Color, bg: Color) {
+    let idx = (mask & 0x0F) as usize;
+    if let Some(cell) = buf.cell_mut((x, y)) {
+        cell.set_symbol(QUADRANT_CHARS[idx]);
+        cell.set_fg(fg);
+        cell.set_bg(bg);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Braille characters — 2x4 sub-cell resolution (8 dots per cell)
+// ---------------------------------------------------------------------------
+
+/// Braille base character (empty pattern).
+pub const BRAILLE_BASE: u32 = 0x2800;
+
+/// Braille dot offsets. Each dot position maps to a bit in the Unicode Braille range.
+/// Layout:  (0)(1)    Bit positions:
+///          (2)(3)    0=0x01, 1=0x08
+///          (4)(5)    2=0x02, 3=0x10
+///          (6)(7)    4=0x04, 5=0x20
+///                    6=0x40, 7=0x80
+pub const BRAILLE_DOT_BITS: [u32; 8] = [
+    0x01, // dot 0: top-left
+    0x08, // dot 1: top-right
+    0x02, // dot 2: mid-upper-left
+    0x10, // dot 3: mid-upper-right
+    0x04, // dot 4: mid-lower-left
+    0x20, // dot 5: mid-lower-right
+    0x40, // dot 6: bottom-left
+    0x80, // dot 7: bottom-right
+];
+
+/// Set a Braille cell from an 8-bit dot pattern.
+/// Each bit corresponds to a dot position (see BRAILLE_DOT_BITS layout).
+/// `fg` is the dot color, `bg` is the background.
+pub fn braille_cell(buf: &mut Buffer, x: u16, y: u16, dots: u8, fg: Color, bg: Color) {
+    let mut codepoint = BRAILLE_BASE;
+    for i in 0..8 {
+        if dots & (1 << i) != 0 {
+            codepoint |= BRAILLE_DOT_BITS[i];
+        }
+    }
+    if let Some(ch) = char::from_u32(codepoint) {
+        let s: String = ch.to_string();
+        let style = Style::default().fg(fg).bg(bg);
+        buf.set_string(x, y, &s, style);
+    }
+}
+
+/// Set a single dot in a Braille cell at sub-cell position (dx, dy).
+/// dx: 0-1 (left, right), dy: 0-3 (top to bottom).
+/// Returns the dot index (0-7) for use with braille_cell.
+pub fn braille_dot_index(dx: u8, dy: u8) -> u8 {
+    let col = (dx & 1) as usize;
+    let row = (dy.min(3)) as usize;
+    (row * 2 + col) as u8
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,5 +455,90 @@ mod tests {
         assert_eq!(buf[(0, 0)].symbol(), "▀");
         assert_eq!(buf[(0, 0)].fg, Color::Red);
         assert_eq!(buf[(0, 0)].bg, Color::Blue);
+    }
+
+    #[test]
+    fn mcgugan_box_renders_eighth_blocks() {
+        let area = Rect::new(0, 0, 6, 4);
+        let mut buf = Buffer::empty(area);
+        let border = Color::Rgb(255, 255, 255);
+        let inside = Color::Rgb(30, 30, 30);
+        let outside = Color::Rgb(0, 0, 0);
+
+        let (ix, iy, iw, ih) = mcgugan_box(&mut buf, 0, 0, 6, 4, border, inside, outside);
+        assert_eq!((ix, iy, iw, ih), (1, 1, 4, 2));
+
+        // Top edge: lower one-eighth block
+        assert_eq!(buf.cell((0, 0)).unwrap().symbol(), LOWER_ONE_EIGHTH);
+        assert_eq!(buf.cell((5, 0)).unwrap().symbol(), LOWER_ONE_EIGHTH);
+
+        // Bottom edge: upper one-eighth block
+        assert_eq!(buf.cell((0, 3)).unwrap().symbol(), UPPER_ONE_EIGHTH);
+
+        // Left edge: left one-quarter block
+        assert_eq!(buf.cell((0, 1)).unwrap().symbol(), LEFT_ONE_QUARTER);
+        assert_eq!(buf.cell((0, 2)).unwrap().symbol(), LEFT_ONE_QUARTER);
+
+        // Right edge: right one-quarter block
+        assert_eq!(buf.cell((5, 1)).unwrap().symbol(), RIGHT_ONE_QUARTER);
+    }
+
+    #[test]
+    fn mcgugan_box_colors_independent() {
+        let area = Rect::new(0, 0, 4, 3);
+        let mut buf = Buffer::empty(area);
+        let border = Color::Rgb(255, 0, 0);
+        let inside = Color::Rgb(0, 255, 0);
+        let outside = Color::Rgb(0, 0, 255);
+
+        mcgugan_box(&mut buf, 0, 0, 4, 3, border, inside, outside);
+
+        // Top edge: fg=border, bg=outside
+        let top = buf.cell((1, 0)).unwrap();
+        assert_eq!(top.fg, border);
+        assert_eq!(top.bg, outside);
+
+        // Left edge: fg=border, bg=inside
+        let left = buf.cell((0, 1)).unwrap();
+        assert_eq!(left.fg, border);
+        assert_eq!(left.bg, inside);
+    }
+
+    #[test]
+    fn quadrant_cell_renders_correct_chars() {
+        let area = Rect::new(0, 0, 2, 1);
+        let mut buf = Buffer::empty(area);
+
+        // Top-left only = ▘
+        quadrant_cell(&mut buf, 0, 0, 0b0001, Color::White, Color::Black);
+        assert_eq!(buf.cell((0, 0)).unwrap().symbol(), "\u{2598}");
+
+        // Full block = █
+        quadrant_cell(&mut buf, 1, 0, 0b1111, Color::White, Color::Black);
+        assert_eq!(buf.cell((1, 0)).unwrap().symbol(), "\u{2588}");
+    }
+
+    #[test]
+    fn braille_empty_and_full() {
+        let area = Rect::new(0, 0, 2, 1);
+        let mut buf = Buffer::empty(area);
+
+        // Empty braille
+        braille_cell(&mut buf, 0, 0, 0, Color::White, Color::Black);
+        assert_eq!(buf.cell((0, 0)).unwrap().symbol(), "\u{2800}"); // ⠀
+
+        // All 8 dots
+        braille_cell(&mut buf, 1, 0, 0xFF, Color::White, Color::Black);
+        assert_eq!(buf.cell((1, 0)).unwrap().symbol(), "\u{28FF}"); // ⣿
+    }
+
+    #[test]
+    fn braille_dot_index_layout() {
+        // top-left = 0, top-right = 1
+        assert_eq!(braille_dot_index(0, 0), 0);
+        assert_eq!(braille_dot_index(1, 0), 1);
+        // bottom-left = 6, bottom-right = 7
+        assert_eq!(braille_dot_index(0, 3), 6);
+        assert_eq!(braille_dot_index(1, 3), 7);
     }
 }

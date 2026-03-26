@@ -27,31 +27,60 @@ impl Widget for Footer {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::style::{Color, Modifier};
+
         if area.height == 0 || area.width == 0 {
             return;
         }
 
-        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        // Key badge: accent bg with dark text
+        let key_style = base_style
+            .fg(Color::Rgb(15, 15, 25))
+            .bg(Color::Rgb(0, 212, 255))
+            .add_modifier(Modifier::BOLD);
+        // Description: muted text
+        let desc_style = base_style.fg(Color::Rgb(120, 120, 140));
 
-        // Collect focused widget's visible key bindings
-        let mut parts: Vec<String> = Vec::new();
+        // Collect key bindings as (key, description) pairs
+        let mut bindings: Vec<(String, String)> = Vec::new();
         if let Some(focused_id) = ctx.focused_widget {
             if let Some(widget) = ctx.arena.get(focused_id) {
                 for kb in widget.key_bindings().iter().filter(|kb| kb.show) {
-                    let key_str = format_key_code(&kb.key);
-                    parts.push(format!(" {} {} ", key_str, kb.description));
+                    bindings.push((format_key_code(&kb.key), kb.description.to_string()));
                 }
             }
         }
+        bindings.push(("Tab".to_string(), "Focus".to_string()));
+        bindings.push(("Ctrl+P".to_string(), "Palette".to_string()));
+        bindings.push(("q".to_string(), "Quit".to_string()));
 
-        // Always show global hints
-        parts.push(" Tab Focus ".to_string());
-        parts.push(" Ctrl+P Palette ".to_string());
-        parts.push(" q Quit ".to_string());
+        // Render each binding as: [key badge] description  [key badge] description ...
+        let mut x = area.x + 1;
+        for (key, desc) in &bindings {
+            if x >= area.x + area.width {
+                break;
+            }
+            // Key badge
+            let key_text = format!(" {} ", key);
+            let key_len = key_text.chars().count() as u16;
+            if x + key_len >= area.x + area.width {
+                break;
+            }
+            buf.set_string(x, area.y, &key_text, key_style);
+            x += key_len;
 
-        let text = parts.join(" ");
-        let display: String = text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, style);
+            // Description
+            let desc_text = format!(" {} ", desc);
+            let desc_len = desc_text.chars().count() as u16;
+            let remaining = (area.x + area.width).saturating_sub(x);
+            let display: String = desc_text.chars().take(remaining as usize).collect();
+            buf.set_string(x, area.y, &display, desc_style);
+            x += display.chars().count() as u16;
+
+            // Separator space
+            x += 1;
+        }
     }
 }
 

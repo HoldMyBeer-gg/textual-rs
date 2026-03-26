@@ -80,7 +80,7 @@ impl Widget for Button {
     where
         Self: Sized,
     {
-        "Button { border: tall; min-width: 16; height: 3; text-align: center; }"
+        "Button { border: inner; min-width: 16; height: 3; }"
     }
 
     fn on_mount(&self, id: WidgetId) {
@@ -95,6 +95,10 @@ impl Widget for Button {
         BUTTON_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("press")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "press" {
             if let Some(id) = self.own_id.get() {
@@ -104,9 +108,16 @@ impl Widget for Button {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::style::Modifier;
+
         if area.height == 0 || area.width == 0 {
             return;
         }
+        let base_style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+
+        // Centered label, bold
         let label_len = self.label.chars().count() as u16;
         let x = if area.width > label_len {
             area.x + (area.width - label_len) / 2
@@ -119,9 +130,7 @@ impl Widget for Button {
             area.y
         };
         let display: String = self.label.chars().take(area.width as usize).collect();
-        let style = self.own_id.get()
-            .map(|id| ctx.text_style(id))
-            .unwrap_or_default();
-        buf.set_string(x, y, &display, style);
+        let label_style = base_style.add_modifier(Modifier::BOLD);
+        buf.set_string(x, y, &display, label_style);
     }
 }

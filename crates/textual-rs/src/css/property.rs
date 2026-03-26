@@ -164,6 +164,8 @@ fn parse_property_value<'i>(
                 "heavy" => BorderStyle::Heavy,
                 "double" => BorderStyle::Double,
                 "ascii" => BorderStyle::Ascii,
+                "tall" => BorderStyle::Tall,
+                "inner" | "mcgugan" => BorderStyle::McguganBox,
                 other => {
                     return Err(location.new_custom_error(PropertyParseError::InvalidValue(
                         format!("unknown border style: {}", other),

@@ -112,12 +112,24 @@ fn border_chars(style: &BorderStyle) -> Option<BorderChars> {
             horizontal: "-",
             vertical: "|",
         }),
+        BorderStyle::Tall => None, // Tall uses custom rendering in draw_tall_border
+        BorderStyle::McguganBox => None, // McGugan uses custom rendering
     }
 }
 
 /// Draw a border around the area using the ComputedStyle's border and color settings.
 /// Returns the inner content area (shrunk by 1 on each bordered side).
 pub fn draw_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
+    // Tall border uses half-block characters for a thin, elegant frame
+    if cs.border == BorderStyle::Tall {
+        return draw_tall_border(cs, area, buf);
+    }
+
+    // McGugan Box uses 1/8-thick borders with independent inside/outside colors
+    if cs.border == BorderStyle::McguganBox {
+        return draw_mcgugan_border(cs, area, buf);
+    }
+
     let chars = match border_chars(&cs.border) {
         Some(c) => c,
         None => return area,
@@ -190,8 +202,168 @@ pub fn draw_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
     }
 }
 
+/// Draw a tall border using half-block characters (▀▄▐▌) — the signature Textual look.
+/// Top edge uses ▀ (upper half), bottom uses ▄ (lower half), left uses ▐, right uses ▌.
+/// This creates thin, elegant frames that feel web-like rather than DOS-like.
+fn draw_tall_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
+    if area.width < 2 || area.height < 2 {
+        return area;
+    }
+
+    // Border color from foreground; background blends behind the half-blocks
+    let fg = to_ratatui_color(&cs.color).unwrap_or(Color::White);
+    let bg = to_ratatui_color(&cs.background).unwrap_or(Color::Reset);
+
+    let x1 = area.x;
+    let y1 = area.y;
+    let x2 = area.x + area.width - 1;
+    let y2 = area.y + area.height - 1;
+
+    // Top edge: ▀ with fg=border_color, bg=content_bg
+    let top_style = Style::default().fg(fg).bg(bg);
+    for x in x1..=x2 {
+        buf.set_string(x, y1, "▀", top_style);
+    }
+
+    // Bottom edge: ▄ with fg=border_color, bg=content_bg (below content)
+    let bottom_style = Style::default().fg(fg).bg(bg);
+    for x in x1..=x2 {
+        buf.set_string(x, y2, "▄", bottom_style);
+    }
+
+    // Left edge: ▐ with fg=border_color, bg=content_bg
+    let left_style = Style::default().fg(fg).bg(bg);
+    for y in (y1 + 1)..y2 {
+        buf.set_string(x1, y, "▐", left_style);
+    }
+
+    // Right edge: ▌ with fg=border_color, bg=content_bg
+    let right_style = Style::default().fg(fg).bg(bg);
+    for y in (y1 + 1)..y2 {
+        buf.set_string(x2, y, "▌", right_style);
+    }
+
+    // Border title on top edge
+    if let Some(ref title) = cs.border_title {
+        let max_len = (area.width as usize).saturating_sub(4);
+        let display: String = title.chars().take(max_len).collect();
+        if !display.is_empty() {
+            let title_style = Style::default().fg(fg).bg(bg)
+                .add_modifier(ratatui::style::Modifier::BOLD);
+            buf.set_string(x1 + 2, y1, &format!(" {} ", display), title_style);
+        }
+    }
+
+    // Inner content area
+    Rect {
+        x: x1 + 1,
+        y: y1 + 1,
+        width: area.width.saturating_sub(2),
+        height: area.height.saturating_sub(2),
+    }
+}
+
+/// Draw a McGugan Box — 1/8-cell-thick borders using one-eighth block characters.
+/// This is the signature Textual rendering technique with independent inside/outside colors.
+fn draw_mcgugan_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
+    if area.width < 2 || area.height < 2 {
+        return area;
+    }
+
+    let border_color = to_ratatui_color(&cs.color).unwrap_or(Color::White);
+    let inside_color = to_ratatui_color(&cs.background).unwrap_or(Color::Reset);
+    // Outside color: use the parent's background. Since we don't have parent context here,
+    // use Reset (transparent) which lets the parent's fill show through.
+    let outside_color = Color::Reset;
+
+    let (ix, iy, iw, ih) = crate::canvas::mcgugan_box(
+        buf,
+        area.x, area.y,
+        area.width, area.height,
+        border_color, inside_color, outside_color,
+    );
+
+    // Fill inside with background color
+    if let Some(bg) = to_ratatui_color(&cs.background) {
+        for cy in iy..iy + ih {
+            for cx in ix..ix + iw {
+                if let Some(cell) = buf.cell_mut((cx, cy)) {
+                    cell.set_bg(bg);
+                }
+            }
+        }
+    }
+
+    // Border title on top edge
+    if let Some(ref title) = cs.border_title {
+        let max_len = (area.width as usize).saturating_sub(4);
+        let display: String = title.chars().take(max_len).collect();
+        if !display.is_empty() {
+            let title_style = Style::default()
+                .fg(border_color)
+                .bg(outside_color)
+                .add_modifier(ratatui::style::Modifier::BOLD);
+            buf.set_string(area.x + 2, area.y, &format!(" {} ", display), title_style);
+        }
+    }
+
+    Rect { x: ix, y: iy, width: iw, height: ih }
+}
+
 /// Paint background and borders for a widget. Returns the content area for the widget to render into.
 pub fn paint_chrome(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
     fill_background(cs, area, buf);
     draw_border(cs, area, buf)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::buffer::Buffer;
+    use ratatui::layout::Rect;
+
+    #[test]
+    fn tall_border_renders_half_blocks() {
+        let area = Rect::new(0, 0, 6, 4);
+        let mut buf = Buffer::empty(area);
+        let mut cs = ComputedStyle::default();
+        cs.border = BorderStyle::Tall;
+        cs.color = TcssColor::Rgb(255, 255, 255);
+
+        let inner = draw_border(&cs, area, &mut buf);
+
+        // Inner area should be shrunk by 1 on each side
+        assert_eq!(inner, Rect::new(1, 1, 4, 2));
+
+        // Top edge: all ▀
+        for x in 0..6 {
+            let cell = buf.cell((x, 0)).unwrap();
+            assert_eq!(cell.symbol(), "▀", "top edge at x={}", x);
+        }
+
+        // Bottom edge: all ▄
+        for x in 0..6 {
+            let cell = buf.cell((x, 3)).unwrap();
+            assert_eq!(cell.symbol(), "▄", "bottom edge at x={}", x);
+        }
+
+        // Left edge (inner rows): ▐
+        assert_eq!(buf.cell((0, 1)).unwrap().symbol(), "▐");
+        assert_eq!(buf.cell((0, 2)).unwrap().symbol(), "▐");
+
+        // Right edge (inner rows): ▌
+        assert_eq!(buf.cell((5, 1)).unwrap().symbol(), "▌");
+        assert_eq!(buf.cell((5, 2)).unwrap().symbol(), "▌");
+    }
+
+    #[test]
+    fn tall_border_too_small_returns_full_area() {
+        let area = Rect::new(0, 0, 1, 1);
+        let mut buf = Buffer::empty(Rect::new(0, 0, 2, 2));
+        let mut cs = ComputedStyle::default();
+        cs.border = BorderStyle::Tall;
+
+        let inner = draw_border(&cs, area, &mut buf);
+        assert_eq!(inner, area); // too small, returns unchanged
+    }
 }

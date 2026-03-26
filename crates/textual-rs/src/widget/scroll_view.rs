@@ -223,37 +223,50 @@ impl Widget for ScrollView {
             }
         }
 
-        // Draw vertical scrollbar
+        // Draw vertical scrollbar using canvas eighth-block rendering
         if need_vscroll && area.width > 0 {
-            let sb_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
-            let max_offset = self.content_height.saturating_sub(area.height as usize);
             let scroll_x = area.x + area.width - 1;
-            for row in 0..area.height {
-                let y = area.y + row;
-                let thumb_row = if max_offset > 0 {
-                    (offset_y as f32 / max_offset as f32 * (area.height - 1) as f32) as u16
-                } else {
-                    0
-                };
-                let ch = if row == thumb_row { "█" } else { "│" };
-                buf.set_string(scroll_x, y, ch, sb_style);
-            }
+            let bar_color = ratatui::style::Color::Rgb(0, 255, 163);
+            let track_color = ratatui::style::Color::Rgb(30, 30, 40);
+            crate::canvas::vertical_scrollbar(
+                buf,
+                scroll_x,
+                area.y,
+                area.height,
+                self.content_height,
+                area.height as usize,
+                offset_y,
+                bar_color,
+                track_color,
+            );
         }
 
         // Draw horizontal scrollbar
+        // TODO: add canvas::horizontal_scrollbar for eighth-block horizontal thumb
         if need_hscroll && area.height > 0 {
-            let sb_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
-            let max_offset = self.content_width.saturating_sub(area.width as usize);
             let scroll_y = area.y + area.height - 1;
+            let bar_color = ratatui::style::Color::Rgb(0, 255, 163);
+            let track_color = ratatui::style::Color::Rgb(30, 30, 40);
+            let max_offset = self.content_width.saturating_sub(area.width as usize);
+            let thumb_size = ((render_w as f32 / self.content_width as f32) * render_w as f32).max(1.0) as u16;
+            let thumb_pos = if max_offset > 0 {
+                (offset_x as f32 / max_offset as f32 * (render_w - thumb_size) as f32) as u16
+            } else {
+                0
+            };
             for col in 0..render_w {
                 let x = area.x + col;
-                let thumb_col = if max_offset > 0 {
-                    (offset_x as f32 / max_offset as f32 * (render_w - 1) as f32) as u16
-                } else {
-                    0
-                };
-                let ch = if col == thumb_col { "█" } else { "─" };
-                buf.set_string(x, scroll_y, ch, sb_style);
+                let in_thumb = col >= thumb_pos && col < thumb_pos + thumb_size;
+                if let Some(cell) = buf.cell_mut((x, scroll_y)) {
+                    if in_thumb {
+                        cell.set_symbol(" ");
+                        cell.set_bg(bar_color);
+                    } else {
+                        cell.set_symbol("─");
+                        cell.set_fg(track_color);
+                        cell.set_bg(ratatui::style::Color::Reset);
+                    }
+                }
             }
         }
     }

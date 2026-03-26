@@ -65,6 +65,8 @@ pub struct DataTable {
     column_widths: RefCell<Vec<u16>>,
     viewport_rows: Cell<u16>,
     own_id: Cell<Option<WidgetId>>,
+    last_area_y: Cell<u16>,
+    last_header_rows: Cell<u16>,
 }
 
 impl DataTable {
@@ -87,6 +89,8 @@ impl DataTable {
             column_widths: RefCell::new(widths),
             viewport_rows: Cell::new(0),
             own_id: Cell::new(None),
+            last_area_y: Cell::new(0),
+            last_header_rows: Cell::new(2),
         }
     }
 
@@ -261,7 +265,7 @@ impl Widget for DataTable {
     where
         Self: Sized,
     {
-        "DataTable { border: tall; min-height: 5; }"
+        "DataTable { border: inner; min-height: 5; }"
     }
 
     fn on_mount(&self, id: WidgetId) {
@@ -274,6 +278,28 @@ impl Widget for DataTable {
 
     fn key_bindings(&self) -> &[KeyBinding] {
         DATA_TABLE_BINDINGS
+    }
+
+    fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> super::EventPropagation {
+        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
+                let header_rows = self.last_header_rows.get();
+                let data_start_y = self.last_area_y.get() + header_rows;
+                if m.row >= data_start_y {
+                    let local_row = (m.row - data_start_y) as usize;
+                    let scroll = self.scroll_offset_row.get_untracked();
+                    let row_idx = scroll + local_row;
+                    let rows = self.rows.borrow();
+                    if row_idx < rows.len() {
+                        drop(rows);
+                        self.cursor_row.set(row_idx);
+                        return super::EventPropagation::Stop;
+                    }
+                }
+            }
+        }
+        super::EventPropagation::Continue
     }
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
@@ -338,8 +364,20 @@ impl Widget for DataTable {
                     self.adjust_scroll_row();
                 }
             }
-            "scroll_up" => return self.on_action("cursor_up", ctx),
-            "scroll_down" => return self.on_action("cursor_down", ctx),
+            "scroll_up" => {
+                let offset = self.scroll_offset_row.get_untracked();
+                if offset > 0 {
+                    self.scroll_offset_row.set(offset - 1);
+                }
+            }
+            "scroll_down" => {
+                let offset = self.scroll_offset_row.get_untracked();
+                let viewport = self.viewport_rows.get() as usize;
+                let row_count = self.rows.borrow().len();
+                if viewport > 0 && row_count > viewport && offset < row_count - viewport {
+                    self.scroll_offset_row.set(offset + 1);
+                }
+            }
             _ => {}
         }
     }
@@ -348,6 +386,7 @@ impl Widget for DataTable {
         if area.height == 0 || area.width == 0 || self.columns.is_empty() {
             return;
         }
+        self.last_area_y.set(area.y);
 
         let style = self.own_id.get()
             .map(|id| ctx.text_style(id))
@@ -391,18 +430,23 @@ impl Widget for DataTable {
             let padded = pad_or_truncate(&cell_text, col_w);
             let avail = (area.x + area.width - x) as usize;
             let display: String = padded.chars().take(avail).collect();
-            buf.set_string(x, y, &display, style);
+            let header_style = style
+                .add_modifier(ratatui::style::Modifier::BOLD)
+                .fg(ratatui::style::Color::Rgb(0, 212, 255));
+            buf.set_string(x, y, &display, header_style);
             x += display.chars().count() as u16;
 
-            // Column separator " | " (skip after last visible column)
+            // Column separator " │ " (skip after last visible column)
             if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                buf.set_string(x, y, " | ", style);
+                let sep_style = style.fg(ratatui::style::Color::Rgb(74, 74, 90));
+                buf.set_string(x, y, " │ ", sep_style);
                 x += 3;
             }
         }
 
         // --- Render separator row ---
         let sep_y = area.y + 1;
+        let sep_style = style.fg(ratatui::style::Color::Rgb(74, 74, 90));
         {
             let mut x = area.x;
             for (vi, &ci) in visible_cols.iter().enumerate() {
@@ -411,12 +455,12 @@ impl Widget for DataTable {
                 }
                 let col_w = widths[ci] as usize;
                 let avail = ((area.x + area.width - x) as usize).min(col_w);
-                let sep: String = "─".repeat(avail);
-                buf.set_string(x, sep_y, &sep, style);
+                let sep: String = "━".repeat(avail);
+                buf.set_string(x, sep_y, &sep, sep_style);
                 x += avail as u16;
 
                 if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                    buf.set_string(x, sep_y, "─┼─", style);
+                    buf.set_string(x, sep_y, "━┿━", sep_style);
                     x += 3;
                 }
             }
@@ -448,9 +492,11 @@ impl Widget for DataTable {
                 let avail = (area.x + area.width - x) as usize;
                 let display: String = padded.chars().take(avail).collect();
 
-                // Highlight cursor row with reverse video
+                // Highlight cursor row with accent color
                 let row_style = if is_cursor_row {
-                    style.add_modifier(Modifier::REVERSED)
+                    style
+                        .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                        .add_modifier(Modifier::BOLD)
                 } else {
                     style
                 };
@@ -459,8 +505,11 @@ impl Widget for DataTable {
                 x += display.chars().count() as u16;
 
                 // Column separator
+                let sep_col_style = if is_cursor_row { row_style } else {
+                    style.fg(ratatui::style::Color::Rgb(74, 74, 90))
+                };
                 if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                    buf.set_string(x, row_y, " | ", row_style);
+                    buf.set_string(x, row_y, " │ ", sep_col_style);
                     x += 3;
                 }
             }
@@ -469,23 +518,19 @@ impl Widget for DataTable {
         // --- Vertical scrollbar on right edge ---
         if !rows.is_empty() && visible_row_count < rows.len() {
             let sb_x = area.x + area.width - 1;
-            let sb_height = data_area_height as usize;
-            let total = rows.len();
-            let thumb_pos = if total > 0 {
-                (scroll_row * sb_height) / total
-            } else {
-                0
-            };
-            let thumb_size = ((visible_row_count * sb_height) / total).max(1);
-
-            for i in 0..sb_height {
-                let sb_y = area.y + header_rows + i as u16;
-                if sb_y >= area.y + area.height {
-                    break;
-                }
-                let ch = if i >= thumb_pos && i < thumb_pos + thumb_size { "█" } else { "░" };
-                buf.set_string(sb_x, sb_y, ch, style);
-            }
+            let bar_color = ratatui::style::Color::Rgb(0, 255, 163);
+            let track_color = ratatui::style::Color::Rgb(30, 30, 40);
+            crate::canvas::vertical_scrollbar(
+                buf,
+                sb_x,
+                area.y + header_rows,
+                data_area_height,
+                rows.len(),
+                visible_row_count,
+                scroll_row,
+                bar_color,
+                track_color,
+            );
         }
     }
 }

@@ -250,7 +250,7 @@ impl Widget for TextArea {
     where
         Self: Sized,
     {
-        "TextArea { border: tall; min-height: 5; }"
+        "TextArea { border: inner; min-height: 5; }"
     }
 
     fn on_mount(&self, id: WidgetId) {

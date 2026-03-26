@@ -1,6 +1,7 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use ratatui::style::Color;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -22,7 +23,8 @@ pub mod messages {
 
 /// A focusable switch (on/off toggle) that emits `messages::Changed`.
 ///
-/// Renders as `━━━◉` (on) or `◉━━━` (off) similar to Python Textual's Switch widget.
+/// Renders as a sliding pill-shaped toggle inspired by Python Textual's Switch widget.
+/// On: green track with knob on right. Off: dim gray track with knob on left.
 pub struct Switch {
     pub value: Reactive<bool>,
     own_id: Cell<Option<WidgetId>>,
@@ -82,6 +84,10 @@ impl Widget for Switch {
         SWITCH_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("toggle")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "toggle" {
             let new_val = !self.value.get_untracked();
@@ -97,11 +103,58 @@ impl Widget for Switch {
             return;
         }
         let on = self.value.get_untracked();
-        let indicator = if on { "━━━◉" } else { "◉━━━" };
-        let display: String = indicator.chars().take(area.width as usize).collect();
-        let style = self.own_id.get()
+        let _base_style = self.own_id.get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
-        buf.set_string(area.x, area.y, &display, style);
+
+        // Textual-style sliding pill switch using block characters
+        // Track width = 8 chars: ▐████████▌ with knob position
+        let track_width = area.width.min(8) as usize;
+        let knob_width = 2;
+        let track_inner = track_width.saturating_sub(2); // inside the ▐...▌ caps
+
+        let (track_color, knob_color, track_bg) = if on {
+            (Color::Rgb(0, 80, 50), Color::Rgb(0, 255, 163), Color::Rgb(0, 60, 40))
+        } else {
+            (Color::Rgb(50, 50, 60), Color::Rgb(120, 120, 130), Color::Rgb(30, 30, 38))
+        };
+
+        // Knob position: left when off, right when on
+        let knob_start = if on {
+            track_inner.saturating_sub(knob_width)
+        } else {
+            0
+        };
+
+        let mut x = area.x;
+
+        // Left cap
+        if x < area.x + area.width {
+            let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+            buf.set_string(x, area.y, "▐", style);
+            x += 1;
+        }
+
+        // Track interior with knob
+        for i in 0..track_inner {
+            if x >= area.x + area.width {
+                break;
+            }
+            let in_knob = i >= knob_start && i < knob_start + knob_width;
+            if in_knob {
+                let style = ratatui::style::Style::default().fg(knob_color).bg(track_bg);
+                buf.set_string(x, area.y, "█", style);
+            } else {
+                let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+                buf.set_string(x, area.y, "━", style);
+            }
+            x += 1;
+        }
+
+        // Right cap
+        if x < area.x + area.width {
+            let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+            buf.set_string(x, area.y, "▌", style);
+        }
     }
 }

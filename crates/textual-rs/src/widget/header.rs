@@ -64,7 +64,10 @@ impl Widget for Header {
         };
 
         let display: String = text.chars().take(area.width as usize).collect();
-        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let style = buf.cell((area.x, area.y))
+            .map(|c| c.style())
+            .unwrap_or_default()
+            .add_modifier(ratatui::style::Modifier::BOLD);
         buf.set_string(x, area.y, &display, style);
     }
 }

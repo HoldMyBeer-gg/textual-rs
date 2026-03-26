@@ -116,6 +116,10 @@ impl Widget for RadioButton {
         RADIO_BUTTON_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("select")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "select" {
             // Radio buttons only turn ON, never toggle off
@@ -134,21 +138,31 @@ impl Widget for RadioButton {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::style::Color;
+
         if area.height == 0 || area.width == 0 {
             return;
         }
 
-        let style = self.own_id.get()
+        let base_style = self.own_id.get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
         // Read from self.signal (shared with RadioSet) so mutual exclusion is reflected.
-        // Use get_untracked() to avoid reactive tracking loops in render.
         let checked = self.signal.get_untracked();
-        let indicator = if checked { "(\u{25cf})" } else { "( )" };
-        let text = format!("{} {}", indicator, self.label);
-        let display: String = text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, style);
+        // Color-differentiated: green filled dot when selected, dim empty when not
+        let (indicator, ind_style) = if checked {
+            ("◉", base_style.fg(Color::Rgb(0, 255, 163)))
+        } else {
+            ("○", base_style.fg(Color::Rgb(100, 100, 110)))
+        };
+        buf.set_string(area.x, area.y, indicator, ind_style);
+
+        // Label after indicator
+        if area.width > 2 {
+            let label_text: String = self.label.chars().take((area.width - 2) as usize).collect();
+            buf.set_string(area.x + 2, area.y, &label_text, base_style);
+        }
     }
 }
 

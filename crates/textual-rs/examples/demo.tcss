@@ -1,117 +1,146 @@
+/* textual-rs demo — dark theme inspired by Python Textual */
+
 Screen {
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: #0f0f1a;
+    color: #e0e0e0;
 }
-.panel {
-    background: #12121a;
-    border: solid #4a4a5a;
-    padding: 0 1;
-}
+
 *:focus {
-    border: solid #00ffa3;
+    border: tall #00ffa3;
 }
+
 Header {
-    background: #12121a;
+    background: #1a1a2e;
     color: #00d4ff;
     height: 1;
 }
+
 Footer {
-    background: #12121a;
-    color: #00d4ff;
+    background: #1a1a2e;
+    color: #e0e0e0;
     height: 1;
 }
+
 Tabs {
-    background: #0a0a0f;
+    background: #0f0f1a;
     height: 1;
 }
-Tab.-active {
-    color: #00ffa3;
 
-}
-Button.primary {
-    background: #00ffa3;
-    color: #0a0a0f;
-
-}
-.muted {
-    color: #4a4a5a;
-}
-.error {
-    color: #ff4444;
-    border: solid #ff4444;
-}
 DemoScreen {
     layout-direction: vertical;
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: #0f0f1a;
+    color: #e0e0e0;
 }
+
 TabbedContent {
     flex-grow: 1;
 }
+
 InputsPane {
     layout-direction: vertical;
     padding: 1;
 }
+
 DisplayPane {
     layout-direction: vertical;
     padding: 1;
 }
+
 LayoutPane {
     layout-direction: vertical;
     padding: 1;
 }
+
 InteractivePane {
     layout-direction: vertical;
+    padding: 1;
 }
+
+/* --- Buttons --- */
+
 Button {
-    border: heavy;
+    border: inner;
     min-width: 16;
     height: 3;
-    color: #00ffa3;
+    color: #e0e0e0;
+    background: #2a2a3e;
 }
+
+Button.primary {
+    background: #0178d4;
+    color: #ffffff;
+}
+
+/* --- Form widgets --- */
+
 Input {
-    border: rounded;
+    border: inner;
     height: 3;
-    color: #c8c8d8;
+    color: #e0e0e0;
+    background: #1a1a2e;
 }
-DataTable {
-    border: rounded;
-    min-height: 8;
-    color: #c8c8d8;
+
+Checkbox {
+    height: 1;
+    color: #e0e0e0;
 }
-ListView {
-    border: rounded;
-    min-height: 6;
-    flex-grow: 1;
-    color: #c8c8d8;
+
+Switch {
+    height: 1;
+    color: #e0e0e0;
 }
-Log {
-    border: rounded;
-    min-height: 6;
-    flex-grow: 1;
-    color: #00ffa3;
+
+RadioSet {
+    height: 3;
+    color: #e0e0e0;
 }
+
+Select {
+    border: inner;
+    height: 3;
+    color: #e0e0e0;
+    background: #1a1a2e;
+}
+
+/* --- Display widgets --- */
+
+Label {
+    height: 1;
+    color: #8c8ca0;
+}
+
 ProgressBar {
     height: 1;
     color: #00ffa3;
 }
+
 Sparkline {
-    height: 1;
+    height: 4;
     color: #00d4ff;
+    background: #12121f;
 }
-Label {
-    height: 1;
-    color: #00d4ff;
+
+/* --- Data widgets --- */
+
+DataTable {
+    border: inner;
+    min-height: 8;
+    color: #e0e0e0;
+    background: #1a1a2e;
 }
-Checkbox {
-    height: 1;
-    color: #c8c8d8;
+
+ListView {
+    border: inner;
+    min-height: 6;
+    flex-grow: 1;
+    color: #e0e0e0;
+    background: #1a1a2e;
 }
-Switch {
-    height: 1;
-    color: #c8c8d8;
-}
-RadioSet {
-    height: 3;
-    color: #c8c8d8;
+
+Log {
+    border: inner;
+    min-height: 6;
+    flex-grow: 1;
+    color: #00ffa3;
+    background: #1a1a2e;
 }

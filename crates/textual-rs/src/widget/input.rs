@@ -259,7 +259,7 @@ impl Widget for Input {
     where
         Self: Sized,
     {
-        "Input { border: tall; height: 3; }"
+        "Input { border: inner; height: 3; }"
     }
 
     fn on_mount(&self, id: WidgetId) {

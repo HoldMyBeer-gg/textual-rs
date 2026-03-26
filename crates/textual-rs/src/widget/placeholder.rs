@@ -42,40 +42,67 @@ impl Widget for Placeholder {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::style::{Color, Modifier, Style};
+
         if area.height == 0 || area.width == 0 {
             return;
         }
 
+        let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let hatch_fg = Color::Rgb(40, 40, 55);
+        let hatch_bg = base_style.bg.unwrap_or(Color::Rgb(20, 20, 30));
+
+        // Fill with cross-hatch pattern using braille characters
+        // Alternating diagonal pattern: ⠿ (dots 0-5) creates a dense fill
+        let pattern_a: u8 = 0b00101010; // diagonal dots
+        let pattern_b: u8 = 0b01010101; // opposite diagonal
+        for row in 0..area.height {
+            for col in 0..area.width {
+                let pattern = if (row + col) % 2 == 0 { pattern_a } else { pattern_b };
+                crate::canvas::braille_cell(
+                    buf,
+                    area.x + col,
+                    area.y + row,
+                    pattern,
+                    hatch_fg,
+                    hatch_bg,
+                );
+            }
+        }
+
+        // Overlay label and dimensions centered
         let label = self.label.as_deref().unwrap_or("Placeholder");
-        let dimensions = format!("{}x{}", area.width, area.height);
+        let dimensions = format!("{}×{}", area.width, area.height);
 
-        // Render label on first line, dimensions on second line
-        // Center both within the area
-        let render_line = |buf: &mut Buffer, y: u16, text: &str| {
-            let text_len = text.chars().count() as u16;
-            let x = if area.width > text_len {
-                area.x + (area.width - text_len) / 2
-            } else {
-                area.x
-            };
-            let display: String = text.chars().take(area.width as usize).collect();
-            let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
-            buf.set_string(x, y, &display, style);
-        };
+        let label_style = Style::default()
+            .fg(Color::Rgb(140, 140, 160))
+            .bg(hatch_bg)
+            .add_modifier(Modifier::BOLD);
+        let dim_style = Style::default()
+            .fg(Color::Rgb(90, 90, 110))
+            .bg(hatch_bg);
 
-        // If we have height, render label on first available row
         let mid_y = area.y + area.height / 2;
 
+        let center_x = |text: &str| -> u16 {
+            let len = text.chars().count() as u16;
+            if area.width > len { area.x + (area.width - len) / 2 } else { area.x }
+        };
+
         if area.height == 1 {
-            // Single row: show just the label
-            render_line(buf, area.y, label);
+            let x = center_x(label);
+            let display: String = label.chars().take(area.width as usize).collect();
+            buf.set_string(x, area.y, &display, label_style);
         } else {
-            // Multi-row: show label above center, dimensions below
             let label_y = if mid_y > area.y { mid_y - 1 } else { area.y };
             let dim_y = mid_y;
-            render_line(buf, label_y, label);
+            let x = center_x(label);
+            let display: String = label.chars().take(area.width as usize).collect();
+            buf.set_string(x, label_y, &display, label_style);
             if dim_y < area.y + area.height {
-                render_line(buf, dim_y, &dimensions);
+                let x = center_x(&dimensions);
+                let display: String = dimensions.chars().take(area.width as usize).collect();
+                buf.set_string(x, dim_y, &display, dim_style);
             }
         }
     }

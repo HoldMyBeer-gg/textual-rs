@@ -311,6 +311,10 @@ impl App {
                                                 if widget.can_focus() {
                                                     self.ctx.focused_widget = Some(target_id);
                                                 }
+                                                // Click-to-activate: trigger the widget's click action
+                                                if let Some(action) = widget.click_action() {
+                                                    widget.on_action(action, &self.ctx);
+                                                }
                                             }
                                             dispatch_message(target_id, &m, &self.ctx);
                                             self.drain_message_queue();
@@ -663,10 +667,13 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                     // If this widget is focused, enhance its border
                     let is_focused = ctx.focused_widget == Some(id);
                     if is_focused && cs.border != TcssBorder::None {
-                        // Focused widget WITH border — upgrade border color
+                        // Focused widget WITH border — upgrade border color to accent
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163); // accent green
-                        focused_cs.border = TcssBorder::Heavy;
+                        // Keep tall/mcgugan borders as-is; upgrade others to heavy
+                        if cs.border != TcssBorder::Tall && cs.border != TcssBorder::McguganBox {
+                            focused_cs.border = TcssBorder::Heavy;
+                        }
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
                     } else if is_focused && cs.border == TcssBorder::None {
                         // Focused widget WITHOUT border — just tint the foreground color.

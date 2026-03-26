@@ -79,6 +79,10 @@ impl Widget for Collapsible {
         COLLAPSIBLE_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("toggle")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "toggle" {
             let was_expanded = self.expanded.get_untracked();
@@ -105,11 +109,15 @@ impl Widget for Collapsible {
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
-        // Always render the title row
+        // Arrow indicator in accent color, title in base style
         let arrow = if expanded { "▼" } else { "▶" };
-        let title_text = format!("{} {}", arrow, self.title);
-        let display: String = title_text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, style);
+        let arrow_style = style.fg(ratatui::style::Color::Rgb(0, 255, 163));
+        buf.set_string(area.x, area.y, arrow, arrow_style);
+        if area.width > 2 {
+            let title_display: String = self.title.chars().take((area.width - 2) as usize).collect();
+            let title_style = style.add_modifier(ratatui::style::Modifier::BOLD);
+            buf.set_string(area.x + 2, area.y, &title_display, title_style);
+        }
 
         // Render children below title row only if expanded
         if expanded && area.height > 1 {

@@ -80,7 +80,11 @@ impl Widget for DisplayPane {
             Box::new(Label::new("Build progress: 65%")),
             Box::new(ProgressBar::new(0.65)),
             Box::new(Label::new("CPU activity:")),
-            Box::new(Sparkline::new(vec![1.0, 3.0, 7.0, 2.0, 8.0, 4.0, 6.0, 5.0, 9.0, 3.0])),
+            Box::new(Sparkline::new(vec![
+                1.0, 3.0, 7.0, 2.0, 8.0, 4.0, 6.0, 5.0, 9.0, 3.0,
+                5.0, 7.0, 4.0, 6.0, 8.0, 3.0, 5.0, 9.0, 2.0, 7.0,
+                4.0, 6.0, 3.0, 8.0, 5.0, 7.0, 2.0, 9.0, 4.0, 6.0,
+            ])),
             Box::new(Markdown::new("# textual-rs\n\nA **Rust** TUI framework inspired by Textual.\n\n- 22 built-in widgets\n- Reactive state\n- CSS styling")),
             Box::new(Placeholder::new()),
         ]

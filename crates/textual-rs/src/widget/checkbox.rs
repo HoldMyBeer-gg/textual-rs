@@ -82,6 +82,10 @@ impl Widget for Checkbox {
         CHECKBOX_BINDINGS
     }
 
+    fn click_action(&self) -> Option<&str> {
+        Some("toggle")
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "toggle" {
             let new_val = !self.checked.get_untracked();
@@ -93,16 +97,28 @@ impl Widget for Checkbox {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        use ratatui::style::{Color, Modifier};
+
         if area.height == 0 || area.width == 0 {
             return;
         }
         let checked = self.checked.get_untracked();
-        let indicator = if checked { "[X]" } else { "[ ]" };
-        let text = format!("{} {}", indicator, self.label);
-        let display: String = text.chars().take(area.width as usize).collect();
-        let style = self.own_id.get()
+        let base_style = self.own_id.get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
-        buf.set_string(area.x, area.y, &display, style);
+
+        // Unicode checkbox with color state: green ✓ when checked, dim ☐ when unchecked
+        let (indicator, indicator_style) = if checked {
+            ("✓", base_style.fg(Color::Rgb(0, 255, 163)))
+        } else {
+            ("☐", base_style.fg(Color::Rgb(100, 100, 110)))
+        };
+        buf.set_string(area.x, area.y, indicator, indicator_style);
+
+        // Label after indicator
+        if area.width > 2 {
+            let label_text: String = self.label.chars().take((area.width - 2) as usize).collect();
+            buf.set_string(area.x + 2, area.y, &label_text, base_style);
+        }
     }
 }

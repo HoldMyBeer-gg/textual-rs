@@ -165,6 +165,15 @@ pub trait Widget: 'static {
     /// The `action` string matches the `action` field of the triggered `KeyBinding`.
     /// Widget state must be mutated via `Cell<T>` or `Reactive<T>` since this takes `&self`.
     fn on_action(&self, _action: &str, _ctx: &AppContext) {}
+
+    /// Return the action to trigger on mouse click, if any.
+    ///
+    /// Widgets that should activate on click (e.g. buttons, checkboxes, switches)
+    /// override this to return the same action string their Space/Enter key binding uses.
+    /// The framework calls `on_action(click_action, ctx)` after click-to-focus.
+    fn click_action(&self) -> Option<&str> {
+        None
+    }
 }
 
 #[cfg(test)]

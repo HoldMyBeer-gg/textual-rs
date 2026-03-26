@@ -38,6 +38,7 @@ pub struct ListView {
     pub scroll_offset: Reactive<usize>,
     viewport_height: Cell<u16>,
     own_id: Cell<Option<WidgetId>>,
+    last_area_y: Cell<u16>,
 }
 
 impl ListView {
@@ -48,6 +49,7 @@ impl ListView {
             scroll_offset: Reactive::new(0),
             viewport_height: Cell::new(0),
             own_id: Cell::new(None),
+            last_area_y: Cell::new(0),
         }
     }
 }
@@ -133,6 +135,28 @@ impl Widget for ListView {
         LIST_VIEW_BINDINGS
     }
 
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
+        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
+                let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
+                let offset = self.scroll_offset.get_untracked();
+                let item_idx = offset + local_row;
+                if item_idx < self.items.len() {
+                    self.selected.set(item_idx);
+                    if let Some(id) = self.own_id.get() {
+                        ctx.post_message(id, messages::Highlighted { index: item_idx });
+                        // Also fire Selected on click (single click = select)
+                        let value = self.items[item_idx].clone();
+                        ctx.post_message(id, messages::Selected { index: item_idx, value });
+                    }
+                    return super::EventPropagation::Stop;
+                }
+            }
+        }
+        super::EventPropagation::Continue
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         let Some(id) = self.own_id.get() else { return };
         let current = self.selected.get_untracked();
@@ -186,8 +210,18 @@ impl Widget for ListView {
                     ctx.post_message(id, messages::Highlighted { index: last });
                 }
             }
-            "scroll_up" => return self.on_action("cursor_up", ctx),
-            "scroll_down" => return self.on_action("cursor_down", ctx),
+            "scroll_up" => {
+                let offset = self.scroll_offset.get_untracked();
+                if offset > 0 {
+                    self.scroll_offset.set(offset - 1);
+                }
+            }
+            "scroll_down" => {
+                let offset = self.scroll_offset.get_untracked();
+                if viewport_h > 0 && count > viewport_h && offset < count - viewport_h {
+                    self.scroll_offset.set(offset + 1);
+                }
+            }
             _ => {}
         }
     }
@@ -196,6 +230,7 @@ impl Widget for ListView {
         if area.height == 0 || area.width == 0 {
             return;
         }
+        self.last_area_y.set(area.y);
 
         let style = self.own_id.get()
             .map(|id| ctx.text_style(id))
@@ -222,12 +257,14 @@ impl Widget for ListView {
             // Pad to text_width so selection highlight covers the whole row
             let padded = format!("{:<width$}", item_text, width = text_width as usize);
 
-            let row_style = if is_selected {
-                style.add_modifier(Modifier::REVERSED)
+            if is_selected {
+                let highlight_style = style
+                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                    .add_modifier(Modifier::BOLD);
+                buf.set_string(area.x, y, &padded, highlight_style);
             } else {
-                style
+                buf.set_string(area.x, y, &padded, style);
             };
-            buf.set_string(area.x, y, &padded, row_style);
         }
 
         // Draw sub-cell vertical scrollbar in rightmost column

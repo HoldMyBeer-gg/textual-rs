@@ -1,57 +1,75 @@
-Screen {
-    background: #0a0a0f;
-    color: #c8c8d8;
-}
-Header {
-    background: #12121a;
-    color: #00d4ff;
+/* IRC demo — weechat-style layout with Textual-quality visuals */
 
-    height: 1;
+Screen {
+    background: #0f0f1a;
+    color: #e0e0e0;
 }
-Footer {
-    background: #12121a;
+
+Header {
+    background: #1a1a2e;
     color: #00d4ff;
     height: 1;
 }
+
+Footer {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    height: 1;
+}
+
 IrcScreen {
     layout-direction: vertical;
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: #0f0f1a;
+    color: #e0e0e0;
 }
+
 MainRegion {
     layout-direction: horizontal;
     flex-grow: 1;
 }
+
 ChannelPane {
     width: 20;
-    border: solid #4a4a5a;
-    background: #12121a;
-    color: #c8c8d8;
+    border: inner #4a4a5a;
+    background: #1a1a2e;
+    color: #e0e0e0;
 }
+
 ChatLog {
     flex-grow: 1;
-    border: solid #4a4a5a;
+    border: inner #4a4a5a;
+    background: #12121f;
     color: #00ffa3;
 }
+
 UserPane {
     width: 22;
-    border: solid #4a4a5a;
-    background: #12121a;
-    color: #c8c8d8;
+    border: inner #4a4a5a;
+    background: #1a1a2e;
+    color: #e0e0e0;
 }
+
 InputRegion {
     height: 3;
 }
+
 Input {
-    border: rounded #4a4a5a;
+    border: inner #4a4a5a;
     flex-grow: 1;
     height: 3;
-    color: #c8c8d8;
+    color: #e0e0e0;
+    background: #1a1a2e;
 }
+
+*:focus {
+    border: inner #00ffa3;
+}
+
 ListView {
     flex-grow: 1;
     border: none;
 }
+
 Log {
     flex-grow: 1;
     border: none;

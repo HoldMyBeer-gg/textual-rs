@@ -153,11 +153,14 @@ impl Widget for Tabs {
                 x += 1;
             }
 
-            // Tab label characters
+            // Tab label characters — active tab gets accent color + underline
             let style = if i == active_idx {
-                base_style.add_modifier(Modifier::REVERSED)
-            } else {
                 base_style
+                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::UNDERLINED)
+            } else {
+                base_style.fg(ratatui::style::Color::Rgb(140, 140, 160))
             };
 
             for ch in label.chars() {
@@ -170,7 +173,7 @@ impl Widget for Tabs {
 
             // Trailing space
             if x < area.x + area.width {
-                buf[(x, y)].set_char(' ').set_style(if i == active_idx { style } else { base_style });
+                buf[(x, y)].set_char(' ').set_style(base_style);
                 x += 1;
             }
         }
@@ -290,8 +293,13 @@ impl Widget for TabBar {
                 x += 1;
             }
             let style = if i == active_idx {
-                base_style.add_modifier(Modifier::REVERSED)
-            } else { base_style };
+                base_style
+                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::UNDERLINED)
+            } else {
+                base_style.fg(ratatui::style::Color::Rgb(140, 140, 160))
+            };
             for ch in label.chars() {
                 if x >= area.x + area.width { break; }
                 if let Some(cell) = buf.cell_mut((x, y)) { cell.set_char(ch).set_style(style); }
@@ -299,7 +307,7 @@ impl Widget for TabBar {
             }
             if x < area.x + area.width {
                 if let Some(cell) = buf.cell_mut((x, y)) {
-                    cell.set_char(' ').set_style(if i == active_idx { style } else { base_style });
+                    cell.set_char(' ').set_style(base_style);
                 }
                 x += 1;
             }

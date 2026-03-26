@@ -89,6 +89,7 @@ pub struct Tree {
     own_id: Cell<Option<WidgetId>>,
     /// Dirty flag — true when flat_entries need rebuilding.
     dirty: Cell<bool>,
+    last_area_y: Cell<u16>,
 }
 
 impl Tree {
@@ -101,6 +102,7 @@ impl Tree {
             viewport_height: Cell::new(0),
             own_id: Cell::new(None),
             dirty: Cell::new(true),
+            last_area_y: Cell::new(0),
         };
         // Initial flatten
         tree.rebuild_flat_entries();
@@ -239,7 +241,7 @@ impl Widget for Tree {
     where
         Self: Sized,
     {
-        "Tree { border: tall; min-height: 5; }"
+        "Tree { border: inner; min-height: 5; }"
     }
 
     fn on_mount(&self, id: WidgetId) {
@@ -252,6 +254,26 @@ impl Widget for Tree {
 
     fn key_bindings(&self) -> &[KeyBinding] {
         TREE_BINDINGS
+    }
+
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
+        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
+                let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
+                let scroll = self.scroll_offset.get_untracked();
+                let entry_idx = scroll + local_row;
+                let flat = self.flat_entries.borrow();
+                if entry_idx < flat.len() {
+                    drop(flat);
+                    self.cursor.set(entry_idx);
+                    // Toggle expand/collapse on click
+                    self.on_action("toggle", ctx);
+                    return super::EventPropagation::Stop;
+                }
+            }
+        }
+        super::EventPropagation::Continue
     }
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
@@ -377,8 +399,20 @@ impl Widget for Tree {
                     }
                 }
             }
-            "scroll_up" => return self.on_action("cursor_up", ctx),
-            "scroll_down" => return self.on_action("cursor_down", ctx),
+            "scroll_up" => {
+                let offset = self.scroll_offset.get_untracked();
+                if offset > 0 {
+                    self.scroll_offset.set(offset - 1);
+                }
+            }
+            "scroll_down" => {
+                let offset = self.scroll_offset.get_untracked();
+                let viewport = self.viewport_height.get() as usize;
+                let total = self.flat_entries.borrow().len();
+                if viewport > 0 && total > viewport && offset < total - viewport {
+                    self.scroll_offset.set(offset + 1);
+                }
+            }
             _ => {}
         }
     }
@@ -387,6 +421,7 @@ impl Widget for Tree {
         if area.height == 0 || area.width == 0 {
             return;
         }
+        self.last_area_y.set(area.y);
 
         let base_style = self.own_id.get()
             .map(|id| ctx.text_style(id))
@@ -451,37 +486,51 @@ impl Widget for Tree {
             }
             guide.push_str(&entry.label);
 
-            let display: String = guide.chars().take(content_width).collect();
-            let style = if is_cursor {
-                base_style.add_modifier(Modifier::REVERSED)
+            // Split guide chars from label for separate styling
+            let guide_len = guide.len() - entry.label.len();
+            let guide_part: String = guide.chars().take(guide_len.min(content_width)).collect();
+            let label_part: String = entry.label.chars().take(content_width.saturating_sub(guide_part.chars().count())).collect();
+
+            let guide_style = if is_cursor {
+                base_style.fg(ratatui::style::Color::Rgb(0, 255, 163))
+            } else {
+                base_style.fg(ratatui::style::Color::Rgb(74, 74, 90))
+            };
+            let label_style = if is_cursor {
+                base_style
+                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                    .add_modifier(Modifier::BOLD)
             } else {
                 base_style
             };
-            buf.set_string(area.x, row_y, &display, style);
 
-            // Pad remaining width
-            let rendered = display.chars().count();
+            buf.set_string(area.x, row_y, &guide_part, guide_style);
+            let lx = area.x + guide_part.chars().count() as u16;
+            buf.set_string(lx, row_y, &label_part, label_style);
+            let rendered = guide_part.chars().count() + label_part.chars().count();
             if rendered < content_width {
                 let padding = " ".repeat(content_width - rendered);
-                buf.set_string(area.x + rendered as u16, row_y, &padding, style);
+                let pad_style = if is_cursor { label_style } else { base_style };
+                buf.set_string(area.x + rendered as u16, row_y, &padding, pad_style);
             }
         }
 
-        // Vertical scrollbar
+        // Vertical scrollbar using canvas eighth-block rendering
         if has_scrollbar {
             let sb_x = area.x + area.width - 1;
-            let sb_height = visible;
-            let thumb_pos = if total > 0 { (scroll * sb_height) / total } else { 0 };
-            let thumb_size = ((visible * sb_height) / total).max(1);
-
-            for i in 0..sb_height {
-                let sb_y = area.y + i as u16;
-                if sb_y >= area.y + area.height {
-                    break;
-                }
-                let ch = if i >= thumb_pos && i < thumb_pos + thumb_size { "█" } else { "░" };
-                buf.set_string(sb_x, sb_y, ch, base_style);
-            }
+            let bar_color = ratatui::style::Color::Rgb(0, 255, 163);
+            let track_color = ratatui::style::Color::Rgb(30, 30, 40);
+            crate::canvas::vertical_scrollbar(
+                buf,
+                sb_x,
+                area.y,
+                area.height,
+                total,
+                visible,
+                scroll,
+                bar_color,
+                track_color,
+            );
         }
     }
 }
