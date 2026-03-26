@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to plan
-stopped_at: Completed 05-02-PLAN.md — Worker API and notify()
-last_updated: "2026-03-26T06:01:19.672Z"
+stopped_at: Completed 05-03-PLAN.md — Command Palette
+last_updated: "2026-03-26T06:18:54.943Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 21
 ---
 
 # Project State
@@ -58,6 +58,7 @@ Plan: Not started
 | Phase 04-built-in-widget-library P08 | 10 | 1 tasks | 2 files |
 | Phase 04-built-in-widget-library P09 | 2 | 1 tasks | 1 files |
 | Phase 05-developer-experience-and-polish P02 | 8 | 2 tasks | 6 files |
+| Phase 05-developer-experience-and-polish P03 | 8 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase 05-developer-experience-and-polish]: Worker results use dedicated flume channel (worker_tx/worker_rx) not AppEvent variant — avoids Clone/Debug requirement on Box<dyn Any + Send>
 - [Phase 05-developer-experience-and-polish]: process_deferred_screens() extracted as App helper — called consistently after key events, mouse events, and worker results
 - [Phase 05-developer-experience-and-polish]: WorkerResult<T> includes source_id field for multi-worker disambiguation in on_event handlers
+- [Phase 05-developer-experience-and-polish]: advance_focus() called after palette push so Esc/Enter keys reach CommandPalette (focused_widget must point to overlay)
+- [Phase 05-developer-experience-and-polish]: fuzzy_score returns 1.0 for exact substring matches, Jaro-Winkler for approximate matches, threshold 0.3 for palette filtering
 
 ### Pending Todos
 
@@ -119,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T06:01:19.668Z
-Stopped at: Completed 05-02-PLAN.md — Worker API and notify()
+Last session: 2026-03-26T06:18:54.939Z
+Stopped at: Completed 05-03-PLAN.md — Command Palette
 Resume file: None
