@@ -1,8 +1,33 @@
 use crate::css::parser::{parse_stylesheet, Rule};
 use crate::css::selector::{selector_matches, Specificity};
-use crate::css::types::{ComputedStyle, Declaration};
+use crate::css::theme::Theme;
+use crate::css::types::{ComputedStyle, Declaration, TcssValue};
 use crate::widget::context::AppContext;
 use crate::widget::WidgetId;
+
+/// Resolve theme variable references in declarations.
+///
+/// Replaces `TcssValue::Variable(name)` with `TcssValue::Color(resolved)` using the theme.
+/// Unknown variables are left as Variable (silently ignored by apply_declarations).
+fn resolve_variables(decls: &[Declaration], theme: &Theme) -> Vec<Declaration> {
+    decls
+        .iter()
+        .map(|d| {
+            if let TcssValue::Variable(ref name) = d.value {
+                if let Some(color) = theme.resolve(name) {
+                    Declaration {
+                        property: d.property.clone(),
+                        value: TcssValue::Color(color),
+                    }
+                } else {
+                    d.clone()
+                }
+            } else {
+                d.clone()
+            }
+        })
+        .collect()
+}
 
 /// A parsed TCSS stylesheet with its rules.
 #[derive(Debug, Clone, Default)]
@@ -66,15 +91,17 @@ pub fn resolve_cascade(
         a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1))
     });
 
-    // Apply declarations in order (later overwrites earlier)
+    // Apply declarations in order (later overwrites earlier), resolving theme variables
     let mut style = ComputedStyle::default();
     for (_, _, decls) in &matched {
-        style.apply_declarations(decls);
+        let resolved = resolve_variables(decls, &ctx.theme);
+        style.apply_declarations(&resolved);
     }
 
-    // Apply inline styles last (highest specificity)
+    // Apply inline styles last (highest specificity), also resolving variables
     if let Some(inline) = ctx.inline_styles.get(widget_id) {
-        style.apply_declarations(inline);
+        let resolved = resolve_variables(inline, &ctx.theme);
+        style.apply_declarations(&resolved);
     }
 
     style
@@ -345,5 +372,141 @@ mod tests {
         let (stylesheet, errors) = stylesheet_from_css_strings(&[css1, css2]);
         assert!(errors.is_empty(), "errors: {:?}", errors);
         assert_eq!(stylesheet.rules.len(), 2);
+    }
+
+    // --- Theme variable resolution tests ---
+
+    #[test]
+    fn resolve_cascade_variable_primary_resolves_to_rgb() {
+        let (ctx, id) = setup_single_widget(btn());
+        let css = "Button { color: $primary; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        // Default dark theme primary = (1, 120, 212)
+        assert_eq!(style.color, TcssColor::Rgb(1, 120, 212));
+    }
+
+    #[test]
+    fn resolve_cascade_variable_lighten() {
+        let (ctx, id) = setup_single_widget(btn());
+        let css = "Button { background: $primary-lighten-2; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        // Should be a lighter shade of primary — not Reset, and not the base primary
+        assert_ne!(style.background, TcssColor::Reset);
+        assert_ne!(style.background, TcssColor::Rgb(1, 120, 212));
+        // Verify it's an Rgb value
+        assert!(matches!(style.background, TcssColor::Rgb(_, _, _)));
+    }
+
+    #[test]
+    fn resolve_cascade_variable_darken() {
+        let (ctx, id) = setup_single_widget(btn());
+        let css = "Button { color: $accent-darken-1; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        // Should be a darker shade of accent — not Reset, not base accent
+        assert_ne!(style.color, TcssColor::Reset);
+        assert_ne!(style.color, TcssColor::Rgb(255, 166, 43));
+        assert!(matches!(style.color, TcssColor::Rgb(_, _, _)));
+    }
+
+    #[test]
+    fn resolve_cascade_unknown_variable_ignored() {
+        let (ctx, id) = setup_single_widget(btn());
+        let css = "Button { color: $nonexistent; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        // Unknown variable should not be applied — color stays at default Reset
+        assert_eq!(style.color, TcssColor::Reset);
+    }
+
+    #[test]
+    fn resolve_cascade_custom_theme() {
+        let (mut ctx, id) = setup_single_widget(btn());
+        // Set a custom theme with a different primary color
+        ctx.theme.primary = (42, 42, 42);
+
+        let css = "Button { color: $primary; }";
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        assert_eq!(style.color, TcssColor::Rgb(42, 42, 42));
+    }
+
+    #[test]
+    fn resolve_cascade_all_base_variables() {
+        let (ctx, id) = setup_single_widget(btn());
+        let theme = &ctx.theme;
+
+        // Test each base variable resolves correctly
+        for (var_name, expected_rgb) in &[
+            ("primary", theme.primary),
+            ("secondary", theme.secondary),
+            ("accent", theme.accent),
+            ("surface", theme.surface),
+            ("panel", theme.panel),
+            ("background", theme.background),
+            ("foreground", theme.foreground),
+            ("success", theme.success),
+            ("warning", theme.warning),
+            ("error", theme.error),
+        ] {
+            let css = format!("Button {{ color: ${}; }}", var_name);
+            let (stylesheet, errors) = Stylesheet::parse(&css);
+            assert!(errors.is_empty(), "errors for {}: {:?}", var_name, errors);
+
+            let style = resolve_cascade(id, &[stylesheet], &ctx);
+            assert_eq!(
+                style.color,
+                TcssColor::Rgb(expected_rgb.0, expected_rgb.1, expected_rgb.2),
+                "variable ${} should resolve to {:?}",
+                var_name, expected_rgb
+            );
+        }
+    }
+
+    #[test]
+    fn appcontext_has_default_dark_theme() {
+        let ctx = AppContext::new();
+        assert_eq!(ctx.theme.name, "textual-dark");
+        assert_eq!(ctx.theme.primary, (1, 120, 212));
+    }
+
+    #[test]
+    fn full_roundtrip_variable_resolution() {
+        // Full pipeline: CSS text -> parse -> cascade with theme -> ComputedStyle with correct RGB
+        let mut ctx = AppContext::new();
+        let id = ctx.arena.insert(Box::new(TestWidget {
+            type_name: "Button",
+            classes: vec![],
+            id: None,
+        }) as Box<dyn crate::widget::Widget>);
+        ctx.parent.insert(id, None);
+        ctx.pseudo_classes.insert(id, PseudoClassSet::default());
+        ctx.computed_styles.insert(id, ComputedStyle::default());
+        ctx.inline_styles.insert(id, Vec::new());
+
+        let css = r#"
+            Button {
+                color: $primary;
+                background: $surface;
+            }
+        "#;
+        let (stylesheet, errors) = Stylesheet::parse(css);
+        assert!(errors.is_empty(), "parse errors: {:?}", errors);
+
+        let style = resolve_cascade(id, &[stylesheet], &ctx);
+        assert_eq!(style.color, TcssColor::Rgb(1, 120, 212));
+        assert_eq!(style.background, TcssColor::Rgb(30, 30, 30));
     }
 }

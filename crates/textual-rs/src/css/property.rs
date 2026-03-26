@@ -1,10 +1,66 @@
 use cssparser::{ParseError, Parser, Token};
-use cssparser_color::{Color as ParsedColor};
+use cssparser_color::Color as ParsedColor;
 
 use crate::css::types::{
     BorderStyle, Declaration, DockEdge, LayoutDirection, Overflow, Sides, TcssColor,
     TcssDimension, TcssDisplay, TcssValue, TextAlign, Visibility,
 };
+
+/// Try to parse a `$variable` token sequence from the CSS parser.
+///
+/// Detects `Token::Delim('$')` followed by an ident (the base name), then optionally
+/// a `-lighten-N` or `-darken-N` suffix. Returns the full variable name string
+/// (e.g. "primary", "accent-darken-1") or None if the next token is not `$`.
+fn try_parse_variable<'i>(input: &mut Parser<'i, '_>) -> Option<String> {
+    let state = input.state();
+    match input.next() {
+        Ok(&Token::Delim('$')) => {
+            // Read the base ident (e.g. "primary")
+            let base = match input.expect_ident_cloned() {
+                Ok(ident) => ident.to_string(),
+                Err(_) => {
+                    input.reset(&state);
+                    return None;
+                }
+            };
+
+            // Try to read -lighten-N or -darken-N suffix
+            let suffix_state = input.state();
+            if let Ok(&Token::Delim('-')) = input.next() {
+                if let Ok(modifier) = input.expect_ident_cloned() {
+                    if modifier == "lighten" || modifier == "darken" {
+                        let dash_state = input.state();
+                        if let Ok(&Token::Delim('-')) = input.next() {
+                            if let Ok(&Token::Number { int_value: Some(n), .. }) = input.next() {
+                                let mut name = base;
+                                name.push('-');
+                                name.push_str(&modifier);
+                                name.push('-');
+                                name.push_str(&n.to_string());
+                                return Some(name);
+                            }
+                        }
+                        // Failed to read the number part, reset to after modifier
+                        input.reset(&dash_state);
+                        // Actually we consumed "lighten"/"darken" but no -N, reset fully
+                        input.reset(&suffix_state);
+                        return Some(base);
+                    }
+                }
+                // Not a lighten/darken modifier, reset
+                input.reset(&suffix_state);
+            } else {
+                input.reset(&suffix_state);
+            }
+
+            Some(base)
+        }
+        _ => {
+            input.reset(&state);
+            None
+        }
+    }
+}
 
 /// Error type for property parsing.
 #[derive(Debug, Clone)]
@@ -152,7 +208,13 @@ fn parse_property_value<'i>(
     location: cssparser::SourceLocation,
 ) -> Result<Option<TcssValue>, ParseError<'i, PropertyParseError>> {
     match property_name {
-        "color" | "background" => Ok(Some(TcssValue::Color(parse_color(input)?))),
+        "color" | "background" => {
+            if let Some(var_name) = try_parse_variable(input) {
+                Ok(Some(TcssValue::Variable(var_name)))
+            } else {
+                Ok(Some(TcssValue::Color(parse_color(input)?)))
+            }
+        }
         "border" => {
             let name = input
                 .expect_ident_cloned()
@@ -492,5 +554,57 @@ mod tests {
     fn parse_dock_top() {
         let val = parse_decl_value("dock: top");
         assert_eq!(val, TcssValue::DockEdge(DockEdge::Top));
+    }
+
+    // --- Theme variable parsing tests ---
+
+    #[test]
+    fn parse_color_variable_primary() {
+        let val = parse_decl_value("color: $primary");
+        assert_eq!(val, TcssValue::Variable("primary".to_string()));
+    }
+
+    #[test]
+    fn parse_background_variable() {
+        let val = parse_decl_value("background: $surface");
+        assert_eq!(val, TcssValue::Variable("surface".to_string()));
+    }
+
+    #[test]
+    fn parse_variable_lighten_suffix() {
+        let val = parse_decl_value("color: $primary-lighten-2");
+        assert_eq!(val, TcssValue::Variable("primary-lighten-2".to_string()));
+    }
+
+    #[test]
+    fn parse_variable_darken_suffix() {
+        let val = parse_decl_value("color: $accent-darken-1");
+        assert_eq!(val, TcssValue::Variable("accent-darken-1".to_string()));
+    }
+
+    #[test]
+    fn parse_variable_darken_3() {
+        let val = parse_decl_value("background: $error-darken-3");
+        assert_eq!(val, TcssValue::Variable("error-darken-3".to_string()));
+    }
+
+    #[test]
+    fn parse_regular_color_still_works_after_variable_support() {
+        // Ensure $ variable support doesn't break normal color parsing
+        let val = parse_decl_value("color: #ff0000");
+        assert!(matches!(val, TcssValue::Color(TcssColor::Rgb(255, 0, 0))));
+
+        let val2 = parse_decl_value("color: red");
+        assert!(matches!(val2, TcssValue::Color(TcssColor::Rgb(255, 0, 0))));
+
+        let val3 = parse_decl_value("background: rgb(0, 255, 0)");
+        assert!(matches!(val3, TcssValue::Color(TcssColor::Rgb(0, 255, 0))));
+    }
+
+    #[test]
+    fn parse_unknown_variable_produces_variable_variant() {
+        // Unknown variables are stored as Variable; resolution happens at cascade time
+        let val = parse_decl_value("color: $nonexistent");
+        assert_eq!(val, TcssValue::Variable("nonexistent".to_string()));
     }
 }

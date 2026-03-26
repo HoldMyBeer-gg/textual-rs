@@ -5,6 +5,7 @@ use slotmap::{DenseSlotMap, SecondaryMap};
 use super::WidgetId;
 use super::Widget;
 use crate::css::cascade::Stylesheet;
+use crate::css::theme::{self, Theme};
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
 use crate::css::render_style;
 use crate::event::AppEvent;
@@ -36,6 +37,9 @@ pub struct AppContext {
     /// Widgets in on_action(&self) use pop_screen_deferred() to schedule a screen pop.
     /// The event loop drains this counter after each action cycle.
     pub pending_screen_pops: Cell<usize>,
+    /// Active theme for CSS variable resolution (e.g., `$primary`, `$accent-lighten-2`).
+    /// Defaults to `default_dark_theme()`. Set a custom theme to change all variable colors.
+    pub theme: Theme,
     /// User stylesheets — stored here so ad-hoc pane rendering can resolve styles.
     pub stylesheets: Vec<Stylesheet>,
     /// Dedicated channel for worker results. Set by App::run_async before the event loop starts.
@@ -66,6 +70,7 @@ impl AppContext {
             message_queue: RefCell::new(Vec::new()),
             pending_screen_pushes: RefCell::new(Vec::new()),
             pending_screen_pops: Cell::new(0),
+            theme: theme::default_dark_theme(),
             stylesheets: Vec::new(),
             worker_tx: None,
             worker_handles: RefCell::new(SecondaryMap::new()),
