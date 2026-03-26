@@ -34,6 +34,18 @@ impl TaffyBridge {
     /// Perform a full DFS sync of the subtree rooted at `root`.
     /// Creates new Taffy nodes or updates existing ones. Rewires children.
     pub fn sync_subtree(&mut self, root: WidgetId, ctx: &AppContext) {
+        // Clean up stale entries: remove node_map entries for WidgetIds no longer in the arena.
+        // This is needed after recompose which unmounts widgets but doesn't notify the bridge.
+        self.node_map.retain(|wid, nid| {
+            if ctx.arena.contains_key(*wid) {
+                true
+            } else {
+                // Remove the orphaned Taffy node
+                let _ = self.tree.remove(*nid);
+                self.layout_cache.remove(wid);
+                false
+            }
+        });
         self.sync_node_dfs(root, ctx, false);
     }
 

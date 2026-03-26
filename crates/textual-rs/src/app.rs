@@ -86,6 +86,8 @@ pub struct App {
     worker_rx: Option<flume::Receiver<(WidgetId, Box<dyn std::any::Any + Send>)>>,
     /// Registry for app-level commands. Discover all commands via discover_all().
     command_registry: crate::command::CommandRegistry,
+    /// Set after recomposition — forces full bridge sync on next render pass.
+    needs_full_sync: bool,
 }
 
 impl App {
@@ -123,6 +125,7 @@ impl App {
             _owner: None,
             worker_rx: None,
             command_registry: crate::command::CommandRegistry::new(),
+            needs_full_sync: false,
         }
     }
 
@@ -147,6 +150,7 @@ impl App {
             _owner: None,
             worker_rx: None,
             command_registry: crate::command::CommandRegistry::new(),
+            needs_full_sync: false,
         }
     }
 
@@ -378,8 +382,13 @@ impl App {
         // a. Apply CSS cascade
         apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
 
-        // b. Sync layout tree
-        self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
+        // b. Sync layout tree (full sync after recomposition, dirty-only otherwise)
+        if self.needs_full_sync {
+            self.bridge.sync_subtree(screen_id, &self.ctx);
+            self.needs_full_sync = false;
+        } else {
+            self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
+        }
 
         // c. Compute layout
         let size = terminal.size()?;
@@ -569,6 +578,16 @@ impl App {
         let pushes: Vec<Box<dyn Widget>> = self.ctx.pending_screen_pushes.borrow_mut().drain(..).collect();
         for screen in pushes {
             push_screen(screen, &mut self.ctx);
+        }
+
+        // Process pending recompositions (e.g. tab switching)
+        let recompose_ids: Vec<WidgetId> = self.ctx.pending_recompose.borrow_mut().drain(..).collect();
+        if !recompose_ids.is_empty() {
+            for id in recompose_ids {
+                crate::widget::tree::recompose_widget(id, &mut self.ctx);
+            }
+            // Flag that next render pass needs a full sync (not dirty-only)
+            self.needs_full_sync = true;
         }
     }
 

@@ -43,6 +43,9 @@ pub struct AppContext {
     pub worker_tx: Option<flume::Sender<(WidgetId, Box<dyn Any + Send>)>>,
     /// Per-widget abort handles for active workers. Used for auto-cancellation on unmount.
     pub worker_handles: RefCell<SecondaryMap<WidgetId, Vec<tokio::task::AbortHandle>>>,
+    /// Widgets that need recomposition (e.g. TabbedContent after tab switch).
+    /// Drained by the event loop after each event cycle.
+    pub pending_recompose: RefCell<Vec<WidgetId>>,
 }
 
 impl AppContext {
@@ -66,7 +69,14 @@ impl AppContext {
             stylesheets: Vec::new(),
             worker_tx: None,
             worker_handles: RefCell::new(SecondaryMap::new()),
+            pending_recompose: RefCell::new(Vec::new()),
         }
+    }
+
+    /// Schedule a widget for recomposition on the next event loop tick.
+    /// Used by widgets like TabbedContent when their compose() output changes.
+    pub fn request_recompose(&self, id: WidgetId) {
+        self.pending_recompose.borrow_mut().push(id);
     }
 
     /// Schedule a new screen push deferred to the next event loop tick.

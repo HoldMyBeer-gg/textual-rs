@@ -177,22 +177,62 @@ impl Widget for Tabs {
     }
 }
 
-/// A simple tab bar widget used as a child of TabbedContent.
-/// Renders tab labels in a single row — non-focusable, height: 1.
+/// Tab bar widget — child of TabbedContent. Focusable with Left/Right to switch tabs.
+/// Shares `active` index with TabbedContent via Rc<Cell<usize>>.
 struct TabBar {
     labels: Vec<String>,
-    active: Reactive<usize>,
+    active: std::rc::Rc<Cell<usize>>,
+    own_id: Cell<Option<WidgetId>>,
 }
+
+static TAB_BAR_BINDINGS: &[KeyBinding] = &[
+    KeyBinding {
+        key: KeyCode::Left,
+        modifiers: KeyModifiers::NONE,
+        action: "prev_tab",
+        description: "Prev tab",
+        show: true,
+    },
+    KeyBinding {
+        key: KeyCode::Right,
+        modifiers: KeyModifiers::NONE,
+        action: "next_tab",
+        description: "Next tab",
+        show: true,
+    },
+];
 
 impl Widget for TabBar {
     fn widget_type_name(&self) -> &'static str { "TabBar" }
-    fn can_focus(&self) -> bool { false }
+    fn can_focus(&self) -> bool { true }
     fn default_css() -> &'static str where Self: Sized { "TabBar { height: 1; }" }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn on_mount(&self, id: WidgetId) { self.own_id.set(Some(id)); }
+    fn on_unmount(&self, _id: WidgetId) { self.own_id.set(None); }
+    fn key_bindings(&self) -> &[KeyBinding] { TAB_BAR_BINDINGS }
+
+    fn on_action(&self, action: &str, ctx: &AppContext) {
+        let current = self.active.get();
+        let count = self.labels.len();
+        let new_idx = match action {
+            "prev_tab" if current > 0 => current - 1,
+            "next_tab" if current + 1 < count => current + 1,
+            _ => return,
+        };
+        self.active.set(new_idx);
+        // Request recomposition on our parent (TabbedContent) so it remounts
+        // the new active pane's children.
+        if let Some(id) = self.own_id.get() {
+            if let Some(&Some(parent_id)) = ctx.parent.get(id) {
+                ctx.request_recompose(parent_id);
+            }
+        }
+    }
+
+    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 { return; }
         let base_style = ratatui::style::Style::default();
-        let active_idx = self.active.get_untracked();
+        let active_idx = self.active.get();
         let separator = " | ";
         let mut x = area.x;
         let y = area.y;
@@ -232,17 +272,21 @@ impl Widget for TabBar {
 /// A container that combines a Tabs bar with content panes, showing only the active pane.
 ///
 /// Composes the active pane's children into the widget tree so they participate
-/// in focus cycling and event dispatch.
+/// in focus cycling and event dispatch. Tab switching triggers recomposition.
 pub struct TabbedContent {
-    pub tabs: Tabs,
+    pub labels: Vec<String>,
     pub panes: Vec<Box<dyn Widget>>,
+    /// Shared active tab index — both TabbedContent and TabBar read/write this.
+    pub active: std::rc::Rc<Cell<usize>>,
 }
 
 impl TabbedContent {
     pub fn new(labels: Vec<String>, panes: Vec<Box<dyn Widget>>) -> Self {
+        let active = std::rc::Rc::new(Cell::new(0));
         Self {
-            tabs: Tabs::new(labels),
+            labels,
             panes,
+            active,
         }
     }
 }
@@ -264,20 +308,17 @@ impl Widget for TabbedContent {
     }
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        // Compose the active pane's children into the widget tree so they
-        // participate in focus cycling and event dispatch.
-        // First child: a TabBar placeholder that renders the tab labels (height: 1).
-        // Remaining children: the active pane's compose output.
         let mut children: Vec<Box<dyn Widget>> = Vec::new();
 
-        // Tab bar as a real widget child
+        // Tab bar — shares active index via Rc<Cell>
         children.push(Box::new(TabBar {
-            labels: self.tabs.tab_labels.clone(),
-            active: Reactive::new(self.tabs.active.get_untracked()),
+            labels: self.labels.clone(),
+            active: self.active.clone(),
+            own_id: Cell::new(None),
         }));
 
         // Active pane's children
-        let active_idx = self.tabs.active.get_untracked();
+        let active_idx = self.active.get();
         if let Some(pane) = self.panes.get(active_idx) {
             children.extend(pane.compose());
         }
