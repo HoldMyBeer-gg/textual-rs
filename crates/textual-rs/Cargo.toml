@@ -35,3 +35,23 @@ path = "examples/demo.rs"
 [[example]]
 name = "irc_demo"
 path = "examples/irc_demo.rs"
+
+[[example]]
+name = "tutorial_01_hello"
+path = "examples/tutorial_01_hello.rs"
+
+[[example]]
+name = "tutorial_02_layout"
+path = "examples/tutorial_02_layout.rs"
+
+[[example]]
+name = "tutorial_03_events"
+path = "examples/tutorial_03_events.rs"
+
+[[example]]
+name = "tutorial_04_reactive"
+path = "examples/tutorial_04_reactive.rs"
+
+[[example]]
+name = "tutorial_05_workers"
+path = "examples/tutorial_05_workers.rs"
