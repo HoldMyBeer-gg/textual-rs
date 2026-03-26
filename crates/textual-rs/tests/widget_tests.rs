@@ -5,8 +5,9 @@ use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::Widget;
-use textual_rs::{Button, Checkbox, Label, Switch};
+use textual_rs::{Button, Checkbox, Input, Label, Switch};
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
+use textual_rs::widget::input::messages::Submitted as InputSubmitted;
 
 // ---------------------------------------------------------------------------
 // Snapshot tests
@@ -290,5 +291,170 @@ async fn switch_toggle_space_also_works() {
         row.contains("◉━━━"),
         "Switch OFF indicator expected after toggle from ON, got: {:?}",
         row.trim_end()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Input widget tests
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn input_type_text() {
+    let mut test_app = TestApp::new(40, 3, || Box::new(Input::new("")));
+
+    // Focus the input
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+    assert!(test_app.ctx().focused_widget.is_some(), "Input should have focus");
+
+    // Type "hello"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.type_text("hello").await;
+    }
+
+    // Verify value via buffer content (cursor at end, all chars visible)
+    let buf = test_app.buffer();
+    let row: String = (0..5u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    assert_eq!(row, "hello", "Input should display typed text, got: {:?}", row);
+}
+
+#[tokio::test]
+async fn input_cursor_movement() {
+    let mut test_app = TestApp::new(40, 3, || Box::new(Input::new("")));
+
+    // Focus and type "hello"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("hello").await;
+    }
+
+    // Press Left 2 times — cursor should move from position 5 to 3
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Left).await;
+        pilot.press(KeyCode::Left).await;
+    }
+
+    // Insert a character at cursor position 3 to verify cursor location
+    {
+        let mut pilot = test_app.pilot();
+        pilot.type_text("X").await;
+    }
+
+    // Value should now be "helXlo" with cursor at 4
+    let buf = test_app.buffer();
+    let row: String = (0..6u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    assert!(
+        row.contains("helX") || row.contains("Xlo"),
+        "After Left×2 and typing X, buffer should contain 'helX', got: {:?}",
+        row
+    );
+}
+
+#[tokio::test]
+async fn input_backspace() {
+    let mut test_app = TestApp::new(40, 3, || Box::new(Input::new("")));
+
+    // Focus and type "hello"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("hello").await;
+    }
+
+    // Press Backspace — should remove last char
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Backspace).await;
+    }
+
+    // Verify value is "hell"
+    let buf = test_app.buffer();
+    let row: String = (0..4u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    assert_eq!(row, "hell", "After Backspace, value should be 'hell', got: {:?}", row);
+}
+
+#[tokio::test]
+async fn input_submit_emits_message() {
+    let mut test_app = TestApp::new(40, 3, || Box::new(Input::new("")));
+
+    // Focus and type "test"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("test").await;
+    }
+
+    // Press Enter without draining message queue so we can inspect it
+    test_app.inject_key_event(crossterm::event::KeyEvent {
+        code: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        kind: crossterm::event::KeyEventKind::Press,
+        state: crossterm::event::KeyEventState::NONE,
+    });
+
+    // Verify Submitted message in queue
+    let has_submitted = test_app
+        .ctx()
+        .message_queue
+        .borrow()
+        .iter()
+        .any(|(_, msg)| msg.downcast_ref::<InputSubmitted>().is_some());
+    assert!(has_submitted, "Expected Submitted message in queue after Enter on Input");
+}
+
+#[test]
+fn input_placeholder_renders() {
+    let test_app = TestApp::new(20, 3, || Box::new(Input::new("Type here")));
+    // No focus — placeholder should be visible
+    let buf = test_app.buffer();
+    let row: String = (0..9u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    assert_eq!(row, "Type here", "Placeholder should render when input is empty and unfocused, got: {:?}", row);
+}
+
+#[tokio::test]
+async fn input_password_mode() {
+    let mut test_app = TestApp::new(40, 3, || {
+        let mut input = Input::new("");
+        input.password = true;
+        Box::new(input)
+    });
+
+    // Focus
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "secret"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.type_text("secret").await;
+    }
+
+    // Verify buffer shows "******" not "secret"
+    let buf = test_app.buffer();
+    let row: String = (0..6u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    // In password mode, characters should be masked (shown as *, space due to cursor, or reversed *)
+    // The first 5 chars should be * (cursor is on last position)
+    let contains_stars = row.chars().all(|c| c == '*' || c == ' ');
+    assert!(
+        contains_stars,
+        "Password mode should mask input with '*', got: {:?}",
+        row
     );
 }

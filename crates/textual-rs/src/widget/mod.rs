@@ -4,6 +4,7 @@ pub mod label;
 pub mod button;
 pub mod checkbox;
 pub mod switch;
+pub mod input;
 
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
