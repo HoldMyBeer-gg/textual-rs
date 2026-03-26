@@ -1,8 +1,8 @@
-/* textual-rs demo — dark theme inspired by Python Textual */
+/* textual-rs demo — dark theme using theme variables */
 
 Screen {
-    background: #0f0f1a;
-    color: #e0e0e0;
+    background: $background;
+    color: $foreground;
 }
 
 *:focus {
@@ -10,26 +10,26 @@ Screen {
 }
 
 Header {
-    background: #1a1a2e;
-    color: #00d4ff;
+    background: $panel;
+    color: $primary;
     height: 1;
 }
 
 Footer {
-    background: #1a1a2e;
-    color: #e0e0e0;
+    background: $panel;
+    color: $foreground;
     height: 1;
 }
 
 Tabs {
-    background: #0f0f1a;
+    background: $background;
     height: 1;
 }
 
 DemoScreen {
     layout-direction: vertical;
-    background: #0f0f1a;
-    color: #e0e0e0;
+    background: $background;
+    color: $foreground;
 }
 
 TabbedContent {
@@ -62,62 +62,62 @@ Button {
     border: inner;
     min-width: 16;
     height: 3;
-    color: #e0e0e0;
-    background: #2a2a3e;
+    color: $foreground;
+    background: $surface;
 }
 
 Button.primary {
-    background: #0178d4;
+    background: $primary;
     color: #ffffff;
 }
 
 /* --- Form widgets --- */
 
 Input {
-    border: inner;
+    border: tall #4a4a5a;
     height: 3;
-    color: #e0e0e0;
-    background: #1a1a2e;
+    color: $foreground;
+    background: $panel;
 }
 
 Checkbox {
     height: 1;
-    color: #e0e0e0;
+    color: $foreground;
 }
 
 Switch {
     height: 1;
-    color: #e0e0e0;
+    color: $foreground;
 }
 
 RadioSet {
     height: 3;
-    color: #e0e0e0;
+    color: $foreground;
 }
 
 Select {
-    border: inner;
+    border: tall #4a4a5a;
     height: 3;
-    color: #e0e0e0;
-    background: #1a1a2e;
+    color: $foreground;
+    background: $panel;
 }
 
 /* --- Display widgets --- */
 
 Label {
     height: 1;
-    color: #8c8ca0;
+    color: $accent;
 }
 
 ProgressBar {
     height: 1;
-    color: #00ffa3;
+    color: $success;
 }
 
 Sparkline {
     height: 4;
-    color: #00d4ff;
-    background: #12121f;
+    color: $primary;
+    background: $background;
 }
 
 /* --- Data widgets --- */
@@ -125,22 +125,22 @@ Sparkline {
 DataTable {
     border: inner;
     min-height: 8;
-    color: #e0e0e0;
-    background: #1a1a2e;
+    color: $foreground;
+    background: $panel;
 }
 
 ListView {
-    border: inner;
+    border: tall #4a4a5a;
     min-height: 6;
     flex-grow: 1;
-    color: #e0e0e0;
-    background: #1a1a2e;
+    color: $foreground;
+    background: $panel;
 }
 
 Log {
-    border: inner;
+    border: tall #4a4a5a;
     min-height: 6;
     flex-grow: 1;
-    color: #00ffa3;
-    background: #1a1a2e;
+    color: $success;
+    background: $panel;
 }

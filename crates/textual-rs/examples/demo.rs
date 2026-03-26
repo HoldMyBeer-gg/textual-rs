@@ -85,7 +85,7 @@ impl Widget for DisplayPane {
                 5.0, 7.0, 4.0, 6.0, 8.0, 3.0, 5.0, 9.0, 2.0, 7.0,
                 4.0, 6.0, 3.0, 8.0, 5.0, 7.0, 2.0, 9.0, 4.0, 6.0,
             ])),
-            Box::new(Markdown::new("# textual-rs\n\nA **Rust** TUI framework inspired by Textual.\n\n- 22 built-in widgets\n- Reactive state\n- CSS styling")),
+            Box::new(Markdown::new("# textual-rs\n\nA **Rust** TUI framework inspired by [Textual](https://textual.textualize.io).\n\n## Features\n\n- **22** built-in widgets\n- Reactive state with signals\n- CSS styling engine\n- Cross-platform (Windows, macOS, Linux)\n\n```rust\nlet app = App::new(|| Box::new(MyScreen));\napp.run()?;\n```")),
             Box::new(Placeholder::new()),
         ]
     }
@@ -147,6 +147,10 @@ impl Widget for InteractivePane {
         table.add_row(vec!["Input".into(), "Form".into(), "Stable".into()]);
         table.add_row(vec!["ListView".into(), "List".into(), "Stable".into()]);
         table.add_row(vec!["DataTable".into(), "Table".into(), "Stable".into()]);
+        table.add_row(vec!["Tree".into(), "Navigation".into(), "Stable".into()]);
+        table.add_row(vec!["Markdown".into(), "Display".into(), "Stable".into()]);
+        table.add_row(vec!["Switch".into(), "Toggle".into(), "Stable".into()]);
+        table.add_row(vec!["Select".into(), "Dropdown".into(), "Stable".into()]);
 
         // Tree with a sample directory hierarchy
         let widget_dir = TreeNode::with_children("widget/", vec![
