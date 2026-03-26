@@ -108,12 +108,10 @@ async fn command_palette_opens() {
     });
     test_app.process_event(ctrl_p);
 
-    // Screen stack should have grown by 1
-    let new_screen_count = test_app.ctx().screen_stack.len();
-    assert_eq!(
-        new_screen_count,
-        initial_screen_count + 1,
-        "Ctrl+P should push CommandPalette onto screen_stack"
+    // Palette is now an active overlay, not a screen push
+    assert!(
+        test_app.ctx().active_overlay.borrow().is_some(),
+        "Ctrl+P should set active_overlay to CommandPalette"
     );
 }
 
@@ -162,7 +160,7 @@ async fn command_palette_esc_dismisses() {
         state: KeyEventState::NONE,
     });
     test_app.process_event(ctrl_p);
-    assert_eq!(test_app.ctx().screen_stack.len(), initial_screen_count + 1);
+    assert!(test_app.ctx().active_overlay.borrow().is_some(), "Ctrl+P should open overlay");
 
     // Press Esc to dismiss
     let esc = AppEvent::Key(KeyEvent {
@@ -173,11 +171,10 @@ async fn command_palette_esc_dismisses() {
     });
     test_app.process_event(esc);
 
-    // Screen stack should be back to original
-    assert_eq!(
-        test_app.ctx().screen_stack.len(),
-        initial_screen_count,
-        "Esc should dismiss the CommandPalette and restore screen_stack"
+    // Overlay should be dismissed
+    assert!(
+        test_app.ctx().active_overlay.borrow().is_none(),
+        "Esc should dismiss the CommandPalette overlay"
     );
 }
 
