@@ -342,7 +342,29 @@ impl App {
                                         }
                                     }
                                 }
-                                _ => {} // Ignore drag, hover, move for now
+                                MouseEventKind::Moved => {
+                                    if let Some(ref hit_map) = self.hit_map {
+                                        let new_hover = hit_map.hit_test(m.column, m.row);
+                                        let old_hover = self.ctx.hovered_widget;
+                                        if new_hover != old_hover {
+                                            // Clear old hover pseudo-class
+                                            if let Some(old_id) = old_hover {
+                                                if let Some(pcs) = self.ctx.pseudo_classes.get_mut(old_id) {
+                                                    pcs.remove(&crate::css::types::PseudoClass::Hover);
+                                                }
+                                            }
+                                            // Set new hover pseudo-class
+                                            if let Some(new_id) = new_hover {
+                                                if let Some(pcs) = self.ctx.pseudo_classes.get_mut(new_id) {
+                                                    pcs.insert(crate::css::types::PseudoClass::Hover);
+                                                }
+                                            }
+                                            self.ctx.hovered_widget = new_hover;
+                                            self.full_render_pass(&mut terminal)?;
+                                        }
+                                    }
+                                }
+                                _ => {} // Ignore drag for now
                             }
                         }
 
@@ -563,6 +585,25 @@ impl App {
                     }
                 }
             }
+            MouseEventKind::Moved => {
+                if let Some(ref hit_map) = self.hit_map {
+                    let new_hover = hit_map.hit_test(m.column, m.row);
+                    let old_hover = self.ctx.hovered_widget;
+                    if new_hover != old_hover {
+                        if let Some(old_id) = old_hover {
+                            if let Some(pcs) = self.ctx.pseudo_classes.get_mut(old_id) {
+                                pcs.remove(&crate::css::types::PseudoClass::Hover);
+                            }
+                        }
+                        if let Some(new_id) = new_hover {
+                            if let Some(pcs) = self.ctx.pseudo_classes.get_mut(new_id) {
+                                pcs.insert(crate::css::types::PseudoClass::Hover);
+                            }
+                        }
+                        self.ctx.hovered_widget = new_hover;
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -664,9 +705,19 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
             if rect.width > 0 && rect.height > 0 {
                 // Paint background + borders from computed CSS, get inner content area
                 let content_area = if let Some(cs) = ctx.computed_styles.get(id) {
-                    // If this widget is focused, enhance its border
                     let is_focused = ctx.focused_widget == Some(id);
-                    if is_focused && cs.border != TcssBorder::None {
+                    let is_hovered = ctx.hovered_widget == Some(id);
+
+                    // Check widget-driven border color override (e.g. Input invalid → red)
+                    let widget_border_override = ctx.arena.get(id)
+                        .and_then(|w| w.border_color_override());
+
+                    if let Some((r, g, b)) = widget_border_override {
+                        // Widget override takes highest priority (invalid state)
+                        let mut override_cs = cs.clone();
+                        override_cs.color = TcssColor::Rgb(r, g, b);
+                        paint_chrome(&override_cs, rect, frame.buffer_mut())
+                    } else if is_focused && cs.border != TcssBorder::None {
                         // Focused widget WITH border — upgrade border color to accent
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163); // accent green
@@ -677,10 +728,14 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
                     } else if is_focused && cs.border == TcssBorder::None {
                         // Focused widget WITHOUT border — just tint the foreground color.
-                        // Don't add a border; it changes the content area size and breaks layout.
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163);
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
+                    } else if is_hovered && cs.border != TcssBorder::None {
+                        // Hovered widget — lighten the border color for subtle feedback
+                        let mut hover_cs = cs.clone();
+                        hover_cs.color = TcssColor::Rgb(100, 180, 255); // light blue hover tint
+                        paint_chrome(&hover_cs, rect, frame.buffer_mut())
                     } else {
                         paint_chrome(cs, rect, frame.buffer_mut())
                     }

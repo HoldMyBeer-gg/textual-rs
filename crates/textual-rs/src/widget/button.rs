@@ -33,6 +33,8 @@ pub struct Button {
     pub label: String,
     pub variant: ButtonVariant,
     own_id: Cell<Option<WidgetId>>,
+    /// Single-frame pressed state: set true on press action, cleared after render.
+    pressed: Cell<bool>,
 }
 
 impl Button {
@@ -41,6 +43,7 @@ impl Button {
             label: label.into(),
             variant: ButtonVariant::Default,
             own_id: Cell::new(None),
+            pressed: Cell::new(false),
         }
     }
 
@@ -101,6 +104,7 @@ impl Widget for Button {
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "press" {
+            self.pressed.set(true);
             if let Some(id) = self.own_id.get() {
                 ctx.post_message(id, messages::Pressed);
             }
@@ -130,7 +134,14 @@ impl Widget for Button {
             area.y
         };
         let display: String = self.label.chars().take(area.width as usize).collect();
-        let label_style = base_style.add_modifier(Modifier::BOLD);
+        let is_pressed = self.pressed.get();
+        let label_style = if is_pressed {
+            // Single-frame "flash" — invert the label style for pressed feedback
+            self.pressed.set(false);
+            base_style.add_modifier(Modifier::BOLD | Modifier::REVERSED)
+        } else {
+            base_style.add_modifier(Modifier::BOLD)
+        };
         buf.set_string(x, y, &display, label_style);
     }
 }

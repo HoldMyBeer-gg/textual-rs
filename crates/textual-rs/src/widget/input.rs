@@ -262,6 +262,14 @@ impl Widget for Input {
         "Input { border: inner; height: 3; }"
     }
 
+    fn border_color_override(&self) -> Option<(u8, u8, u8)> {
+        if !self.valid.get() && !self.value.get_untracked().is_empty() {
+            Some((186, 60, 91)) // theme error color — red border for invalid input
+        } else {
+            None
+        }
+    }
+
     fn on_mount(&self, id: WidgetId) {
         self.own_id.set(Some(id));
     }

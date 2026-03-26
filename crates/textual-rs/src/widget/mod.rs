@@ -166,6 +166,14 @@ pub trait Widget: 'static {
     /// Widget state must be mutated via `Cell<T>` or `Reactive<T>` since this takes `&self`.
     fn on_action(&self, _action: &str, _ctx: &AppContext) {}
 
+    /// Override the border color for this widget based on internal state.
+    ///
+    /// Returns `Some((r, g, b))` when the widget wants to override its CSS border color
+    /// (e.g., Input with invalid content shows a red border). Returns `None` by default.
+    fn border_color_override(&self) -> Option<(u8, u8, u8)> {
+        None
+    }
+
     /// Return the action to trigger on mouse click, if any.
     ///
     /// Widgets that should activate on click (e.g. buttons, checkboxes, switches)

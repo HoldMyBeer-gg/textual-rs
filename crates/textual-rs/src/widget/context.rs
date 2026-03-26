@@ -19,6 +19,8 @@ pub struct AppContext {
     pub dirty: SecondaryMap<WidgetId, bool>,
     pub pseudo_classes: SecondaryMap<WidgetId, PseudoClassSet>,
     pub focused_widget: Option<WidgetId>,
+    /// Currently hovered widget (under mouse cursor). Updated by MouseMove events.
+    pub hovered_widget: Option<WidgetId>,
     pub screen_stack: Vec<WidgetId>,
     pub pending_mounts: Vec<WidgetId>,
     /// Temporary input buffer for demo purposes (Phase 3 replaces with proper reactive state).
@@ -63,6 +65,7 @@ impl AppContext {
             dirty: SecondaryMap::new(),
             pseudo_classes: SecondaryMap::new(),
             focused_widget: None,
+            hovered_widget: None,
             screen_stack: Vec::new(),
             pending_mounts: Vec::new(),
             input_buffer: String::new(),
