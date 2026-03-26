@@ -26,13 +26,11 @@ IrcScreen {
     color: rgb(224,224,224);
 }
 Header {
-    dock: top;
     height: 1;
     background: rgb(18,18,26);
     color: rgb(0,255,163);
 }
 Footer {
-    dock: bottom;
     height: 1;
     background: rgb(18,18,26);
     color: rgb(224,224,224);
@@ -44,29 +42,34 @@ MainRegion {
 ChannelPane {
     width: 20;
     border: solid;
+    color: rgb(224,224,224);
 }
 ChatLog {
     flex-grow: 1;
     border: solid;
+    color: rgb(0,255,163);
 }
 UserPane {
     width: 22;
     border: solid;
+    color: rgb(224,224,224);
 }
 InputRegion {
-    dock: bottom;
     height: 3;
 }
 Input {
     border: rounded;
     flex-grow: 1;
     height: 3;
+    color: rgb(224,224,224);
 }
 ListView {
-    min-height: 3;
+    flex-grow: 1;
+    border: none;
 }
 Log {
-    min-height: 3;
+    flex-grow: 1;
+    border: none;
 }
 "#;
 
@@ -197,9 +200,9 @@ impl Widget for IrcScreen {
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Header::new("textual-rs IRC").with_subtitle("#general -- 7 users")),
-            Box::new(Footer),
             Box::new(MainRegion),
             Box::new(InputRegion),
+            Box::new(Footer),
         ]
     }
 
