@@ -34,7 +34,8 @@ ScrollView { overflow: auto; }
 Select { border: rounded; height: 3; }
 Sparkline { height: 1; }
 Switch { height: 1; }
-TabbedContent { min-height: 3; }
+TabbedContent { min-height: 3; layout-direction: vertical; }
+TabBar { height: 1; }
 TextArea { border: rounded; min-height: 5; }
 Tree { border: rounded; min-height: 5; }
 Vertical { layout-direction: vertical; }

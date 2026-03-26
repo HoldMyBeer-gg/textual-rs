@@ -1,9 +1,10 @@
 ---
 source: crates/textual-rs/tests/widget_tests.rs
+assertion_line: 2097
 expression: "format!(\"{}\", test_app.backend())"
 ---
-" Alpha  |  Beta                         "
-"Content of Alpha                        "
+"                                        "
+"                                        "
 "                                        "
 "                                        "
 "                                        "
