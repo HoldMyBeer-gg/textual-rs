@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to plan
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-26T02:37:05.706Z"
+stopped_at: Phase 5 UI-SPEC approved
+last_updated: "2026-03-26T03:22:34.927Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -107,8 +107,14 @@ None yet.
 - [RESOLVED Phase 2]: SlotMap borrow ergonomics spike required before planning — RESOLVED: ctx-passing pattern (AppContext) confirmed working. HopSlotMap not needed.
 - [Phase 3]: reactive_graph + Tokio LocalSet spike required before planning — Executor::init_tokio() + any_spawner API must be verified against current published version; effect batching for render debounce needs POC
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260325-ti8 | Fix demo.rs and irc_demo.rs to look good and work properly | 2026-03-26 | 9570686 | Needs Review | [260325-ti8-fix-demo-rs-and-irc-demo-rs-to-look-good](./quick/260325-ti8-fix-demo-rs-and-irc-demo-rs-to-look-good/) |
+
 ## Session Continuity
 
-Last session: 2026-03-26T02:37:05.702Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-developer-experience-and-polish/05-CONTEXT.md
+Last session: 2026-03-26
+Stopped at: Quick task 260325-ti8 executed — demos rewritten
+Resume file: .planning/quick/260325-ti8-fix-demo-rs-and-irc-demo-rs-to-look-good/260325-ti8-SUMMARY.md
