@@ -1,6 +1,6 @@
 # Requirements: textual-rs
 
-**Defined:** 2026-03-24 (v1.0), updated 2026-03-26 (v1.1)
+**Defined:** 2026-03-24 (v1.0), updated 2026-03-26 (v1.1, v1.2)
 **Core Value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
 
 ## v1.1: Visual Parity with Python Textual
@@ -44,6 +44,36 @@
 - [x] **DEMO-02**: IRC demo renders professional-looking client with clear visual hierarchy
 - [x] **DEMO-03**: Both demos use McGugan Box borders with proper background depth
 
+## v1.2: Production Readiness
+
+### Critical Bugs & Gaps (Must Have)
+
+- [ ] **PROD-01**: Clipboard integration via arboard — Ctrl+C/V/X wired to Input and TextArea
+- [ ] **PROD-02**: Text selection in Input and TextArea — Shift+arrow keys, Shift+Home/End
+- [ ] **PROD-03**: Select overlay and CommandPalette use active_overlay pattern (no screen blank)
+- [ ] **PROD-04**: CSS $variable in border shorthand — `border: tall $primary` resolves correctly
+- [ ] **PROD-05**: McGugan Box fallback for terminals without U+1FB87 — use U+2595 instead
+- [ ] **PROD-06**: Terminal capability detection — color depth, Unicode support, mouse
+- [ ] **PROD-07**: Resize reflow — full layout recomputation on terminal resize
+
+### Important Features (Should Have)
+
+- [ ] **PROD-08**: Animation system — Tween with easing, used by Switch toggle and Tab underline
+- [ ] **PROD-09**: text-align CSS property actually centers content in widget render
+- [ ] **PROD-10**: Horizontal mouse wheel scrolling dispatches scroll_left/scroll_right
+- [ ] **PROD-11**: Ctrl+C as copy (not terminal interrupt) when text widget has selection
+- [ ] **PROD-12**: Worker progress reporting — workers can send incremental updates
+- [ ] **PROD-13**: Hot-reload .tcss files — poll for changes, re-cascade on modification
+
+### Polish (Nice to Have)
+
+- [ ] **PROD-14**: Light theme + runtime theme switching via Ctrl+T
+- [ ] **PROD-15**: 5+ built-in themes (tokyo-night, nord, gruvbox, dracula, catppuccin)
+- [ ] **PROD-16**: hatch CSS property — background pattern fills
+- [ ] **PROD-17**: keyline CSS property — grid lines between child widgets
+- [ ] **PROD-18**: Image rendering via half-block canvas
+- [ ] **PROD-19**: Syntax highlighting in Markdown code blocks
+
 ## Traceability
 
 | Requirement | Phase | Status |
@@ -72,3 +102,22 @@
 | DEMO-01 | Phase 3 | Complete |
 | DEMO-02 | Phase 3 | Complete |
 | DEMO-03 | Phase 3 | Complete |
+| PROD-01 | Phase 4 | Pending |
+| PROD-02 | Phase 4 | Pending |
+| PROD-03 | Phase 4 | Pending |
+| PROD-04 | Phase 4 | Pending |
+| PROD-05 | Phase 4 | Pending |
+| PROD-06 | Phase 4 | Pending |
+| PROD-07 | Phase 4 | Pending |
+| PROD-08 | Phase 4 | Pending |
+| PROD-09 | Phase 4 | Pending |
+| PROD-10 | Phase 4 | Pending |
+| PROD-11 | Phase 4 | Pending |
+| PROD-12 | Phase 4 | Pending |
+| PROD-13 | Phase 4 | Pending |
+| PROD-14 | Phase 4 | Pending |
+| PROD-15 | Phase 4 | Pending |
+| PROD-16 | Phase 4 | Pending |
+| PROD-17 | Phase 4 | Pending |
+| PROD-18 | Phase 4 | Pending |
+| PROD-19 | Phase 4 | Pending |
