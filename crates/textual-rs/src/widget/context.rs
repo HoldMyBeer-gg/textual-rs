@@ -9,6 +9,7 @@ use crate::css::theme::{self, Theme};
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
 use crate::css::render_style;
 use crate::event::AppEvent;
+use crate::terminal::TerminalCaps;
 
 pub struct AppContext {
     pub arena: DenseSlotMap<WidgetId, Box<dyn Widget>>,
@@ -57,6 +58,9 @@ pub struct AppContext {
     pub active_overlay: RefCell<Option<Box<dyn Widget>>>,
     /// Deferred overlay dismissal flag. Set by dismiss_overlay(), drained after event handling.
     pub pending_overlay_dismiss: Cell<bool>,
+    /// Detected terminal capabilities (color depth, unicode, mouse, title).
+    /// Widgets can inspect this to degrade gracefully on limited terminals.
+    pub terminal_caps: TerminalCaps,
 }
 
 impl AppContext {
@@ -85,6 +89,7 @@ impl AppContext {
             pending_recompose: RefCell::new(Vec::new()),
             active_overlay: RefCell::new(None),
             pending_overlay_dismiss: Cell::new(false),
+            terminal_caps: crate::terminal::detect_capabilities(),
         }
     }
 
