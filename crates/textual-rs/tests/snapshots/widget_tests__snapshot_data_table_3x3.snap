@@ -1,0 +1,12 @@
+---
+source: crates/textual-rs/tests/widget_tests.rs
+expression: "format!(\"{}\", test_app.backend())"
+---
+"Name  | Age | City                                          "
+"──────┼─────┼─────────                                      "
+"Alice | 30  | New York                                      "
+"Bob   | 25  | Chicago                                       "
+"Carol | 35  | Boston                                        "
+"                                                            "
+"                                                            "
+"                                                            "

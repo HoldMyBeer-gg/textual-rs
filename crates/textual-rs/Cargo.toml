@@ -19,6 +19,7 @@ reactive_graph = { version = "0.2.13", features = ["effects"] }
 any_spawner = { version = "0.3.0", features = ["tokio"] }
 pulldown-cmark = { version = "0.13", default-features = false }
 arboard = { version = "3.6", default-features = false }
+unicode-width = "0.2"
 
 [dev-dependencies]
 insta = "1.46.3"
