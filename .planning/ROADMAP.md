@@ -116,8 +116,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01-PLAN.md -- Button 3D depth borders, DataTable zebra-striped rows
-- [ ] 03-02-PLAN.md -- Demo and IRC demo visual polish pass with human verification
+- [x] 03-01-PLAN.md -- Button 3D depth borders, DataTable zebra-striped rows
+- [x] 03-02-PLAN.md -- Demo and IRC demo visual polish pass with human verification
 
 ## Progress
 
