@@ -12,6 +12,10 @@ pub use event::AppEvent;
 pub use testing::TestApp;
 pub use testing::pilot::Pilot;
 pub use widget::{Widget, WidgetId};
+// Re-export proc macros — derive macro Widget lives in a separate namespace from the Widget trait,
+// so `pub use textual_rs_macros::Widget` does not conflict with `pub use widget::Widget`.
+pub use textual_rs_macros::Widget;
+pub use textual_rs_macros::widget_impl;
 pub use widget::label::Label;
 pub use widget::button::{Button, ButtonVariant};
 pub use widget::checkbox::Checkbox;
