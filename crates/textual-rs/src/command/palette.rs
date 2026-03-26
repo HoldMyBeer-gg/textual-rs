@@ -73,6 +73,10 @@ impl Widget for CommandPalette {
         true
     }
 
+    fn is_overlay(&self) -> bool {
+        true
+    }
+
     fn default_css() -> &'static str
     where
         Self: Sized,
@@ -163,55 +167,74 @@ impl Widget for CommandPalette {
 
         let bg_style = Style::default().bg(bg);
 
-        // Fill background
-        for y in area.y..area.y + area.height {
-            let blank: String = " ".repeat(area.width as usize);
-            buf.set_string(area.x, y, &blank, bg_style);
+        // Calculate floating panel dimensions (centered, max 60 cols, max 20 rows)
+        let panel_w = area.width.min(60);
+        let panel_h = area.height.min(20);
+        let px = area.x + (area.width.saturating_sub(panel_w)) / 2;
+        let py = area.y + (area.height.saturating_sub(panel_h)) / 4; // upper-third
+
+        // Draw McGugan box border
+        let border_color = Color::Rgb(0, 212, 255);
+        crate::canvas::mcgugan_box(buf, px, py, panel_w, panel_h, border_color, bg, Color::Reset);
+
+        // Fill inside
+        for y in (py + 1)..(py + panel_h - 1) {
+            for x in (px + 1)..(px + panel_w - 1) {
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_symbol(" ");
+                    cell.set_bg(bg);
+                }
+            }
         }
 
-        let mut row = area.y;
+        let inner_x = px + 1;
+        let inner_w = panel_w.saturating_sub(2);
+        let mut row = py + 1;
+
+        let panel_bottom = py + panel_h - 1;
+        let iw = inner_w as usize;
 
         // Title bar: "Command Palette" bold cyan
-        if row < area.y + area.height {
+        if row < panel_bottom {
             let title = "Command Palette";
             let title_style = Style::default()
                 .fg(cyan)
                 .bg(bg)
                 .add_modifier(Modifier::BOLD);
-            buf.set_string(area.x, row, title, title_style);
+            buf.set_string(inner_x, row, title, title_style);
             row += 1;
         }
 
         // Divider line
-        if row < area.y + area.height {
-            let divider: String = "─".repeat(area.width as usize);
-            buf.set_string(area.x, row, &divider, Style::default().fg(muted).bg(bg));
+        if row < panel_bottom {
+            let divider: String = "─".repeat(iw);
+            buf.set_string(inner_x, row, &divider, Style::default().fg(muted).bg(bg));
             row += 1;
         }
 
         // Search query line
-        if row < area.y + area.height {
+        if row < panel_bottom {
             let query = self.query.borrow();
             let prompt_style = Style::default().fg(cyan).bg(bg);
             let query_style = Style::default().fg(normal).bg(bg);
 
-            buf.set_string(area.x, row, "> ", prompt_style);
+            buf.set_string(inner_x, row, "> ", prompt_style);
             if query.is_empty() {
                 let placeholder = "Type to search commands...";
                 let ph_style = Style::default().fg(muted).bg(bg);
-                let display: String = placeholder.chars().take((area.width as usize).saturating_sub(2)).collect();
-                buf.set_string(area.x + 2, row, &display, ph_style);
+                let display: String = placeholder.chars().take(iw.saturating_sub(2)).collect();
+                buf.set_string(inner_x + 2, row, &display, ph_style);
             } else {
-                let display: String = query.chars().take((area.width as usize).saturating_sub(2)).collect();
-                buf.set_string(area.x + 2, row, &display, query_style);
+                let display: String = query.chars().take(iw.saturating_sub(2)).collect();
+                buf.set_string(inner_x + 2, row, &display, query_style);
             }
             row += 1;
         }
 
         // Another divider
-        if row < area.y + area.height {
-            let divider: String = "─".repeat(area.width as usize);
-            buf.set_string(area.x, row, &divider, Style::default().fg(muted).bg(bg));
+        if row < panel_bottom {
+            let divider: String = "─".repeat(iw);
+            buf.set_string(inner_x, row, &divider, Style::default().fg(muted).bg(bg));
             row += 1;
         }
 
@@ -221,15 +244,15 @@ impl Widget for CommandPalette {
 
         if filtered.is_empty() {
             // No results
-            if row < area.y + area.height {
+            if row < panel_bottom {
                 let query = self.query.borrow();
                 let msg = format!("No commands match '{}'", query);
-                let display: String = msg.chars().take(area.width as usize).collect();
-                buf.set_string(area.x, row, &display, Style::default().fg(muted).bg(bg));
+                let display: String = msg.chars().take(iw).collect();
+                buf.set_string(inner_x, row, &display, Style::default().fg(muted).bg(bg));
             }
         } else {
             for (i, cmd) in filtered.iter().enumerate() {
-                if row >= area.y + area.height {
+                if row >= panel_bottom {
                     break;
                 }
 
@@ -242,16 +265,16 @@ impl Widget for CommandPalette {
                 let row_style = Style::default().fg(fg).bg(row_bg);
 
                 // Clear the row
-                let blank: String = " ".repeat(area.width as usize);
-                buf.set_string(area.x, row, &blank, row_style);
+                let blank: String = " ".repeat(iw);
+                buf.set_string(inner_x, row, &blank, row_style);
 
                 // Command name (left-aligned)
                 let name_display: String = cmd.name.chars().take(30).collect();
-                buf.set_string(area.x, row, &name_display, row_style);
+                buf.set_string(inner_x, row, &name_display, row_style);
 
                 // Source type (muted, after name)
-                let source_x = area.x + 32;
-                if (source_x as usize) < (area.x + area.width) as usize {
+                let source_x = inner_x + 32;
+                if (source_x as usize) < (inner_x + inner_w) as usize {
                     let source_style = if is_selected {
                         Style::default().fg(dark).bg(row_bg)
                     } else {
@@ -264,7 +287,7 @@ impl Widget for CommandPalette {
                 // Keybinding (right-aligned, cyan when not selected)
                 if let Some(ref kb) = cmd.keybinding {
                     let kb_len = kb.chars().count();
-                    let kb_x = (area.x + area.width).saturating_sub(kb_len as u16 + 1);
+                    let kb_x = (inner_x + inner_w).saturating_sub(kb_len as u16 + 1);
                     if kb_x > source_x {
                         let kb_style = if is_selected {
                             Style::default().fg(dark).bg(row_bg)
