@@ -177,6 +177,10 @@ impl Widget for SelectOverlay {
         true
     }
 
+    fn is_overlay(&self) -> bool {
+        true
+    }
+
     fn key_bindings(&self) -> &[KeyBinding] {
         OVERLAY_BINDINGS
     }
@@ -185,13 +189,16 @@ impl Widget for SelectOverlay {
         use crossterm::event::{MouseEvent, MouseEventKind};
         if let Some(m) = event.downcast_ref::<MouseEvent>() {
             if matches!(m.kind, MouseEventKind::Down(_)) {
-                // Convert absolute screen row to option index
-                let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
-                if local_row < self.options.len() {
+                let content_y = self.last_area_y.get();
+                let local_row = m.row.saturating_sub(content_y) as usize;
+                if m.row >= content_y && local_row < self.options.len() {
                     self.cursor.set(local_row);
                     self.on_action("select", ctx);
                     return super::EventPropagation::Stop;
                 }
+                // Click outside dropdown — close it
+                ctx.pop_screen_deferred();
+                return super::EventPropagation::Stop;
             }
         }
         super::EventPropagation::Continue
@@ -249,31 +256,67 @@ impl Widget for SelectOverlay {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 {
+        use ratatui::style::{Color, Style};
+
+        if area.height == 0 || area.width == 0 || self.options.is_empty() {
             return;
         }
-        self.last_area_y.set(area.y);
 
-        let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        // Calculate dropdown dimensions
+        let max_label = self.options.iter().map(|o| o.chars().count()).max().unwrap_or(10);
+        let dropdown_width = (max_label + 4).min(area.width as usize) as u16;
+        let dropdown_height = (self.options.len() as u16 + 2).min(area.height); // +2 for border
 
+        // Position: center horizontally, top of screen area
+        let dx = if area.width > dropdown_width {
+            area.x + (area.width - dropdown_width) / 2
+        } else {
+            area.x
+        };
+        let dy = if area.height > dropdown_height {
+            area.y + (area.height - dropdown_height) / 2
+        } else {
+            area.y
+        };
+
+        self.last_area_y.set(dy + 1); // content starts after top border
+
+        let border_color = Color::Rgb(100, 100, 120);
+        let bg = Color::Rgb(30, 30, 42);
+        let fg = Color::Rgb(224, 224, 224);
+
+        // Draw McGugan box border
+        crate::canvas::mcgugan_box(buf, dx, dy, dropdown_width, dropdown_height, border_color, bg, Color::Reset);
+
+        // Fill inside
+        for y in (dy + 1)..(dy + dropdown_height - 1) {
+            for x in (dx + 1)..(dx + dropdown_width - 1) {
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_symbol(" ");
+                    cell.set_bg(bg);
+                }
+            }
+        }
+
+        // Render options
         let cursor = self.cursor.get();
+        let inner_width = (dropdown_width - 2) as usize;
         for (i, option) in self.options.iter().enumerate() {
-            let y = area.y + i as u16;
-            if y >= area.y + area.height {
+            let y = dy + 1 + i as u16;
+            if y >= dy + dropdown_height - 1 {
                 break;
             }
-            // Clear the row
-            let blank: String = " ".repeat(area.width as usize);
-            buf.set_string(area.x, y, &blank, base_style);
-
-            let display: String = option.chars().take(area.width as usize).collect();
+            let display: String = option.chars().take(inner_width).collect();
+            let padded = format!(" {:<width$}", display, width = inner_width - 1);
             if i == cursor {
-                let hl_style = base_style
-                    .fg(ratatui::style::Color::Rgb(0, 255, 163))
+                let hl_style = Style::default()
+                    .fg(Color::Rgb(0, 255, 163))
+                    .bg(bg)
                     .add_modifier(Modifier::BOLD);
-                buf.set_string(area.x, y, &display, hl_style);
+                buf.set_string(dx + 1, y, &padded, hl_style);
             } else {
-                buf.set_string(area.x, y, &display, base_style);
+                let style = Style::default().fg(fg).bg(bg);
+                buf.set_string(dx + 1, y, &padded, style);
             }
         }
     }
