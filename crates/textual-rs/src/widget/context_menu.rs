@@ -136,12 +136,12 @@ impl Widget for ContextMenuOverlay {
                         }
                     }
                     // Click outside menu — close it
-                    ctx.pop_screen_deferred();
+                    ctx.dismiss_overlay();
                     return EventPropagation::Stop;
                 }
                 MouseEventKind::Down(MouseButton::Right) => {
                     // Right-click anywhere closes the menu
-                    ctx.pop_screen_deferred();
+                    ctx.dismiss_overlay();
                     return EventPropagation::Stop;
                 }
                 _ => {}
@@ -178,10 +178,10 @@ impl Widget for ContextMenuOverlay {
                         }
                     }
                 }
-                ctx.pop_screen_deferred();
+                ctx.dismiss_overlay();
             }
             "close" => {
-                ctx.pop_screen_deferred();
+                ctx.dismiss_overlay();
             }
             _ => {}
         }

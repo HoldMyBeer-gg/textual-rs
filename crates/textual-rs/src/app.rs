@@ -299,7 +299,7 @@ impl App {
                                                 let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
                                                     items, Some(focused_id), ax, ay,
                                                 );
-                                                self.ctx.push_screen_deferred(Box::new(overlay));
+                                                *self.ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
                                                 handled = true;
                                             }
                                         }
@@ -328,23 +328,37 @@ impl App {
 
                         Ok(AppEvent::Mouse(m)) => {
                             use crossterm::event::{MouseEventKind, MouseButton};
+
+                            // Route to overlay if active
+                            if self.ctx.active_overlay.borrow().is_some() {
+                                {
+                                    let overlay = self.ctx.active_overlay.borrow();
+                                    if let Some(ref widget) = *overlay {
+                                        widget.on_event(&m as &dyn std::any::Any, &self.ctx);
+                                    }
+                                }
+                                self.full_render_pass(&mut terminal)?;
+                                continue;
+                            }
+
                             match m.kind {
                                 MouseEventKind::Down(MouseButton::Right) => {
-                                    // Right-click: spawn context menu if widget provides items
+                                    // Right-click: walk parent chain to find context menu items
                                     if let Some(ref hit_map) = self.hit_map {
                                         if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                                            if let Some(widget) = self.ctx.arena.get(target_id) {
-                                                let items = widget.context_menu_items();
-                                                if !items.is_empty() {
-                                                    let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
-                                                        items,
-                                                        Some(target_id),
-                                                        m.column,
-                                                        m.row,
-                                                    );
-                                                    self.ctx.push_screen_deferred(Box::new(overlay));
-                                                    self.process_deferred_screens();
-                                                    self.full_render_pass(&mut terminal)?;
+                                            let chain = crate::event::dispatch::collect_parent_chain(target_id, &self.ctx);
+                                            for &id in &chain {
+                                                if let Some(widget) = self.ctx.arena.get(id) {
+                                                    let items = widget.context_menu_items();
+                                                    if !items.is_empty() {
+                                                        let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
+                                                            items, Some(id), m.column, m.row,
+                                                        );
+                                                        *self.ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
+                                                        self.process_deferred_screens();
+                                                        self.full_render_pass(&mut terminal)?;
+                                                        break;
+                                                    }
                                                 }
                                             }
                                         }
@@ -446,41 +460,38 @@ impl App {
     where
         B::Error: Send + Sync + 'static,
     {
-        if self.ctx.screen_stack.is_empty() {
-            return Ok(());
+        let screen_id = match self.ctx.screen_stack.last().copied() {
+            Some(id) => id,
+            None => return Ok(()),
+        };
+
+        // a. Apply CSS cascade
+        apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
+
+        // b. Sync layout tree
+        if self.needs_full_sync {
+            self.bridge.sync_subtree(screen_id, &self.ctx);
+            self.needs_full_sync = false;
+        } else {
+            self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
         }
 
+        // c. Compute layout
         let size = terminal.size()?;
+        self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
 
-        // Process ALL screens in the stack (bottom-to-top) so overlays
-        // render on top of the underlying screen content.
-        for &screen_id in &self.ctx.screen_stack.clone() {
-            apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
+        // d. Clear dirty flags
+        clear_dirty_subtree(screen_id, &mut self.ctx);
 
-            if self.needs_full_sync {
-                self.bridge.sync_subtree(screen_id, &self.ctx);
-            } else {
-                self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
-            }
-
-            self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
-            clear_dirty_subtree(screen_id, &mut self.ctx);
-        }
-        self.needs_full_sync = false;
-
-        // Build hit map from the TOP screen only (events go to the topmost overlay)
-        let top_screen_id = *self.ctx.screen_stack.last().unwrap();
-        let dfs_ids = collect_subtree_dfs(top_screen_id, &self.ctx);
+        // e. Build hit map
+        let dfs_ids = collect_subtree_dfs(screen_id, &self.ctx);
         self.hit_map = Some(MouseHitMap::build(&dfs_ids, self.bridge.layout_cache()));
 
-        // Render all screens bottom-to-top in a single frame
+        // f. Render main screen + floating overlay (if any)
         let ctx_ref = &self.ctx;
         let bridge_ref = &self.bridge;
-        let screen_stack = self.ctx.screen_stack.clone();
         terminal.draw(|frame| {
-            for &screen_id in &screen_stack {
-                render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
-            }
+            render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
         })?;
 
         Ok(())
@@ -562,6 +573,25 @@ impl App {
     /// Handle a key event: check bindings, dispatch to focused widget, advance focus on Tab.
     /// Returns true if the event was handled by a binding or on_event handler.
     pub fn handle_key_event(&mut self, k: crossterm::event::KeyEvent) -> bool {
+        // 0a. If overlay is active, route keys to it
+        if self.ctx.active_overlay.borrow().is_some() {
+            let overlay = self.ctx.active_overlay.borrow();
+            if let Some(ref widget) = *overlay {
+                // Check overlay's key bindings
+                for binding in widget.key_bindings() {
+                    if binding.matches(k.code, k.modifiers) {
+                        widget.on_action(binding.action, &self.ctx);
+                        drop(overlay);
+                        return true;
+                    }
+                }
+            }
+            drop(overlay);
+            // Any unhandled key dismisses the overlay
+            self.ctx.dismiss_overlay();
+            return true;
+        }
+
         // 0. Ctrl+P: open command palette
         if k.code == KeyCode::Char('p') && k.modifiers.contains(KeyModifiers::CONTROL) {
             let commands = self.command_registry.discover_all(&self.ctx);
@@ -613,11 +643,49 @@ impl App {
 
     /// Handle a mouse event: hit-test and dispatch to target widget.
     pub fn handle_mouse_event(&mut self, m: crossterm::event::MouseEvent) {
-        use crossterm::event::MouseEventKind;
+        use crossterm::event::{MouseEventKind, MouseButton};
+
+        // If an overlay is active, route events to it first
+        if self.ctx.active_overlay.borrow().is_some() {
+            let overlay = self.ctx.active_overlay.borrow();
+            if let Some(ref widget) = *overlay {
+                widget.on_event(&m as &dyn std::any::Any, &self.ctx);
+            }
+            drop(overlay);
+            return;
+        }
         match m.kind {
+            MouseEventKind::Down(MouseButton::Right) => {
+                // Right-click: spawn context menu. Walk parent chain to find items.
+                if let Some(ref hit_map) = self.hit_map {
+                    if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                        let chain = crate::event::dispatch::collect_parent_chain(target_id, &self.ctx);
+                        for &id in &chain {
+                            if let Some(widget) = self.ctx.arena.get(id) {
+                                let items = widget.context_menu_items();
+                                if !items.is_empty() {
+                                    let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
+                                        items, Some(id), m.column, m.row,
+                                    );
+                                    *self.ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             MouseEventKind::Down(_) => {
                 if let Some(ref hit_map) = self.hit_map {
                     if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                        if let Some(widget) = self.ctx.arena.get(target_id) {
+                            if widget.can_focus() {
+                                self.ctx.focused_widget = Some(target_id);
+                            }
+                            if let Some(action) = widget.click_action() {
+                                widget.on_action(action, &self.ctx);
+                            }
+                        }
                         dispatch_message(target_id, &m, &self.ctx);
                     }
                 }
@@ -815,5 +883,10 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                 }
             }
         }
+    }
+
+    // Paint the floating overlay (context menu, etc.) last, on top of everything
+    if let Some(ref overlay) = *ctx.active_overlay.borrow() {
+        overlay.render(ctx, buf_area, frame.buffer_mut());
     }
 }
