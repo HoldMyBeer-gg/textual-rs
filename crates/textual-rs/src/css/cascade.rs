@@ -13,17 +13,28 @@ fn resolve_variables(decls: &[Declaration], theme: &Theme) -> Vec<Declaration> {
     decls
         .iter()
         .map(|d| {
-            if let TcssValue::Variable(ref name) = d.value {
-                if let Some(color) = theme.resolve(name) {
-                    Declaration {
-                        property: d.property.clone(),
-                        value: TcssValue::Color(color),
+            match &d.value {
+                TcssValue::Variable(ref name) => {
+                    if let Some(color) = theme.resolve(name) {
+                        Declaration {
+                            property: d.property.clone(),
+                            value: TcssValue::Color(color),
+                        }
+                    } else {
+                        d.clone()
                     }
-                } else {
-                    d.clone()
                 }
-            } else {
-                d.clone()
+                TcssValue::BorderWithVariable(ref style, ref name) => {
+                    if let Some(color) = theme.resolve(name) {
+                        Declaration {
+                            property: d.property.clone(),
+                            value: TcssValue::BorderWithColor(*style, color),
+                        }
+                    } else {
+                        d.clone()
+                    }
+                }
+                _ => d.clone(),
             }
         })
         .collect()
