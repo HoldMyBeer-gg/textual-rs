@@ -727,10 +727,19 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                         }
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
                     } else if is_focused && cs.border == TcssBorder::None {
-                        // Focused widget WITHOUT border — just tint the foreground color.
-                        let mut focused_cs = cs.clone();
-                        focused_cs.color = TcssColor::Rgb(0, 255, 163);
-                        paint_chrome(&focused_cs, rect, frame.buffer_mut())
+                        // Focused widget WITHOUT border — subtle left-edge accent bar.
+                        // Don't tint the entire foreground (jarring on large content areas like Log).
+                        let content = paint_chrome(cs, rect, frame.buffer_mut());
+                        if rect.height > 0 {
+                            let fg = ratatui::style::Color::Rgb(0, 255, 163);
+                            for y in rect.y..rect.y + rect.height {
+                                if let Some(cell) = frame.buffer_mut().cell_mut((rect.x, y)) {
+                                    cell.set_symbol("\u{258E}"); // ▎ left quarter block
+                                    cell.set_fg(fg);
+                                }
+                            }
+                        }
+                        content
                     } else if is_hovered && cs.border != TcssBorder::None {
                         // Hovered widget — lighten the border color for subtle feedback
                         let mut hover_cs = cs.clone();
