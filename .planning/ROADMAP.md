@@ -91,11 +91,16 @@ Plans:
   2. Interactive widgets (Input, TextArea, Button, Checkbox, Switch, RadioSet, Select, ListView, DataTable, Tree, Tabs, Collapsible) respond correctly to keyboard events delivered via `Pilot`
   3. ScrollView, ListView, DataTable, and Tree widgets scroll their content when content exceeds the available area
   4. Each widget emits the documented messages (e.g., `Button::Pressed`, `Input::Changed`) when user interaction occurs, verifiable via TestApp message capture
-**Plans**: 2 plans
+**Plans**: 7 plans
 
 Plans:
-- [ ] 04-01: Input widgets — Label, Button, Input, TextArea, Checkbox, Switch, RadioButton/RadioSet, Select; each with TCSS default styles, keyboard handling, reactive state, and snapshot tests
-- [ ] 04-02: Display and layout widgets — ListView, DataTable, Tree, ProgressBar, Sparkline, Log, Markdown, Tabs/TabbedContent, Collapsible, Vertical/Horizontal, ScrollView, Header, Footer, Placeholder; each with TCSS default styles, scroll/interaction behavior, and snapshot tests
+- [ ] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
+- [ ] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
+- [ ] 04-03-PLAN.md — TextArea + Select widgets
+- [ ] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
+- [ ] 04-05-PLAN.md — ListView, Log, ScrollView widgets
+- [ ] 04-06-PLAN.md — DataTable, Tree widgets
+- [ ] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
 
 **UI hint**: yes
 
@@ -120,5 +125,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
-| 4. Built-in Widget Library | 0/2 | Not started | - |
+| 4. Built-in Widget Library | 0/7 | Not started | - |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
