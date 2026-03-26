@@ -81,6 +81,8 @@ pub fn unmount_widget(id: WidgetId, ctx: &mut AppContext) {
         if let Some(w) = ctx.arena.get(did) {
             w.on_unmount(did);
         }
+        // Cancel any active workers for this widget before removing it
+        ctx.cancel_workers(did);
         ctx.arena.remove(did);
         ctx.children.remove(did);
         ctx.parent.remove(did);

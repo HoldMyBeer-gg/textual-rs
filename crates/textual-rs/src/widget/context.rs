@@ -38,6 +38,11 @@ pub struct AppContext {
     pub pending_screen_pops: Cell<usize>,
     /// User stylesheets — stored here so ad-hoc pane rendering can resolve styles.
     pub stylesheets: Vec<Stylesheet>,
+    /// Dedicated channel for worker results. Set by App::run_async before the event loop starts.
+    /// Workers send (WidgetId, Box<dyn Any + Send>) through this channel to the event loop.
+    pub worker_tx: Option<flume::Sender<(WidgetId, Box<dyn Any + Send>)>>,
+    /// Per-widget abort handles for active workers. Used for auto-cancellation on unmount.
+    pub worker_handles: RefCell<SecondaryMap<WidgetId, Vec<tokio::task::AbortHandle>>>,
 }
 
 impl AppContext {
@@ -59,6 +64,8 @@ impl AppContext {
             pending_screen_pushes: RefCell::new(Vec::new()),
             pending_screen_pops: Cell::new(0),
             stylesheets: Vec::new(),
+            worker_tx: None,
+            worker_handles: RefCell::new(SecondaryMap::new()),
         }
     }
 
@@ -81,6 +88,57 @@ impl AppContext {
     /// Takes &self so this can be called from on_event or on_action without borrow conflict.
     pub fn post_message(&self, source: WidgetId, message: impl Any + 'static) {
         self.message_queue.borrow_mut().push((source, Box::new(message)));
+    }
+
+    /// Convenience alias: post a message that bubbles up from the source widget.
+    /// Equivalent to post_message — provided for API symmetry with Python Textual's notify().
+    pub fn notify(&self, source: WidgetId, message: impl Any + 'static) {
+        self.post_message(source, message);
+    }
+
+    /// Spawn an async worker tied to a widget. The worker runs on the Tokio LocalSet.
+    /// On completion, the result is delivered as a WorkerResult<T> message to the
+    /// source widget via the message queue. T must be Send + 'static.
+    ///
+    /// Returns an AbortHandle for manual cancellation. Workers are also automatically
+    /// cancelled when the owning widget is unmounted.
+    ///
+    /// # Panics
+    /// Panics if called outside of App::run() (worker_tx not initialized).
+    pub fn run_worker<T: Send + 'static>(
+        &self,
+        source_id: WidgetId,
+        fut: impl std::future::Future<Output = T> + 'static,
+    ) -> tokio::task::AbortHandle {
+        let tx = self
+            .worker_tx
+            .clone()
+            .expect("worker_tx not initialized — run_worker called outside App::run()");
+        let handle = tokio::task::spawn_local(async move {
+            let result = fut.await;
+            let _ = tx.send((
+                source_id,
+                Box::new(crate::worker::WorkerResult { source_id, value: result }),
+            ));
+        });
+        let abort = handle.abort_handle();
+        // Track handle for auto-cancel on unmount
+        self.worker_handles
+            .borrow_mut()
+            .entry(source_id)
+            .unwrap()
+            .or_insert_with(Vec::new)
+            .push(abort.clone());
+        abort
+    }
+
+    /// Cancel all workers associated with a widget. Called automatically during unmount.
+    pub fn cancel_workers(&self, widget_id: WidgetId) {
+        if let Some(handles) = self.worker_handles.borrow_mut().remove(widget_id) {
+            for handle in handles {
+                handle.abort();
+            }
+        }
     }
 
     /// Get the ratatui text style (fg + bg) for a widget from its computed CSS.

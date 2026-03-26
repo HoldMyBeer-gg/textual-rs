@@ -16,7 +16,7 @@ use crate::layout::bridge::TaffyBridge;
 use crate::layout::hit_map::MouseHitMap;
 use crate::terminal::{init_panic_hook, TerminalGuard};
 use crate::widget::context::AppContext;
-use crate::widget::tree::{advance_focus, advance_focus_backward, clear_dirty_subtree, push_screen};
+use crate::widget::tree::{advance_focus, advance_focus_backward, clear_dirty_subtree, pop_screen, push_screen};
 use crate::widget::{Widget, WidgetId};
 
 /// Root application entry point.
@@ -31,6 +31,9 @@ pub struct App {
     /// Must be `Some` while the app is running. Stored as Option because
     /// it is initialized in run_async(), not in new().
     _owner: Option<Owner>,
+    /// Receiver end of the dedicated worker result channel.
+    /// The sender is stored on AppContext so widgets can spawn workers.
+    worker_rx: Option<flume::Receiver<(WidgetId, Box<dyn std::any::Any + Send>)>>,
 }
 
 impl App {
@@ -61,6 +64,7 @@ impl App {
             hit_map: None,
             root_screen_factory: Some(Box::new(screen_factory)),
             _owner: None,
+            worker_rx: None,
         }
     }
 
@@ -110,6 +114,12 @@ impl App {
         // Store event sender on AppContext so widgets and effects can post events.
         self.ctx.event_tx = Some(tx.clone());
 
+        // Create dedicated worker result channel. The sender is stored on AppContext
+        // so run_worker can send results; we poll the receiver in the select! loop.
+        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn std::any::Any + Send>)>();
+        self.ctx.worker_tx = Some(worker_tx);
+        self.worker_rx = Some(worker_rx);
+
         // Spawn EventStream reader task on LocalSet (does not need Send)
         task::spawn_local(async move {
             let mut stream = EventStream::new();
@@ -128,105 +138,123 @@ impl App {
             }
         });
 
-        // Main event loop
+        // Take worker_rx out of self to avoid borrow issues in select!
+        let worker_rx = self.worker_rx.take().expect("worker_rx not initialized");
+
+        // Main event loop — select! between app events and worker results
         loop {
-            match rx.recv_async().await {
-                // Ignore non-press key events (release, repeat on some platforms)
-                Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
+            tokio::select! {
+                event = rx.recv_async() => {
+                    match event {
+                        // Ignore non-press key events (release, repeat on some platforms)
+                        Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
 
-                Ok(AppEvent::Key(k)) => {
-                    // 1. Check global quit bindings first
-                    if k.code == KeyCode::Char('q')
-                        || (k.code == KeyCode::Char('c')
-                            && k.modifiers.contains(KeyModifiers::CONTROL))
-                    {
-                        break;
-                    }
-
-                    // 2. Check focused widget's key bindings
-                    let mut handled = false;
-                    if let Some(focused_id) = self.ctx.focused_widget {
-                        if let Some(widget) = self.ctx.arena.get(focused_id) {
-                            for binding in widget.key_bindings() {
-                                if binding.matches(k.code, k.modifiers) {
-                                    widget.on_action(binding.action, &self.ctx);
-                                    handled = true;
-                                    break;
-                                }
+                        Ok(AppEvent::Key(k)) => {
+                            // 1. Check global quit bindings first
+                            if k.code == KeyCode::Char('q')
+                                || (k.code == KeyCode::Char('c')
+                                    && k.modifiers.contains(KeyModifiers::CONTROL))
+                            {
+                                break;
                             }
-                        }
-                    }
 
-                    // 3. If not handled by binding, dispatch as key event to focused widget, then bubble
-                    if !handled {
-                        if let Some(focused_id) = self.ctx.focused_widget {
-                            dispatch_message(focused_id, &k, &self.ctx);
-                            handled = true;
-                        }
-                    }
-
-                    // 4. App-level key handling (Tab for focus cycling)
-                    if !handled || matches!(k.code, KeyCode::Tab) {
-                        match k.code {
-                            KeyCode::Tab if k.modifiers.contains(KeyModifiers::SHIFT) => {
-                                advance_focus_backward(&mut self.ctx);
-                            }
-                            KeyCode::Tab => {
-                                advance_focus(&mut self.ctx);
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    // 5. Drain message queue (widget handlers may have posted messages)
-                    self.drain_message_queue();
-
-                    self.full_render_pass(&mut terminal)?;
-                }
-
-                Ok(AppEvent::Mouse(m)) => {
-                    use crossterm::event::MouseEventKind;
-                    match m.kind {
-                        MouseEventKind::Down(_) => {
-                            // Hit test to find target widget
-                            if let Some(ref hit_map) = self.hit_map {
-                                if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                                    // Click-to-focus: if target is focusable, set focus
-                                    if let Some(widget) = self.ctx.arena.get(target_id) {
-                                        if widget.can_focus() {
-                                            self.ctx.focused_widget = Some(target_id);
+                            // 2. Check focused widget's key bindings
+                            let mut handled = false;
+                            if let Some(focused_id) = self.ctx.focused_widget {
+                                if let Some(widget) = self.ctx.arena.get(focused_id) {
+                                    for binding in widget.key_bindings() {
+                                        if binding.matches(k.code, k.modifiers) {
+                                            widget.on_action(binding.action, &self.ctx);
+                                            handled = true;
+                                            break;
                                         }
                                     }
-                                    dispatch_message(target_id, &m, &self.ctx);
-                                    self.drain_message_queue();
-                                    self.full_render_pass(&mut terminal)?;
                                 }
                             }
-                        }
-                        MouseEventKind::ScrollDown
-                        | MouseEventKind::ScrollUp => {
-                            if let Some(ref hit_map) = self.hit_map {
-                                if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                                    dispatch_message(target_id, &m, &self.ctx);
-                                    self.drain_message_queue();
-                                    self.full_render_pass(&mut terminal)?;
+
+                            // 3. If not handled by binding, dispatch as key event to focused widget, then bubble
+                            if !handled {
+                                if let Some(focused_id) = self.ctx.focused_widget {
+                                    dispatch_message(focused_id, &k, &self.ctx);
+                                    handled = true;
                                 }
                             }
+
+                            // 4. App-level key handling (Tab for focus cycling)
+                            if !handled || matches!(k.code, KeyCode::Tab) {
+                                match k.code {
+                                    KeyCode::Tab if k.modifiers.contains(KeyModifiers::SHIFT) => {
+                                        advance_focus_backward(&mut self.ctx);
+                                    }
+                                    KeyCode::Tab => {
+                                        advance_focus(&mut self.ctx);
+                                    }
+                                    _ => {}
+                                }
+                            }
+
+                            // 5. Drain message queue + process deferred screens
+                            self.drain_message_queue();
+                            self.process_deferred_screens();
+                            self.full_render_pass(&mut terminal)?;
                         }
-                        _ => {} // Ignore drag, hover, move for now
+
+                        Ok(AppEvent::Mouse(m)) => {
+                            use crossterm::event::MouseEventKind;
+                            match m.kind {
+                                MouseEventKind::Down(_) => {
+                                    // Hit test to find target widget
+                                    if let Some(ref hit_map) = self.hit_map {
+                                        if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                                            // Click-to-focus: if target is focusable, set focus
+                                            if let Some(widget) = self.ctx.arena.get(target_id) {
+                                                if widget.can_focus() {
+                                                    self.ctx.focused_widget = Some(target_id);
+                                                }
+                                            }
+                                            dispatch_message(target_id, &m, &self.ctx);
+                                            self.drain_message_queue();
+                                            self.process_deferred_screens();
+                                            self.full_render_pass(&mut terminal)?;
+                                        }
+                                    }
+                                }
+                                MouseEventKind::ScrollDown
+                                | MouseEventKind::ScrollUp => {
+                                    if let Some(ref hit_map) = self.hit_map {
+                                        if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                                            dispatch_message(target_id, &m, &self.ctx);
+                                            self.drain_message_queue();
+                                            self.process_deferred_screens();
+                                            self.full_render_pass(&mut terminal)?;
+                                        }
+                                    }
+                                }
+                                _ => {} // Ignore drag, hover, move for now
+                            }
+                        }
+
+                        Ok(AppEvent::Resize(_, _)) => {
+                            self.full_render_pass(&mut terminal)?;
+                        }
+                        Ok(AppEvent::RenderRequest) => {
+                            // Coalesce: drain any additional RenderRequests queued in the same tick
+                            while let Ok(AppEvent::RenderRequest) = rx.try_recv() {}
+                            self.full_render_pass(&mut terminal)?;
+                        }
+                        Ok(_) => {}
+                        Err(_) => break, // channel closed
                     }
                 }
 
-                Ok(AppEvent::Resize(_, _)) => {
-                    self.full_render_pass(&mut terminal)?;
+                result = worker_rx.recv_async() => {
+                    if let Ok((source_id, payload)) = result {
+                        self.ctx.message_queue.borrow_mut().push((source_id, payload));
+                        self.drain_message_queue();
+                        self.process_deferred_screens();
+                        self.full_render_pass(&mut terminal)?;
+                    }
                 }
-                Ok(AppEvent::RenderRequest) => {
-                    // Coalesce: drain any additional RenderRequests queued in the same tick
-                    while let Ok(AppEvent::RenderRequest) = rx.try_recv() {}
-                    self.full_render_pass(&mut terminal)?;
-                }
-                Ok(_) => {}
-                Err(_) => break, // channel closed
             }
         }
 
@@ -396,6 +424,24 @@ impl App {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Drain pending screen pushes and pops scheduled by widgets via
+    /// push_screen_deferred() / pop_screen_deferred(). Called after each event cycle.
+    pub fn process_deferred_screens(&mut self) {
+        // Process pops first, then pushes (pop old modal before pushing new one)
+        let pops = self.ctx.pending_screen_pops.get();
+        if pops > 0 {
+            self.ctx.pending_screen_pops.set(0);
+            for _ in 0..pops {
+                pop_screen(&mut self.ctx);
+            }
+        }
+
+        let pushes: Vec<Box<dyn Widget>> = self.ctx.pending_screen_pushes.borrow_mut().drain(..).collect();
+        for screen in pushes {
+            push_screen(screen, &mut self.ctx);
         }
     }
 

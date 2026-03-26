@@ -6,6 +6,7 @@ pub mod reactive;
 pub mod terminal;
 pub mod testing;
 pub mod widget;
+pub mod worker;
 
 pub use app::App;
 pub use event::AppEvent;
@@ -34,3 +35,4 @@ pub use widget::tree_view::{Tree, TreeNode};
 pub use widget::tabs::{Tabs, TabbedContent};
 pub use widget::collapsible::Collapsible;
 pub use widget::markdown::Markdown;
+pub use worker::WorkerResult;
