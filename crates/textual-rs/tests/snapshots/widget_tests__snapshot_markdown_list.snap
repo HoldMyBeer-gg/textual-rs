@@ -1,0 +1,12 @@
+---
+source: crates/textual-rs/tests/widget_tests.rs
+expression: "format!(\"{}\", test_app.backend())"
+---
+"  * item 1                              "
+"  * item 2                              "
+"  * item 3                              "
+"                                        "
+"                                        "
+"                                        "
+"                                        "
+"                                        "
