@@ -99,8 +99,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Hover tracking, button pressed state, input invalid border, interactive state tests
-- [ ] 02-02-PLAN.md -- Quadrant chars in Placeholder, half-block gradients for depth, rendering primitive verification tests
+- [x] 02-01-PLAN.md -- Hover tracking, button pressed state, input invalid border, interactive state tests
+- [x] 02-02-PLAN.md -- Quadrant chars in Placeholder, half-block gradients for depth, rendering primitive verification tests
 
 ### Phase 3: Widget Visual Polish & Demos
 **Goal**: Individual widgets match Python Textual's visual quality; demo apps prove the full visual stack works together
@@ -132,5 +132,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 4. Built-in Widget Library | v1.0 | 9/9 | Complete | 2026-03-26 |
 | 5. Developer Experience and Polish | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 1. Semantic Theme Engine | v1.1 | 1/2 | In progress | - |
-| 2. Interactive States & Rendering Integration | v1.1 | 0/2 | Not started | - |
+| 2. Interactive States & Rendering Integration | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 3. Widget Visual Polish & Demos | v1.1 | 0/0 | Not started | - |

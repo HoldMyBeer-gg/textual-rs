@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: "Visual Parity with Python Textual"
 status: In progress
-stopped_at: "Completed 02-02-PLAN.md (Quadrant chars in Placeholder, half-block gradients, render primitive tests)"
-last_updated: "2026-03-26T21:12:00Z"
+stopped_at: "Completed 02-01-PLAN.md (Hover tracking, button pressed state, input invalid border)"
+last_updated: "2026-03-26T21:10:00Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 4
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 2 of 3 (Interactive States & Rendering)
-Plan: 2 of 2 complete in phase 2 so far
+Plan: 2 of 2 complete in phase 2 (phase complete)
 Status: In progress
-Last activity: 2026-03-26 -- Completed 02-02 (Quadrant chars, half-block gradients, render primitive tests)
+Last activity: 2026-03-26 -- Completed 02-01 (Hover tracking, button pressed state, input invalid border)
 
-Progress: [████████░░] 80% (4/5 plans estimated)
+Progress: [██████████] 100% (5/5 plans in phases 1-2)
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [████████░░] 80% (4/5 plans estimated)
 | 01 | 01 | 188s | 1 | 2 |
 | 01 | 02 | 204s | 1 | 4 |
 | 02 | 02 | 240s | 2 | 6 |
+| 02 | 01 | ~480s | 2 | 6 |
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Progress: [████████░░] 80% (4/5 plans estimated)
 - [v1.1-02-02]: Quadrant anti-diagonal/diagonal (0b1001/0b0110) pattern for Placeholder cross-hatch
 - [v1.1-02-02]: Half-block gradient on empty track only, progress fill overlaid on top
 - [v1.1-02-02]: Header single-row uses blended bg (not half-block) to preserve text
+- [v1.1-02-01]: border_color_override() trait method for widget-driven border color (Input invalid -> red)
+- [v1.1-02-01]: Render priority: widget override > focus > hover > default CSS
+- [v1.1-02-01]: Button pressed is single-frame REVERSED flash, reset in render()
 
 ### Pending Todos
 
@@ -71,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 02-02-PLAN.md (Quadrant chars in Placeholder, half-block gradients, render primitive tests)
+Stopped at: Completed 02-01-PLAN.md (Hover tracking, button pressed state, input invalid border)
 Resume file: None
