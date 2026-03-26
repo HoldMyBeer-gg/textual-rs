@@ -88,6 +88,8 @@ pub struct App {
     command_registry: crate::command::CommandRegistry,
     /// Set after recomposition — forces full bridge sync on next render pass.
     needs_full_sync: bool,
+    /// Timestamp of last Ctrl+C press for double-tap quit detection.
+    last_ctrl_c: Option<std::time::Instant>,
 }
 
 impl App {
@@ -126,6 +128,7 @@ impl App {
             worker_rx: None,
             command_registry: crate::command::CommandRegistry::new(),
             needs_full_sync: false,
+            last_ctrl_c: None,
         }
     }
 
@@ -151,6 +154,7 @@ impl App {
             worker_rx: None,
             command_registry: crate::command::CommandRegistry::new(),
             needs_full_sync: false,
+            last_ctrl_c: None,
         }
     }
 
@@ -279,12 +283,47 @@ impl App {
                                 continue;
                             }
 
-                            // 1. Check global quit bindings first
-                            if k.code == KeyCode::Char('q')
-                                || (k.code == KeyCode::Char('c')
-                                    && k.modifiers.contains(KeyModifiers::CONTROL))
-                            {
+                            // 1. Check global quit bindings
+                            if k.code == KeyCode::Char('q') {
                                 break;
+                            }
+                            // Ctrl+C: route to copy if focused widget has text selection,
+                            // otherwise use double-tap-to-quit pattern.
+                            if k.code == KeyCode::Char('c')
+                                && k.modifiers.contains(KeyModifiers::CONTROL)
+                            {
+                                let widget_has_selection = self.ctx.focused_widget
+                                    .and_then(|id| self.ctx.arena.get(id))
+                                    .map(|w| w.has_text_selection())
+                                    .unwrap_or(false);
+
+                                if widget_has_selection {
+                                    // Route to widget's copy action via key bindings
+                                    if let Some(focused_id) = self.ctx.focused_widget {
+                                        if let Some(widget) = self.ctx.arena.get(focused_id) {
+                                            for binding in widget.key_bindings() {
+                                                if binding.matches(k.code, k.modifiers) {
+                                                    widget.on_action(binding.action, &self.ctx);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    self.last_ctrl_c = None;
+                                    self.full_render_pass(&mut terminal)?;
+                                    continue;
+                                }
+
+                                // No selection: double-tap to quit (within 500ms)
+                                let now = std::time::Instant::now();
+                                if let Some(last) = self.last_ctrl_c {
+                                    if now.duration_since(last).as_millis() < 500 {
+                                        break; // Double-tap -- quit
+                                    }
+                                }
+                                self.last_ctrl_c = Some(now);
+                                self.full_render_pass(&mut terminal)?;
+                                continue;
                             }
 
                             // 2. Check focused widget's key bindings
