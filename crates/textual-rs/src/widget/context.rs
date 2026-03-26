@@ -55,6 +55,8 @@ pub struct AppContext {
     /// Active floating overlay (context menu, etc.). Rendered last, on top of everything.
     /// Not part of the widget tree — painted directly to the frame buffer at absolute coords.
     pub active_overlay: RefCell<Option<Box<dyn Widget>>>,
+    /// Deferred overlay dismissal flag. Set by dismiss_overlay(), drained after event handling.
+    pub pending_overlay_dismiss: Cell<bool>,
 }
 
 impl AppContext {
@@ -82,6 +84,7 @@ impl AppContext {
             worker_handles: RefCell::new(SecondaryMap::new()),
             pending_recompose: RefCell::new(Vec::new()),
             active_overlay: RefCell::new(None),
+            pending_overlay_dismiss: Cell::new(false),
         }
     }
 
@@ -91,9 +94,10 @@ impl AppContext {
         self.pending_recompose.borrow_mut().push(id);
     }
 
-    /// Dismiss the active floating overlay (context menu, etc.).
+    /// Schedule the active overlay for dismissal. Actual removal happens after the
+    /// current event handler returns (avoids RefCell borrow conflict).
     pub fn dismiss_overlay(&self) {
-        *self.active_overlay.borrow_mut() = None;
+        self.pending_overlay_dismiss.set(true);
     }
 
     /// Schedule a new screen push deferred to the next event loop tick.

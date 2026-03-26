@@ -337,6 +337,10 @@ impl App {
                                         widget.on_event(&m as &dyn std::any::Any, &self.ctx);
                                     }
                                 }
+                                if self.ctx.pending_overlay_dismiss.get() {
+                                    self.ctx.pending_overlay_dismiss.set(false);
+                                    *self.ctx.active_overlay.borrow_mut() = None;
+                                }
                                 self.full_render_pass(&mut terminal)?;
                                 continue;
                             }
@@ -575,20 +579,25 @@ impl App {
     pub fn handle_key_event(&mut self, k: crossterm::event::KeyEvent) -> bool {
         // 0a. If overlay is active, route keys to it
         if self.ctx.active_overlay.borrow().is_some() {
-            let overlay = self.ctx.active_overlay.borrow();
-            if let Some(ref widget) = *overlay {
-                // Check overlay's key bindings
-                for binding in widget.key_bindings() {
-                    if binding.matches(k.code, k.modifiers) {
-                        widget.on_action(binding.action, &self.ctx);
-                        drop(overlay);
-                        return true;
+            {
+                let overlay = self.ctx.active_overlay.borrow();
+                if let Some(ref widget) = *overlay {
+                    for binding in widget.key_bindings() {
+                        if binding.matches(k.code, k.modifiers) {
+                            widget.on_action(binding.action, &self.ctx);
+                            break;
+                        }
                     }
                 }
             }
-            drop(overlay);
-            // Any unhandled key dismisses the overlay
-            self.ctx.dismiss_overlay();
+            // Drain deferred dismiss
+            if self.ctx.pending_overlay_dismiss.get() {
+                self.ctx.pending_overlay_dismiss.set(false);
+                *self.ctx.active_overlay.borrow_mut() = None;
+            } else {
+                // Any unhandled key dismisses the overlay
+                *self.ctx.active_overlay.borrow_mut() = None;
+            }
             return true;
         }
 
@@ -652,6 +661,11 @@ impl App {
                 widget.on_event(&m as &dyn std::any::Any, &self.ctx);
             }
             drop(overlay);
+            // Drain deferred overlay dismiss
+            if self.ctx.pending_overlay_dismiss.get() {
+                self.ctx.pending_overlay_dismiss.set(false);
+                *self.ctx.active_overlay.borrow_mut() = None;
+            }
             return;
         }
         match m.kind {
