@@ -17,6 +17,8 @@ cssparser = "0.37.0"
 cssparser-color = "0.5.0"
 reactive_graph = { version = "0.2.13", features = ["effects"] }
 any_spawner = { version = "0.3.0", features = ["tokio"] }
+pulldown-cmark = { version = "0.13", default-features = false }
+arboard = { version = "3.6", default-features = false }
 
 [dev-dependencies]
 insta = "1.46.3"

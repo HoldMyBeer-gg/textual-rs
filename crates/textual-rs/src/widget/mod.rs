@@ -1,5 +1,9 @@
 pub mod context;
 pub mod tree;
+pub mod label;
+pub mod button;
+pub mod checkbox;
+pub mod switch;
 
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

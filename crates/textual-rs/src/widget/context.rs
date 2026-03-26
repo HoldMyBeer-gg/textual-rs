@@ -25,6 +25,10 @@ pub struct AppContext {
     /// Uses RefCell so widgets can post messages from &self (on_event/on_action) without &mut.
     /// Drained by the event loop after each event is processed.
     pub message_queue: RefCell<Vec<(WidgetId, Box<dyn Any>)>>,
+    /// Deferred screen pushes from widgets.
+    /// Widgets in on_action(&self) can use push_screen_deferred() to schedule a new screen push
+    /// without needing &mut AppContext. The event loop drains this after each action.
+    pub pending_screen_pushes: RefCell<Vec<Box<dyn Widget>>>,
 }
 
 impl AppContext {
@@ -43,7 +47,15 @@ impl AppContext {
             input_buffer: String::new(),
             event_tx: None,
             message_queue: RefCell::new(Vec::new()),
+            pending_screen_pushes: RefCell::new(Vec::new()),
         }
+    }
+
+    /// Schedule a new screen push deferred to the next event loop tick.
+    /// Use this from `on_action(&self, ...)` where only &self is available.
+    /// The event loop drains `pending_screen_pushes` after each event cycle.
+    pub fn push_screen_deferred(&self, screen: Box<dyn Widget>) {
+        self.pending_screen_pushes.borrow_mut().push(screen);
     }
 
     /// Post a typed message from a widget.
