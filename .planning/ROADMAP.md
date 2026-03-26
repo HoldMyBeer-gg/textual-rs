@@ -91,7 +91,7 @@ Plans:
   2. Interactive widgets (Input, TextArea, Button, Checkbox, Switch, RadioSet, Select, ListView, DataTable, Tree, Tabs, Collapsible) respond correctly to keyboard events delivered via `Pilot`
   3. ScrollView, ListView, DataTable, and Tree widgets scroll their content when content exceeds the available area
   4. Each widget emits the documented messages (e.g., `Button::Pressed`, `Input::Changed`) when user interaction occurs, verifiable via TestApp message capture
-**Plans**: 7 plans
+**Plans**: 9 plans
 
 Plans:
 - [x] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
@@ -101,6 +101,8 @@ Plans:
 - [ ] 04-05-PLAN.md — ListView, Log, ScrollView widgets
 - [ ] 04-06-PLAN.md — DataTable, Tree widgets
 - [ ] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
+- [ ] 04-08-PLAN.md — Gap closure: Input validation API (validator callback, error state rendering)
+- [ ] 04-09-PLAN.md — Gap closure: Update REQUIREMENTS.md checkbox markers to match verification status
 
 **UI hint**: yes
 
@@ -125,5 +127,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
-| 4. Built-in Widget Library | 2/7 | In Progress|  |
+| 4. Built-in Widget Library | 7/9 | In Progress (gap closure)|  |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
