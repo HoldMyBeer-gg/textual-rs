@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: "Visual Parity with Python Textual"
 status: In progress
-stopped_at: "Completed 02-01-PLAN.md (Hover tracking, button pressed state, input invalid border)"
-last_updated: "2026-03-26T21:10:00Z"
+stopped_at: "Completed 03-01-PLAN.md (Button 3D depth borders + DataTable zebra rows)"
+last_updated: "2026-03-26T22:00:00Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,16 +19,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** v1.1 Phase 2 -- Interactive States & Rendering
+**Current focus:** v1.1 Phase 3 -- Widget Visual Polish & Demos
 
 ## Current Position
 
-Phase: 2 of 3 (Interactive States & Rendering)
-Plan: 2 of 2 complete in phase 2 (phase complete)
+Phase: 3 of 3 (Widget Visual Polish & Demos)
+Plan: 1 of 2 complete in phase 3
 Status: In progress
-Last activity: 2026-03-26 -- Completed 02-01 (Hover tracking, button pressed state, input invalid border)
+Last activity: 2026-03-26 -- Completed 03-01 (Button 3D depth borders + DataTable zebra rows)
 
-Progress: [██████████] 100% (5/5 plans in phases 1-2)
+Progress: [████████░░] 83% (6/7 plans total, 1/2 in phase 3)
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [██████████] 100% (5/5 plans in phases 1-2)
 | 01 | 02 | 204s | 1 | 4 |
 | 02 | 02 | 240s | 2 | 6 |
 | 02 | 01 | ~480s | 2 | 6 |
+| 03 | 01 | 246s | 2 | 2 |
 
 ## Accumulated Context
 
@@ -61,6 +62,9 @@ Progress: [██████████] 100% (5/5 plans in phases 1-2)
 - [v1.1-02-01]: border_color_override() trait method for widget-driven border color (Input invalid -> red)
 - [v1.1-02-01]: Render priority: widget override > focus > hover > default CSS
 - [v1.1-02-01]: Button pressed is single-frame REVERSED flash, reset in render()
+- [v1.1-03-01]: Button 3D depth uses 25% lighter top / 35% darker bottom blend ratios
+- [v1.1-03-01]: DataTable zebra stripe is 6% lighter than table background
+- [v1.1-03-01]: Cursor row always overrides zebra stripe (accent highlight priority)
 
 ### Pending Todos
 
@@ -75,5 +79,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 02-01-PLAN.md (Hover tracking, button pressed state, input invalid border)
+Stopped at: Completed 03-01-PLAN.md (Button 3D depth borders + DataTable zebra rows)
 Resume file: None
