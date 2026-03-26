@@ -265,6 +265,15 @@ impl Widget for TextArea {
         TEXT_AREA_BINDINGS
     }
 
+    fn context_menu_items(&self) -> Vec<super::context_menu::ContextMenuItem> {
+        vec![
+            super::context_menu::ContextMenuItem::new("Cut", "cut").with_shortcut("Ctrl+X"),
+            super::context_menu::ContextMenuItem::new("Copy", "copy").with_shortcut("Ctrl+C"),
+            super::context_menu::ContextMenuItem::new("Paste", "paste").with_shortcut("Ctrl+V"),
+            super::context_menu::ContextMenuItem::new("Select All", "select_all").with_shortcut("Ctrl+A"),
+        ]
+    }
+
     fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> EventPropagation {
         if let Some(key_event) = event.downcast_ref::<KeyEvent>() {
             // Handle character insertion — only for plain chars (no Control/Alt, but allow Shift)

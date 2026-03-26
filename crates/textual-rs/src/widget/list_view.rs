@@ -135,6 +135,12 @@ impl Widget for ListView {
         LIST_VIEW_BINDINGS
     }
 
+    fn context_menu_items(&self) -> Vec<super::context_menu::ContextMenuItem> {
+        vec![
+            super::context_menu::ContextMenuItem::new("Copy Selected", "copy_selected").with_shortcut("Ctrl+C"),
+        ]
+    }
+
     fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
         use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
         if let Some(m) = event.downcast_ref::<MouseEvent>() {

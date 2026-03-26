@@ -1,4 +1,5 @@
 pub mod context;
+pub mod context_menu;
 pub mod tree;
 pub mod label;
 pub mod button;
@@ -172,6 +173,12 @@ pub trait Widget: 'static {
     /// (e.g., Input with invalid content shows a red border). Returns `None` by default.
     fn border_color_override(&self) -> Option<(u8, u8, u8)> {
         None
+    }
+
+    /// Return context menu items for right-click. Empty vec = no context menu.
+    /// Override to provide widget-specific menu items.
+    fn context_menu_items(&self) -> Vec<context_menu::ContextMenuItem> {
+        Vec::new()
     }
 
     /// Return the action to trigger on mouse click, if any.

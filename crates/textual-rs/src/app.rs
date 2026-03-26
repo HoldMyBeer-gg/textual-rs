@@ -280,6 +280,33 @@ impl App {
                                 }
                             }
 
+                            // 3.5. Shift+F10 or Menu key → open context menu
+                            if !handled {
+                                let is_context_key = matches!(k.code, KeyCode::F(10) if k.modifiers.contains(KeyModifiers::SHIFT))
+                                    || matches!(k.code, KeyCode::Menu);
+                                if is_context_key {
+                                    if let Some(focused_id) = self.ctx.focused_widget {
+                                        if let Some(widget) = self.ctx.arena.get(focused_id) {
+                                            let items = widget.context_menu_items();
+                                            if !items.is_empty() {
+                                                // Position at widget's top-left (approximate)
+                                                let (ax, ay) = self.hit_map.as_ref()
+                                                    .and_then(|hm| {
+                                                        // Use first cell of focused widget as anchor
+                                                        None::<(u16, u16)> // fallback below
+                                                    })
+                                                    .unwrap_or((0, 0));
+                                                let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
+                                                    items, Some(focused_id), ax, ay,
+                                                );
+                                                self.ctx.push_screen_deferred(Box::new(overlay));
+                                                handled = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             // 4. App-level key handling (Tab for focus cycling)
                             if !handled || matches!(k.code, KeyCode::Tab) {
                                 match k.code {
@@ -300,18 +327,37 @@ impl App {
                         }
 
                         Ok(AppEvent::Mouse(m)) => {
-                            use crossterm::event::MouseEventKind;
+                            use crossterm::event::{MouseEventKind, MouseButton};
                             match m.kind {
-                                MouseEventKind::Down(_) => {
-                                    // Hit test to find target widget
+                                MouseEventKind::Down(MouseButton::Right) => {
+                                    // Right-click: spawn context menu if widget provides items
                                     if let Some(ref hit_map) = self.hit_map {
                                         if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                                            // Click-to-focus: if target is focusable, set focus
+                                            if let Some(widget) = self.ctx.arena.get(target_id) {
+                                                let items = widget.context_menu_items();
+                                                if !items.is_empty() {
+                                                    let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
+                                                        items,
+                                                        Some(target_id),
+                                                        m.column,
+                                                        m.row,
+                                                    );
+                                                    self.ctx.push_screen_deferred(Box::new(overlay));
+                                                    self.process_deferred_screens();
+                                                    self.full_render_pass(&mut terminal)?;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                MouseEventKind::Down(_) => {
+                                    // Left/middle click: focus + activate
+                                    if let Some(ref hit_map) = self.hit_map {
+                                        if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
                                             if let Some(widget) = self.ctx.arena.get(target_id) {
                                                 if widget.can_focus() {
                                                     self.ctx.focused_widget = Some(target_id);
                                                 }
-                                                // Click-to-activate: trigger the widget's click action
                                                 if let Some(action) = widget.click_action() {
                                                     widget.on_action(action, &self.ctx);
                                                 }

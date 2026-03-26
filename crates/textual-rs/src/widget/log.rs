@@ -114,6 +114,13 @@ impl Widget for Log {
         LOG_BINDINGS
     }
 
+    fn context_menu_items(&self) -> Vec<super::context_menu::ContextMenuItem> {
+        vec![
+            super::context_menu::ContextMenuItem::new("Copy All", "copy_all").with_shortcut("Ctrl+C"),
+            super::context_menu::ContextMenuItem::new("Clear", "clear"),
+        ]
+    }
+
     fn on_action(&self, action: &str, _ctx: &AppContext) {
         let offset = self.scroll_offset.get_untracked();
         let line_count = self.lines.get_untracked().len();

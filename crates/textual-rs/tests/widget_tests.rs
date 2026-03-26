@@ -916,9 +916,10 @@ async fn text_area_backspace_joins_lines() {
         "row 0 should contain 'abcd' after joining, got: {:?}",
         row0
     );
+    // Row 1 may contain the focus accent bar (▎) if widget is borderless+focused
     assert!(
-        row1.is_empty(),
-        "row 1 should be empty after joining, got: {:?}",
+        row1.is_empty() || row1 == "▎",
+        "row 1 should be empty after joining (may have focus indicator), got: {:?}",
         row1
     );
 }
