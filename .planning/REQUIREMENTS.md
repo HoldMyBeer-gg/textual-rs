@@ -100,8 +100,8 @@
 ### Developer Experience
 
 - [ ] **DX-01**: `#[derive(Widget)]` proc-macro for common widget boilerplate
-- [ ] **DX-02**: Worker API for running blocking tasks without blocking the event loop
-- [ ] **DX-03**: `notify()` / `post_message()` API for inter-widget communication
+- [x] **DX-02**: Worker API for running blocking tasks without blocking the event loop
+- [x] **DX-03**: `notify()` / `post_message()` API for inter-widget communication
 - [ ] **DX-04**: Application-level command palette support
 - [ ] **DX-05**: Comprehensive documentation with examples matching Textual's guide structure
 

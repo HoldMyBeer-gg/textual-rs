@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to plan
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-03-26T03:22:34.927Z"
+stopped_at: Completed 05-02-PLAN.md — Worker API and notify()
+last_updated: "2026-03-26T06:01:19.672Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 22
+  completed_plans: 19
 ---
 
 # Project State
@@ -57,6 +57,7 @@ Plan: Not started
 | Phase 04-built-in-widget-library P03 | 8 | 2 tasks | 8 files |
 | Phase 04-built-in-widget-library P08 | 10 | 1 tasks | 2 files |
 | Phase 04-built-in-widget-library P09 | 2 | 1 tasks | 1 files |
+| Phase 05-developer-experience-and-polish P02 | 8 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 04-built-in-widget-library]: run_validation() called inside emit_changed() — single call site keeps validity fresh before message emission
 - [Phase 04-built-in-widget-library]: Input validation tests use inject_key_event() not pilot.type_text() — type_text drains queue via settle(), leaving nothing to inspect
 - [Phase 04-built-in-widget-library]: All 22 WIDGET-* requirements marked complete in REQUIREMENTS.md after gap closure
+- [Phase 05-developer-experience-and-polish]: Worker results use dedicated flume channel (worker_tx/worker_rx) not AppEvent variant — avoids Clone/Debug requirement on Box<dyn Any + Send>
+- [Phase 05-developer-experience-and-polish]: process_deferred_screens() extracted as App helper — called consistently after key events, mouse events, and worker results
+- [Phase 05-developer-experience-and-polish]: WorkerResult<T> includes source_id field for multi-worker disambiguation in on_event handlers
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: Quick task 260325-ti8 executed — demos rewritten
-Resume file: .planning/quick/260325-ti8-fix-demo-rs-and-irc-demo-rs-to-look-good/260325-ti8-SUMMARY.md
+Last session: 2026-03-26T06:01:19.668Z
+Stopped at: Completed 05-02-PLAN.md — Worker API and notify()
+Resume file: None

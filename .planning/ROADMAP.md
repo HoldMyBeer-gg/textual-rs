@@ -120,7 +120,7 @@ Plans:
 
 Plans:
 - [ ] 05-01-PLAN.md — Proc-macro crate: #[derive(Widget)] + #[widget_impl] with #[on] and #[keybinding] support
-- [ ] 05-02-PLAN.md — Worker API (run_worker, WorkerResult, auto-cancel) + notify() convenience wrapper
+- [x] 05-02-PLAN.md — Worker API (run_worker, WorkerResult, auto-cancel) + notify() convenience wrapper
 - [ ] 05-03-PLAN.md — Command Palette: CommandRegistry, CommandPalette widget, Ctrl+P integration, fuzzy search
 - [ ] 05-04-PLAN.md — Demos (widget showcase + IRC client) + tutorial examples + rustdoc
 
@@ -137,4 +137,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
 | 4. Built-in Widget Library | 8/9 | In Progress|  |
-| 5. Developer Experience and Polish | 0/4 | Not started | - |
+| 5. Developer Experience and Polish | 1/4 | In Progress|  |
