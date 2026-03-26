@@ -1,0 +1,60 @@
+Screen {
+    background: #0a0a0f;
+    color: #c8c8d8;
+}
+Header {
+    background: #12121a;
+    color: #00d4ff;
+    text-style: bold;
+    height: 1;
+    dock: top;
+}
+Footer {
+    background: #12121a;
+    color: #00d4ff;
+    height: 1;
+    dock: bottom;
+}
+IrcScreen {
+    layout-direction: vertical;
+    background: #0a0a0f;
+    color: #c8c8d8;
+}
+MainRegion {
+    layout-direction: horizontal;
+    flex-grow: 1;
+}
+ChannelPane {
+    width: 20;
+    border: solid #4a4a5a;
+    background: #12121a;
+    color: #c8c8d8;
+}
+ChatLog {
+    flex-grow: 1;
+    border: solid #4a4a5a;
+    color: #00ffa3;
+}
+UserPane {
+    width: 22;
+    border: solid #4a4a5a;
+    background: #12121a;
+    color: #c8c8d8;
+}
+InputRegion {
+    height: 3;
+}
+Input {
+    border: rounded #4a4a5a;
+    flex-grow: 1;
+    height: 3;
+    color: #c8c8d8;
+}
+ListView {
+    flex-grow: 1;
+    border: none;
+}
+Log {
+    flex-grow: 1;
+    border: none;
+}

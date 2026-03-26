@@ -1,0 +1,120 @@
+Screen {
+    background: #0a0a0f;
+    color: #c8c8d8;
+}
+.panel {
+    background: #12121a;
+    border: solid #4a4a5a;
+    padding: 0 1;
+}
+*:focus {
+    border: solid #00ffa3;
+}
+Header {
+    background: #12121a;
+    color: #00d4ff;
+    text-style: bold;
+    height: 1;
+    dock: top;
+}
+Footer {
+    background: #12121a;
+    color: #00d4ff;
+    height: 1;
+    dock: bottom;
+}
+Tabs {
+    background: #0a0a0f;
+    height: 1;
+}
+Tab.-active {
+    color: #00ffa3;
+    text-style: bold;
+}
+Button.primary {
+    background: #00ffa3;
+    color: #0a0a0f;
+    text-style: bold;
+}
+.muted {
+    color: #4a4a5a;
+}
+.error {
+    color: #ff4444;
+    border: solid #ff4444;
+}
+DemoScreen {
+    layout-direction: vertical;
+    background: #0a0a0f;
+    color: #c8c8d8;
+}
+TabbedContent {
+    flex-grow: 1;
+}
+InputsPane {
+    layout-direction: vertical;
+    padding: 1;
+}
+DisplayPane {
+    layout-direction: vertical;
+    padding: 1;
+}
+LayoutPane {
+    layout-direction: vertical;
+    padding: 1;
+}
+InteractivePane {
+    layout-direction: vertical;
+}
+Button {
+    border: heavy;
+    min-width: 16;
+    height: 3;
+    color: #00ffa3;
+}
+Input {
+    border: rounded;
+    height: 3;
+    color: #c8c8d8;
+}
+DataTable {
+    border: rounded;
+    min-height: 8;
+    color: #c8c8d8;
+}
+ListView {
+    border: rounded;
+    min-height: 6;
+    flex-grow: 1;
+    color: #c8c8d8;
+}
+Log {
+    border: rounded;
+    min-height: 6;
+    flex-grow: 1;
+    color: #00ffa3;
+}
+ProgressBar {
+    height: 1;
+    color: #00ffa3;
+}
+Sparkline {
+    height: 1;
+    color: #00d4ff;
+}
+Label {
+    height: 1;
+    color: #00d4ff;
+}
+Checkbox {
+    height: 1;
+    color: #c8c8d8;
+}
+Switch {
+    height: 1;
+    color: #c8c8d8;
+}
+RadioSet {
+    height: 3;
+    color: #c8c8d8;
+}
