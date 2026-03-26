@@ -177,6 +177,8 @@ pub enum TcssValue {
     Dimension(TcssDimension),
     Color(TcssColor),
     Border(BorderStyle),
+    /// Border style + color shorthand (e.g. "border: solid #4a4a5a")
+    BorderWithColor(BorderStyle, TcssColor),
     Display(TcssDisplay),
     TextAlign(TextAlign),
     Overflow(Overflow),
@@ -213,8 +215,13 @@ impl ComputedStyle {
                     }
                 }
                 "border" => {
-                    if let TcssValue::Border(b) = decl.value {
-                        self.border = b;
+                    match &decl.value {
+                        TcssValue::Border(b) => self.border = *b,
+                        TcssValue::BorderWithColor(b, c) => {
+                            self.border = *b;
+                            self.color = c.clone();
+                        }
+                        _ => {}
                     }
                 }
                 "border-title" => {

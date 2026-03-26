@@ -37,13 +37,13 @@ Header {
     height: 1;
     background: #12121a;
     color: #00d4ff;
-    dock: top;
+
 }
 Footer {
     height: 1;
     background: #12121a;
     color: #4a4a5a;
-    dock: bottom;
+
 }
 WorkerDemo {
     flex-grow: 1;

@@ -13,15 +13,12 @@ Screen {
 Header {
     background: #12121a;
     color: #00d4ff;
-    text-style: bold;
     height: 1;
-    dock: top;
 }
 Footer {
     background: #12121a;
     color: #00d4ff;
     height: 1;
-    dock: bottom;
 }
 Tabs {
     background: #0a0a0f;
@@ -29,12 +26,12 @@ Tabs {
 }
 Tab.-active {
     color: #00ffa3;
-    text-style: bold;
+
 }
 Button.primary {
     background: #00ffa3;
     color: #0a0a0f;
-    text-style: bold;
+
 }
 .muted {
     color: #4a4a5a;
