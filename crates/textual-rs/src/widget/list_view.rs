@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Modifier;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -175,10 +175,14 @@ impl Widget for ListView {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
 
         // Store viewport height for action handlers
         self.viewport_height.set(area.height);
@@ -201,12 +205,12 @@ impl Widget for ListView {
             // Pad to text_width so selection highlight covers the whole row
             let padded = format!("{:<width$}", item_text, width = text_width as usize);
 
-            let style = if is_selected {
-                Style::default().add_modifier(Modifier::REVERSED)
+            let row_style = if is_selected {
+                style.add_modifier(Modifier::REVERSED)
             } else {
-                Style::default()
+                style
             };
-            buf.set_string(area.x, y, &padded, style);
+            buf.set_string(area.x, y, &padded, row_style);
         }
 
         // Draw scrollbar in rightmost column
@@ -221,7 +225,7 @@ impl Widget for ListView {
                     0
                 };
                 let ch = if row == thumb_row { "█" } else { "│" };
-                buf.set_string(scroll_x, y, ch, Style::default());
+                buf.set_string(scroll_x, y, ch, style);
             }
         }
     }

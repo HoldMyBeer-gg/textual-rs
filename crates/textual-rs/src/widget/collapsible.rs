@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -102,11 +101,15 @@ impl Widget for Collapsible {
         // Use get_untracked() to avoid reactive tracking loops in render
         let expanded = self.expanded.get_untracked();
 
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+
         // Always render the title row
         let arrow = if expanded { "▼" } else { "▶" };
         let title_text = format!("{} {}", arrow, self.title);
         let display: String = title_text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, Style::default());
+        buf.set_string(area.x, area.y, &display, style);
 
         // Render children below title row only if expanded
         if expanded && area.height > 1 {

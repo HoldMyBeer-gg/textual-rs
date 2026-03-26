@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -104,11 +103,10 @@ impl Widget for Button {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        // Render label centered in the area
         let label_len = self.label.chars().count() as u16;
         let x = if area.width > label_len {
             area.x + (area.width - label_len) / 2
@@ -121,6 +119,9 @@ impl Widget for Button {
             area.y
         };
         let display: String = self.label.chars().take(area.width as usize).collect();
-        buf.set_string(x, y, &display, Style::default());
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+        buf.set_string(x, y, &display, style);
     }
 }

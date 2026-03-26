@@ -1,6 +1,5 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use super::context::AppContext;
 use super::Widget;
@@ -58,7 +57,8 @@ impl Widget for Footer {
         }
 
         let display: String = binding_text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, Style::default());
+        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        buf.set_string(area.x, area.y, &display, style);
     }
 }
 

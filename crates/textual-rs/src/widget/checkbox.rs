@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -93,15 +92,17 @@ impl Widget for Checkbox {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        // Use get_untracked() to avoid reactive tracking loops in render
         let checked = self.checked.get_untracked();
         let indicator = if checked { "[X]" } else { "[ ]" };
         let text = format!("{} {}", indicator, self.label);
         let display: String = text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, Style::default());
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+        buf.set_string(area.x, area.y, &display, style);
     }
 }

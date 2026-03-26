@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Modifier};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::context::AppContext;
@@ -345,6 +345,10 @@ impl Widget for Input {
             return;
         }
 
+        let base_style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+
         let val = self.value.get_untracked();
         let pos = self.cursor_pos.get();
 
@@ -358,7 +362,7 @@ impl Widget for Input {
                 area.x,
                 area.y,
                 &display,
-                Style::default().add_modifier(Modifier::DIM),
+                base_style.add_modifier(Modifier::DIM),
             );
             return;
         }
@@ -394,14 +398,14 @@ impl Widget for Input {
             }
             let style = if char_idx == cursor_char_idx && focused {
                 if is_invalid {
-                    Style::default().fg(Color::Red).add_modifier(Modifier::REVERSED)
+                    base_style.fg(Color::Red).add_modifier(Modifier::REVERSED)
                 } else {
-                    Style::default().add_modifier(Modifier::REVERSED)
+                    base_style.add_modifier(Modifier::REVERSED)
                 }
             } else if is_invalid {
-                Style::default().fg(Color::Red)
+                base_style.fg(Color::Red)
             } else {
-                Style::default()
+                base_style
             };
             buf.set_string(col, area.y, &ch.to_string(), style);
             col += 1;
@@ -412,9 +416,9 @@ impl Widget for Input {
             let cursor_col = area.x + (cursor_char_idx - view_start).min(area.width as usize - 1) as u16;
             if cursor_col < area.x + area.width {
                 let cursor_style = if is_invalid {
-                    Style::default().fg(Color::Red).add_modifier(Modifier::REVERSED)
+                    base_style.fg(Color::Red).add_modifier(Modifier::REVERSED)
                 } else {
-                    Style::default().add_modifier(Modifier::REVERSED)
+                    base_style.add_modifier(Modifier::REVERSED)
                 };
                 buf.set_string(cursor_col, area.y, " ", cursor_style);
             }

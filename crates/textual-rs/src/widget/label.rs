@@ -1,6 +1,5 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use super::context::AppContext;
 use super::Widget;
@@ -36,10 +35,11 @@ impl Widget for Label {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        // Truncate text to fit area width
         let text: &str = &self.text;
         let max_chars = area.width as usize;
         let display: String = text.chars().take(max_chars).collect();
-        buf.set_string(area.x, area.y, &display, Style::default());
+        // Inherit style from buffer (set by paint_chrome)
+        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        buf.set_string(area.x, area.y, &display, style);
     }
 }

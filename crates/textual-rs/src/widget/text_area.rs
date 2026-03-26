@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Modifier;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::context::AppContext;
@@ -521,10 +521,14 @@ impl Widget for TextArea {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
 
         let lines = self.lines.get_untracked();
         let cursor_row = self.cursor_row.get();
@@ -554,7 +558,7 @@ impl Widget for TextArea {
             if self.show_line_numbers && margin > 0 {
                 let num_str = format!("{:>width$} ", line_idx + 1, width = margin - 1);
                 let display: String = num_str.chars().take(margin).collect();
-                buf.set_string(area.x, y, &display, Style::default());
+                buf.set_string(area.x, y, &display, style);
             }
 
             let line = &lines[line_idx];
@@ -562,7 +566,7 @@ impl Widget for TextArea {
 
             // Render line content
             let display: String = line.chars().take(text_width).collect();
-            buf.set_string(text_x, y, &display, Style::default());
+            buf.set_string(text_x, y, &display, style);
 
             // Render cursor on the cursor row
             if line_idx == cursor_row {
@@ -570,7 +574,7 @@ impl Widget for TextArea {
                 if cx < area.x + area.width {
                     let current_char = line.chars().nth(cursor_col).unwrap_or(' ');
                     let sym = current_char.to_string();
-                    buf.set_string(cx, y, &sym, Style::default().add_modifier(Modifier::REVERSED));
+                    buf.set_string(cx, y, &sym, style.add_modifier(Modifier::REVERSED));
                 }
             }
         }

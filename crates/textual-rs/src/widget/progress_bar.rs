@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use super::context::AppContext;
 use super::Widget;
@@ -70,7 +69,8 @@ impl Widget for ProgressBar {
                     .take(filled)
                     .chain(std::iter::repeat(EMPTY).take(width - filled))
                     .collect();
-                buf.set_string(area.x, area.y, &text, Style::default());
+                let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+                buf.set_string(area.x, area.y, &text, style);
             }
             None => {
                 // Indeterminate: bouncing block animation
@@ -104,7 +104,8 @@ impl Widget for ProgressBar {
                 for _ in block_end..width {
                     text.push(' ');
                 }
-                buf.set_string(area.x, area.y, &text, Style::default());
+                let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+                buf.set_string(area.x, area.y, &text, style);
             }
         }
     }

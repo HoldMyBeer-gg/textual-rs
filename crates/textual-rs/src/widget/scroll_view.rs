@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -226,6 +225,7 @@ impl Widget for ScrollView {
 
         // Draw vertical scrollbar
         if need_vscroll && area.width > 0 {
+            let sb_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
             let max_offset = self.content_height.saturating_sub(area.height as usize);
             let scroll_x = area.x + area.width - 1;
             for row in 0..area.height {
@@ -236,12 +236,13 @@ impl Widget for ScrollView {
                     0
                 };
                 let ch = if row == thumb_row { "█" } else { "│" };
-                buf.set_string(scroll_x, y, ch, Style::default());
+                buf.set_string(scroll_x, y, ch, sb_style);
             }
         }
 
         // Draw horizontal scrollbar
         if need_hscroll && area.height > 0 {
+            let sb_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
             let max_offset = self.content_width.saturating_sub(area.width as usize);
             let scroll_y = area.y + area.height - 1;
             for col in 0..render_w {
@@ -252,7 +253,7 @@ impl Widget for ScrollView {
                     0
                 };
                 let ch = if col == thumb_col { "█" } else { "─" };
-                buf.set_string(x, scroll_y, ch, Style::default());
+                buf.set_string(x, scroll_y, ch, sb_style);
             }
         }
     }

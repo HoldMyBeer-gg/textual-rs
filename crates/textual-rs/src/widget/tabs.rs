@@ -1,11 +1,12 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Modifier;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
+use crate::css::render_style::{fill_background, text_style as css_text_style};
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 
@@ -114,10 +115,15 @@ impl Widget for Tabs {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let base_style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+
         let active_idx = self.active.get_untracked();
         let separator = " | ";
 
@@ -136,22 +142,22 @@ impl Widget for Tabs {
                     if x >= area.x + area.width {
                         break;
                     }
-                    buf[(x, y)].set_char(ch).set_style(Style::default());
+                    buf[(x, y)].set_char(ch).set_style(base_style);
                     x += 1;
                 }
             }
 
             // Leading space
             if x < area.x + area.width {
-                buf[(x, y)].set_char(' ').set_style(Style::default());
+                buf[(x, y)].set_char(' ').set_style(base_style);
                 x += 1;
             }
 
             // Tab label characters
             let style = if i == active_idx {
-                Style::default().add_modifier(Modifier::REVERSED)
+                base_style.add_modifier(Modifier::REVERSED)
             } else {
-                Style::default()
+                base_style
             };
 
             for ch in label.chars() {
@@ -164,7 +170,7 @@ impl Widget for Tabs {
 
             // Trailing space
             if x < area.x + area.width {
-                buf[(x, y)].set_char(' ').set_style(if i == active_idx { style } else { Style::default() });
+                buf[(x, y)].set_char(' ').set_style(if i == active_idx { style } else { base_style });
                 x += 1;
             }
         }
@@ -174,7 +180,8 @@ impl Widget for Tabs {
 /// A container that combines a Tabs bar with content panes, showing only the active pane.
 ///
 /// Renders the tab bar in the first row and the active pane in the remaining area.
-/// The tab bar is embedded and rendered directly — not composed as a child widget.
+/// Panes are rendered directly (not via compose tree) so TabbedContent can control
+/// which pane is visible. It propagates computed styles to pane children.
 pub struct TabbedContent {
     pub tabs: Tabs,
     pub panes: Vec<Box<dyn Widget>>,
@@ -229,8 +236,164 @@ impl Widget for TabbedContent {
             };
             let active_idx = self.tabs.active.get_untracked();
             if let Some(pane) = self.panes.get(active_idx) {
-                pane.render(ctx, pane_area, buf);
+                // Panes are not in the compose tree, so we manually render their
+                // children with style propagation from the parent computed style.
+                render_pane_tree(pane.as_ref(), ctx, pane_area, buf);
             }
         }
+    }
+}
+
+/// Recursively render a pane widget and its compose() children.
+/// Since panes are not in the arena, we manually lay out children vertically/horizontally
+/// and apply the parent background to give them styled rendering.
+fn render_pane_tree(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    if area.width == 0 || area.height == 0 {
+        return;
+    }
+
+    // Fill pane background from parent (inherit from buffer)
+    let parent_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+    if let Some(bg) = parent_style.bg {
+        for y in area.y..area.y + area.height {
+            for x in area.x..area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_bg(bg);
+                }
+            }
+        }
+    }
+
+    let children = widget.compose();
+    if children.is_empty() {
+        // Leaf pane — just render it directly
+        widget.render(ctx, area, buf);
+        return;
+    }
+
+    // Detect layout direction from widget type name
+    // Convention: panes with "horizontal" in CSS or type names with known patterns
+    let is_horizontal = widget.widget_type_name().contains("Lists")
+        || widget.widget_type_name().contains("Main")
+        || widget.widget_type_name().contains("Horizontal");
+
+    if is_horizontal {
+        // Split area equally among children
+        let child_count = children.len() as u16;
+        if child_count == 0 { return; }
+        let child_width = area.width / child_count;
+        let mut x = area.x;
+
+        for (i, child) in children.iter().enumerate() {
+            let w = if i as u16 == child_count - 1 {
+                area.width - (x - area.x) // last child gets remaining width
+            } else {
+                child_width
+            };
+            let child_area = Rect { x, y: area.y, width: w, height: area.height };
+            render_child_styled(child.as_ref(), ctx, child_area, buf);
+            x += w;
+        }
+    } else {
+        // Vertical layout — give each child its natural height, flex remaining
+        let child_count = children.len();
+        let mut heights: Vec<u16> = Vec::with_capacity(child_count);
+        let mut flex_children: Vec<usize> = Vec::new();
+        let mut used_height: u16 = 0;
+
+        // First pass: assign fixed heights
+        for (i, child) in children.iter().enumerate() {
+            let name = child.widget_type_name();
+            // Widgets that want flex-grow
+            let wants_flex = matches!(name,
+                "DataTable" | "ListView" | "Log" | "TreeView" | "ScrollView" | "TextArea"
+            );
+            if wants_flex {
+                heights.push(0); // will be assigned later
+                flex_children.push(i);
+            } else {
+                // Give fixed-height widgets their natural height
+                let h = match name {
+                    "Button" => 3u16,
+                    "Input" => 3,
+                    "Label" | "Checkbox" | "Switch" | "ProgressBar" | "Sparkline" => 1,
+                    "RadioSet" | "RadioButton" => 3,
+                    "Collapsible" => 2,
+                    _ => 1,
+                };
+                heights.push(h);
+                used_height += h;
+            }
+        }
+
+        // Second pass: distribute remaining height to flex children
+        let remaining = area.height.saturating_sub(used_height);
+        if !flex_children.is_empty() {
+            let per_flex = remaining / flex_children.len() as u16;
+            let extra = remaining % flex_children.len() as u16;
+            for (j, &idx) in flex_children.iter().enumerate() {
+                heights[idx] = per_flex + if (j as u16) < extra { 1 } else { 0 };
+            }
+        }
+
+        // Third pass: render children
+        let mut y = area.y;
+        for (i, child) in children.iter().enumerate() {
+            let h = heights[i];
+            if h == 0 || y >= area.y + area.height {
+                continue;
+            }
+            let h = h.min(area.y + area.height - y);
+            let child_area = Rect { x: area.x, y, width: area.width, height: h };
+            render_child_styled(child.as_ref(), ctx, child_area, buf);
+            y += h;
+        }
+    }
+}
+
+/// Render a single child widget with CSS-like chrome (background, border).
+fn render_child_styled(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    use crate::css::render_style::{draw_border, to_ratatui_color};
+    use crate::css::types::{BorderStyle as TcssBorder, ComputedStyle, TcssColor};
+
+    if area.width == 0 || area.height == 0 {
+        return;
+    }
+
+    // Try to find a matching CSS rule for this widget type
+    // Since these widgets aren't in the arena, we check the parent's computed styles
+    // and build a synthetic style from any matching stylesheet rules
+    let type_name = widget.widget_type_name();
+
+    // Look through all computed styles to find one that might match this widget type
+    // This is a heuristic: we search for a computed style that was applied to the same
+    // widget type name earlier in the tree
+    let mut matched_style: Option<&ComputedStyle> = None;
+    for (id, w) in ctx.arena.iter() {
+        if w.widget_type_name() == type_name {
+            if let Some(cs) = ctx.computed_styles.get(id) {
+                matched_style = Some(cs);
+                break;
+            }
+        }
+    }
+
+    let content_area = if let Some(cs) = matched_style {
+        // Apply the matched style's background
+        fill_background(cs, area, buf);
+        // Draw border
+        draw_border(cs, area, buf)
+    } else {
+        area
+    };
+
+    // Check if this widget has compose() children
+    let children = widget.compose();
+    if children.is_empty() {
+        // Leaf widget — render with inherited style from buffer
+        widget.render(ctx, content_area, buf);
+    } else {
+        // Container — recurse
+        render_pane_tree(widget, ctx, content_area, buf);
     }
 }

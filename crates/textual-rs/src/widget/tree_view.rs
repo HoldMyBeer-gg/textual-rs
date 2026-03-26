@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Modifier;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -367,10 +367,14 @@ impl Widget for Tree {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let base_style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
 
         if self.dirty.get() {
             self.rebuild_flat_entries();
@@ -433,9 +437,9 @@ impl Widget for Tree {
 
             let display: String = guide.chars().take(content_width).collect();
             let style = if is_cursor {
-                Style::default().add_modifier(Modifier::REVERSED)
+                base_style.add_modifier(Modifier::REVERSED)
             } else {
-                Style::default()
+                base_style
             };
             buf.set_string(area.x, row_y, &display, style);
 
@@ -460,7 +464,7 @@ impl Widget for Tree {
                     break;
                 }
                 let ch = if i >= thumb_pos && i < thumb_pos + thumb_size { "█" } else { "░" };
-                buf.set_string(sb_x, sb_y, ch, Style::default());
+                buf.set_string(sb_x, sb_y, ch, base_style);
             }
         }
     }

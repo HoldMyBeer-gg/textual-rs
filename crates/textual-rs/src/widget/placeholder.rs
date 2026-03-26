@@ -1,6 +1,5 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use super::context::AppContext;
 use super::Widget;
@@ -60,7 +59,8 @@ impl Widget for Placeholder {
                 area.x
             };
             let display: String = text.chars().take(area.width as usize).collect();
-            buf.set_string(x, y, &display, Style::default());
+            let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+            buf.set_string(x, y, &display, style);
         };
 
         // If we have height, render label on first available row

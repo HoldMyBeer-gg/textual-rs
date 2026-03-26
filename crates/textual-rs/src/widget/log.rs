@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
@@ -151,10 +150,14 @@ impl Widget for Log {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
 
         // Store viewport height for action handlers and push_line
         self.viewport_height.set(area.height);
@@ -171,7 +174,7 @@ impl Widget for Log {
             // Reserve last column for scrollbar
             let text_width = if area.width > 1 { area.width - 1 } else { area.width };
             let line_text: String = lines[line_idx].chars().take(text_width as usize).collect();
-            buf.set_string(area.x, y, &line_text, Style::default());
+            buf.set_string(area.x, y, &line_text, style);
         }
 
         // Draw vertical scrollbar in rightmost column
@@ -186,7 +189,7 @@ impl Widget for Log {
                     0
                 };
                 let ch = if row == thumb_row { "█" } else { "│" };
-                buf.set_string(scroll_x, y, ch, Style::default());
+                buf.set_string(scroll_x, y, ch, style);
             }
         }
     }

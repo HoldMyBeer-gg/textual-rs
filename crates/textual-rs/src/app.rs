@@ -9,6 +9,7 @@ use tokio::task;
 use tokio::task::LocalSet;
 
 use crate::css::cascade::{apply_cascade_to_tree, Stylesheet};
+use crate::css::render_style::paint_chrome;
 use crate::event::dispatch::dispatch_message;
 use crate::event::AppEvent;
 use crate::layout::bridge::TaffyBridge;
@@ -428,8 +429,14 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
     for id in dfs_ids {
         if let Some(rect) = bridge.rect_for(id) {
             if rect.width > 0 && rect.height > 0 {
+                // Paint background + borders from computed CSS, get inner content area
+                let content_area = if let Some(cs) = ctx.computed_styles.get(id) {
+                    paint_chrome(cs, rect, frame.buffer_mut())
+                } else {
+                    rect
+                };
                 if let Some(widget) = ctx.arena.get(id) {
-                    widget.render(ctx, rect, frame.buffer_mut());
+                    widget.render(ctx, content_area, frame.buffer_mut());
                 }
             }
         }

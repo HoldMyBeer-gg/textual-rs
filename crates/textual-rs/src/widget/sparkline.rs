@@ -1,6 +1,5 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use super::context::AppContext;
 use super::Widget;
@@ -71,6 +70,7 @@ impl Widget for Sparkline {
             })
             .collect();
 
-        buf.set_string(area.x, area.y, &text, Style::default());
+        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        buf.set_string(area.x, area.y, &text, style);
     }
 }

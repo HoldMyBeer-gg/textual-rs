@@ -1,3 +1,15 @@
+/// Widget showcase demo — tabbed layout demonstrating textual-rs built-in widgets.
+///
+/// Layout:
+/// ┌──────────────────── Header (dock: top) ─────────────────────┐
+/// ├─────────────────────────────────────────────────────────────┤
+/// │  Controls | Data | Lists    (TabbedContent)                 │
+/// │ ┌─────────────────────────────────────────────────────────┐ │
+/// │ │  Active pane content (compose-based children)           │ │
+/// │ └─────────────────────────────────────────────────────────┘ │
+/// ├─────────────────────────────────────────────────────────────┤
+/// │  Footer (dock: bottom)                                      │
+/// └─────────────────────────────────────────────────────────────┘
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use textual_rs::{
@@ -27,7 +39,7 @@ Header {
     dock: top;
     height: 1;
     background: rgb(18,18,26);
-    color: rgb(0,255,163);
+    color: rgb(0,212,255);
 }
 Footer {
     dock: bottom;
@@ -38,40 +50,74 @@ Footer {
 TabbedContent {
     flex-grow: 1;
 }
+ControlsPane {
+    layout-direction: vertical;
+    padding: 1;
+}
+DataPane {
+    layout-direction: vertical;
+    padding: 1;
+}
+ListsPane {
+    layout-direction: horizontal;
+}
 Button {
     border: heavy;
     min-width: 16;
     height: 3;
+    color: rgb(0,255,163);
 }
 Input {
     border: rounded;
     height: 3;
+    color: rgb(224,224,224);
 }
 DataTable {
     border: rounded;
     min-height: 8;
+    color: rgb(224,224,224);
 }
 ListView {
     border: rounded;
     min-height: 6;
     flex-grow: 1;
+    color: rgb(224,224,224);
 }
 Log {
     border: rounded;
     min-height: 6;
     flex-grow: 1;
+    color: rgb(0,255,163);
 }
 ProgressBar {
     height: 1;
+    color: rgb(0,255,163);
 }
 Sparkline {
     height: 1;
+    color: rgb(0,212,255);
+}
+Label {
+    height: 1;
+    color: rgb(0,212,255);
+}
+Checkbox {
+    height: 1;
+    color: rgb(224,224,224);
+}
+Switch {
+    height: 1;
+    color: rgb(224,224,224);
+}
+RadioSet {
+    height: 3;
+    color: rgb(224,224,224);
 }
 "#;
 
 // ---- Tab pane widgets ----
 
-/// Controls tab: form widgets.
+/// Controls tab: form widgets composed as children.
 struct ControlsPane;
 
 impl Widget for ControlsPane {
@@ -79,61 +125,24 @@ impl Widget for ControlsPane {
         "ControlsPane"
     }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 {
-            return;
-        }
-
-        let mut y = area.y;
-
-        // Section label
-        let label = Label::new("-- Form Controls --");
-        if y < area.y + area.height {
-            label.render(ctx, Rect { x: area.x, y, width: area.width, height: 1 }, buf);
-            y += 1;
-        }
-
-        // Input field
-        if y + 2 < area.y + area.height {
-            let input = Input::new("Type something...");
-            input.render(ctx, Rect { x: area.x, y, width: area.width.min(40), height: 3 }, buf);
-            y += 3;
-        }
-
-        // Checkbox
-        if y < area.y + area.height {
-            let cb = Checkbox::new("Enable notifications", true);
-            cb.render(ctx, Rect { x: area.x, y, width: area.width, height: 1 }, buf);
-            y += 1;
-        }
-
-        // Switch
-        if y < area.y + area.height {
-            let sw = Switch::new(false);
-            sw.render(ctx, Rect { x: area.x, y, width: 20, height: 1 }, buf);
-            y += 2;
-        }
-
-        // RadioSet
-        if y + 4 < area.y + area.height {
-            let radio = RadioSet::new(vec![
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        vec![
+            Box::new(Label::new("Form Controls")),
+            Box::new(Input::new("Type something...")),
+            Box::new(Checkbox::new("Enable notifications", true)),
+            Box::new(Switch::new(false)),
+            Box::new(RadioSet::new(vec![
                 "Option A".to_string(),
                 "Option B".to_string(),
                 "Option C".to_string(),
-            ]);
-            radio.render(ctx, Rect { x: area.x, y, width: area.width, height: 3 }, buf);
-            y += 4;
-        }
+            ])),
+            Box::new(Button::new("Submit").with_variant(ButtonVariant::Primary)),
+            Box::new(Button::new("Cancel")),
+        ]
+    }
 
-        // Buttons
-        if y + 2 < area.y + area.height {
-            let btn_primary = Button::new("Submit").with_variant(ButtonVariant::Primary);
-            btn_primary.render(ctx, Rect { x: area.x, y, width: 18, height: 3 }, buf);
-            if area.x + 20 + 18 < area.x + area.width {
-                let btn_default = Button::new("Cancel");
-                btn_default.render(ctx, Rect { x: area.x + 20, y, width: 18, height: 3 }, buf);
-            }
-        }
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
+        // Container only — children render via compose tree
     }
 }
 
@@ -145,62 +154,33 @@ impl Widget for DataPane {
         "DataPane"
     }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 {
-            return;
-        }
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        let mut table = DataTable::new(vec![
+            ColumnDef::new("Widget").with_width(20),
+            ColumnDef::new("Status").with_width(12),
+            ColumnDef::new("Version").with_width(10),
+        ]);
+        table.add_row(vec!["Label".into(), "Stable".into(), "v1.0".into()]);
+        table.add_row(vec!["Button".into(), "Stable".into(), "v1.0".into()]);
+        table.add_row(vec!["Input".into(), "Stable".into(), "v1.0".into()]);
+        table.add_row(vec!["Checkbox".into(), "Stable".into(), "v1.0".into()]);
+        table.add_row(vec!["DataTable".into(), "Stable".into(), "v1.0".into()]);
 
-        let mut y = area.y;
-
-        // Section label
-        let label = Label::new("-- Data Display --");
-        if y < area.y + area.height {
-            label.render(ctx, Rect { x: area.x, y, width: area.width, height: 1 }, buf);
-            y += 1;
-        }
-
-        // DataTable
-        let table_height = 8u16.min(area.height.saturating_sub(y.saturating_sub(area.y) + 4));
-        if table_height >= 3 {
-            let mut table = DataTable::new(vec![
-                ColumnDef::new("Widget").with_width(20),
-                ColumnDef::new("Status").with_width(12),
-                ColumnDef::new("Version").with_width(10),
-            ]);
-            table.add_row(vec!["Label".into(), "Stable".into(), "v1.0".into()]);
-            table.add_row(vec!["Button".into(), "Stable".into(), "v1.0".into()]);
-            table.add_row(vec!["Input".into(), "Stable".into(), "v1.0".into()]);
-            table.add_row(vec!["Checkbox".into(), "Stable".into(), "v1.0".into()]);
-            table.add_row(vec!["DataTable".into(), "Stable".into(), "v1.0".into()]);
-            table.render(ctx, Rect { x: area.x, y, width: area.width.min(50), height: table_height }, buf);
-            y += table_height + 1;
-        }
-
-        // Progress bar label + bar
-        if y < area.y + area.height {
-            let lbl = Label::new("Build progress: 65%");
-            lbl.render(ctx, Rect { x: area.x, y, width: area.width, height: 1 }, buf);
-            y += 1;
-        }
-        if y < area.y + area.height {
-            let progress = ProgressBar::new(0.65);
-            progress.render(ctx, Rect { x: area.x, y, width: area.width.min(50), height: 1 }, buf);
-            y += 2;
-        }
-
-        // Sparkline label + sparkline
-        if y < area.y + area.height {
-            let lbl = Label::new("CPU activity:");
-            lbl.render(ctx, Rect { x: area.x, y, width: area.width, height: 1 }, buf);
-            y += 1;
-        }
-        if y < area.y + area.height {
-            let sparkline = Sparkline::new(vec![
+        vec![
+            Box::new(Label::new("Data Widgets")),
+            Box::new(table),
+            Box::new(Label::new("Build progress: 65%")),
+            Box::new(ProgressBar::new(0.65)),
+            Box::new(Label::new("CPU activity:")),
+            Box::new(Sparkline::new(vec![
                 2.0, 4.0, 3.0, 7.0, 5.0, 6.0, 8.0, 4.0, 3.0, 5.0,
                 7.0, 6.0, 4.0, 2.0, 5.0, 8.0, 7.0, 3.0, 6.0, 4.0,
-            ]);
-            sparkline.render(ctx, Rect { x: area.x, y, width: area.width.min(50), height: 1 }, buf);
-        }
+            ])),
+        ]
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
+        // Container only
     }
 }
 
@@ -212,27 +192,7 @@ impl Widget for ListsPane {
         "ListsPane"
     }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 {
-            return;
-        }
-
-        let half_width = area.width / 2;
-
-        // ListView on left
-        let list = ListView::new(vec![
-            "apple".to_string(),
-            "banana".to_string(),
-            "cherry".to_string(),
-            "date".to_string(),
-            "elderberry".to_string(),
-            "fig".to_string(),
-            "grape".to_string(),
-            "honeydew".to_string(),
-        ]);
-        list.render(ctx, Rect { x: area.x, y: area.y, width: half_width.saturating_sub(1), height: area.height }, buf);
-
-        // Log on right
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
         let log = Log::new();
         log.push_line("[INFO]  server started on port 8080".to_string());
         log.push_line("[DEBUG] loading configuration file".to_string());
@@ -244,7 +204,24 @@ impl Widget for ListsPane {
         log.push_line("[INFO]  CSS stylesheet reloaded".to_string());
         log.push_line("[WARN]  memory usage at 72%".to_string());
         log.push_line("[INFO]  reactive effect batched 3 updates".to_string());
-        log.render(ctx, Rect { x: area.x + half_width, y: area.y, width: area.width - half_width, height: area.height }, buf);
+
+        vec![
+            Box::new(ListView::new(vec![
+                "apple".to_string(),
+                "banana".to_string(),
+                "cherry".to_string(),
+                "date".to_string(),
+                "elderberry".to_string(),
+                "fig".to_string(),
+                "grape".to_string(),
+                "honeydew".to_string(),
+            ])),
+            Box::new(log),
+        ]
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
+        // Container only
     }
 }
 

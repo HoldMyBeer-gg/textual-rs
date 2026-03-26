@@ -1,7 +1,6 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 use reactive_graph::signal::ArcRwSignal;
 use reactive_graph::prelude::*;
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -134,17 +133,22 @@ impl Widget for RadioButton {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
+
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
+
         // Read from self.signal (shared with RadioSet) so mutual exclusion is reflected.
         // Use get_untracked() to avoid reactive tracking loops in render.
         let checked = self.signal.get_untracked();
         let indicator = if checked { "(\u{25cf})" } else { "( )" };
         let text = format!("{} {}", indicator, self.label);
         let display: String = text.chars().take(area.width as usize).collect();
-        buf.set_string(area.x, area.y, &display, Style::default());
+        buf.set_string(area.x, area.y, &display, style);
     }
 }
 

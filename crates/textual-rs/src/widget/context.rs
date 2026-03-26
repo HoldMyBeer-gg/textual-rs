@@ -1,9 +1,11 @@
 use std::any::Any;
 use std::cell::{Cell, RefCell};
+use ratatui::style::Style;
 use slotmap::{DenseSlotMap, SecondaryMap};
 use super::WidgetId;
 use super::Widget;
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
+use crate::css::render_style;
 use crate::event::AppEvent;
 
 pub struct AppContext {
@@ -75,5 +77,14 @@ impl AppContext {
     /// Takes &self so this can be called from on_event or on_action without borrow conflict.
     pub fn post_message(&self, source: WidgetId, message: impl Any + 'static) {
         self.message_queue.borrow_mut().push((source, Box::new(message)));
+    }
+
+    /// Get the ratatui text style (fg + bg) for a widget from its computed CSS.
+    /// Returns Style::default() if the widget has no computed style.
+    pub fn text_style(&self, id: WidgetId) -> Style {
+        self.computed_styles
+            .get(id)
+            .map(|cs| render_style::text_style(cs))
+            .unwrap_or_default()
     }
 }

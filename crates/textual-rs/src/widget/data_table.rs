@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Modifier;
 use crossterm::event::{KeyCode, KeyModifiers};
 use unicode_width::UnicodeWidthStr;
 
@@ -328,10 +328,14 @@ impl Widget for DataTable {
         }
     }
 
-    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 || self.columns.is_empty() {
             return;
         }
+
+        let style = self.own_id.get()
+            .map(|id| ctx.text_style(id))
+            .unwrap_or_default();
 
         // Header row = 1, separator row = 1, remaining = data rows
         let header_rows: u16 = 2; // header + separator
@@ -371,12 +375,12 @@ impl Widget for DataTable {
             let padded = pad_or_truncate(&cell_text, col_w);
             let avail = (area.x + area.width - x) as usize;
             let display: String = padded.chars().take(avail).collect();
-            buf.set_string(x, y, &display, Style::default());
+            buf.set_string(x, y, &display, style);
             x += display.chars().count() as u16;
 
             // Column separator " | " (skip after last visible column)
             if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                buf.set_string(x, y, " | ", Style::default());
+                buf.set_string(x, y, " | ", style);
                 x += 3;
             }
         }
@@ -392,11 +396,11 @@ impl Widget for DataTable {
                 let col_w = widths[ci] as usize;
                 let avail = ((area.x + area.width - x) as usize).min(col_w);
                 let sep: String = "─".repeat(avail);
-                buf.set_string(x, sep_y, &sep, Style::default());
+                buf.set_string(x, sep_y, &sep, style);
                 x += avail as u16;
 
                 if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                    buf.set_string(x, sep_y, "─┼─", Style::default());
+                    buf.set_string(x, sep_y, "─┼─", style);
                     x += 3;
                 }
             }
@@ -429,18 +433,18 @@ impl Widget for DataTable {
                 let display: String = padded.chars().take(avail).collect();
 
                 // Highlight cursor row with reverse video
-                let style = if is_cursor_row {
-                    Style::default().add_modifier(Modifier::REVERSED)
+                let row_style = if is_cursor_row {
+                    style.add_modifier(Modifier::REVERSED)
                 } else {
-                    Style::default()
+                    style
                 };
 
-                buf.set_string(x, row_y, &display, style);
+                buf.set_string(x, row_y, &display, row_style);
                 x += display.chars().count() as u16;
 
                 // Column separator
                 if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
-                    buf.set_string(x, row_y, " | ", style);
+                    buf.set_string(x, row_y, " | ", row_style);
                     x += 3;
                 }
             }
@@ -464,7 +468,7 @@ impl Widget for DataTable {
                     break;
                 }
                 let ch = if i >= thumb_pos && i < thumb_pos + thumb_size { "█" } else { "░" };
-                buf.set_string(sb_x, sb_y, ch, Style::default());
+                buf.set_string(sb_x, sb_y, ch, style);
             }
         }
     }
