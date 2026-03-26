@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Visual Parity with Python Textual
 status: verifying
-stopped_at: Completed 04-03-PLAN.md (Terminal capability detection & resize reflow)
-last_updated: "2026-03-26T23:19:53.859Z"
+stopped_at: Completed 04-02-PLAN.md (Select/CommandPalette overlays, CSS border+variable, McGugan Box fallback)
+last_updated: "2026-03-26T23:24:38Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 11
-  completed_plans: 7
-  percent: 83
+  completed_plans: 8
+  percent: 87
 ---
 
 # Project State
@@ -45,6 +45,7 @@ Progress: [████████░░] 83% (6/7 plans total, 1/2 in phase 3)
 | 03 | 01 | 246s | 2 | 2 |
 | Phase 03 P02 | 113 | 2 tasks | 4 files |
 | Phase 04 P03 | 266 | 2 tasks | 3 files |
+| Phase 04 P02 | ~480 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Progress: [████████░░] 83% (6/7 plans total, 1/2 in phase 3)
 - [v1.1-03-01]: Cursor row always overrides zebra stripe (accent highlight priority)
 - [Phase 03]: Theme variables for color/background; hex kept for border colors (shorthand parser limitation)
 - [Phase 04]: TerminalCaps detects color depth via COLORTERM > TERM > WT_SESSION; Unicode via locale vars; Windows assumed TrueColor+Unicode
+- [Phase 04 P02]: Select and CommandPalette use active_overlay pattern (not push_screen_deferred) to avoid screen blanking
+- [Phase 04 P02]: CSS `border: tall $primary` now parses as BorderWithVariable, resolved in cascade
+- [Phase 04 P02]: McGugan Box right border uses U+2595 (Unicode 1.1) fallback instead of U+1FB87 (Unicode 13)
 
 ### Pending Todos
 
@@ -78,12 +82,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- U+1FB87 (Right One Quarter Block) requires Unicode 13 font support -- may not render on all terminals
-- CSS variables ($primary, $surface, etc.) now resolve during cascade -- border shorthand variables not yet supported
 - Sparkline braille rendering not visually verified on real terminal
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:19:53.853Z
-Stopped at: Completed 04-03-PLAN.md (Terminal capability detection & resize reflow)
+Last session: 2026-03-26T23:24:38Z
+Stopped at: Completed 04-02-PLAN.md (Select/CommandPalette overlays, CSS border+variable, McGugan Box fallback)
 Resume file: None
