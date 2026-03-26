@@ -59,6 +59,17 @@ impl Widget for ProgressBar {
 
         match self.progress.get_untracked() {
             Some(p) => {
+                // Paint a half-block gradient on the empty (unfilled) portion of the track.
+                // This gives the track a subtle depth/3D effect using sub-cell shading.
+                // For single-row bars, half_block_cell packs two color shades into one cell.
+                let track_top = canvas::blend_color(empty_color, Color::Rgb(50, 50, 50), 0.3);
+                let track_bottom = empty_color;
+                let filled_cells = ((p.clamp(0.0, 1.0) * (area.width as f64) * 8.0).round() as usize) / 8;
+                for col in (filled_cells as u16)..area.width {
+                    canvas::half_block_cell(buf, area.x + col, area.y, track_top, track_bottom);
+                }
+
+                // Overlay the eighth-block progress fill on top
                 canvas::progress_bar(
                     buf,
                     area.x,

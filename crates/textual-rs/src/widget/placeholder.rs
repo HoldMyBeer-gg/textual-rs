@@ -52,14 +52,15 @@ impl Widget for Placeholder {
         let hatch_fg = Color::Rgb(40, 40, 55);
         let hatch_bg = base_style.bg.unwrap_or(Color::Rgb(20, 20, 30));
 
-        // Fill with cross-hatch pattern using braille characters
-        // Alternating diagonal pattern: ⠿ (dots 0-5) creates a dense fill
-        let pattern_a: u8 = 0b00101010; // diagonal dots
-        let pattern_b: u8 = 0b01010101; // opposite diagonal
+        // Fill with cross-hatch pattern using quadrant block characters.
+        // Alternating anti-diagonal (▚) and diagonal (▞) quadrant masks
+        // create a textured checkerboard at 2x2 sub-cell resolution.
+        let pattern_a: u8 = 0b1001; // anti-diagonal: top-left + bottom-right
+        let pattern_b: u8 = 0b0110; // diagonal: top-right + bottom-left
         for row in 0..area.height {
             for col in 0..area.width {
                 let pattern = if (row + col) % 2 == 0 { pattern_a } else { pattern_b };
-                crate::canvas::braille_cell(
+                crate::canvas::quadrant_cell(
                     buf,
                     area.x + col,
                     area.y + row,
