@@ -93,6 +93,12 @@ impl AppContext {
         }
     }
 
+    /// Set the active theme, replacing all CSS variable colors.
+    /// After calling this, a full re-cascade should be triggered to apply new theme colors.
+    pub fn set_theme(&mut self, theme: Theme) {
+        self.theme = theme;
+    }
+
     /// Schedule a widget for recomposition on the next event loop tick.
     /// Used by widgets like TabbedContent when their compose() output changes.
     pub fn request_recompose(&self, id: WidgetId) {
