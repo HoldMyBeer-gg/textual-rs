@@ -14,7 +14,6 @@ fn parse_key_combo(combo: &str, span: Span) -> Result<(TokenStream, TokenStream)
     let modifiers: Vec<&str>;
 
     if parts.len() > 1 {
-        // Last part is the key, rest are modifiers
         key_part = *parts.last().unwrap();
         modifiers = parts[..parts.len() - 1].to_vec();
     } else {
@@ -59,7 +58,6 @@ fn parse_key_combo(combo: &str, span: Span) -> Result<(TokenStream, TokenStream)
         }
     };
 
-    // Build modifier flags
     let mut mod_tokens: Vec<TokenStream> = vec![];
     for m in &modifiers {
         match *m {
@@ -91,18 +89,22 @@ fn parse_key_combo(combo: &str, span: Span) -> Result<(TokenStream, TokenStream)
     Ok((key_code, modifiers_ts))
 }
 
-/// Collected info for a single #[on(Type)] annotation.
+/// Collected info for a single #[on(Type)] annotation — method extracted from impl Widget block.
 struct OnAnnotation {
     type_path: syn::Path,
     method_name: Ident,
+    /// The method itself (moved to inherent impl)
+    method: ImplItemFn,
 }
 
-/// Collected info for a single #[keybinding("key", "action")] annotation.
+/// Collected info for a single #[keybinding("key", "action")] annotation — method extracted.
 struct KeybindingAnnotation {
     key_code: TokenStream,
     modifiers: TokenStream,
     action: String,
     method_name: Ident,
+    /// The method itself (moved to inherent impl)
+    method: ImplItemFn,
 }
 
 /// Check if a method with the given name exists in the impl items.
@@ -117,22 +119,18 @@ fn method_exists(items: &[ImplItem], name: &str) -> bool {
 }
 
 /// Attempt to extract #[on(TypePath)] — returns the type path if this is an `on` attr.
-/// Uses syn 2.x API.
 fn try_parse_on_attr(attr: &syn::Attribute) -> Option<syn::Path> {
     if !attr.path().is_ident("on") {
         return None;
     }
-    // Parse the tokens inside the parens as a syn::Path
     attr.parse_args::<syn::Path>().ok()
 }
 
 /// Attempt to extract #[keybinding("key_combo", "action")] — returns (combo, action, span).
-/// Uses syn 2.x API.
 fn try_parse_keybinding_attr(attr: &syn::Attribute) -> Option<(String, String, Span)> {
     if !attr.path().is_ident("keybinding") {
         return None;
     }
-    // Parse as two comma-separated string literals
     let result: Result<Punctuated<LitStr, Token![,]>, _> =
         attr.parse_args_with(Punctuated::parse_terminated);
     if let Ok(args) = result {
@@ -148,54 +146,81 @@ fn try_parse_keybinding_attr(attr: &syn::Attribute) -> Option<(String, String, S
 /// Main transform function for the `#[widget_impl]` attribute macro.
 ///
 /// Processes the `impl Widget for Struct` block:
-/// 1. Scans methods for `#[on(T)]` and `#[keybinding(...)]` annotations, strips them.
-/// 2. Injects delegation methods that weren't manually provided.
-/// 3. Generates `on_event`, `key_bindings`, `on_action` if annotations found.
+/// 1. Scans methods for `#[on(T)]` and `#[keybinding(...)]` annotations.
+/// 2. Removes annotated handler methods from the `impl Widget` block.
+/// 3. Moves those handler methods into a separate inherent `impl` block.
+/// 4. Injects delegation methods that weren't manually provided into the Widget impl.
+/// 5. Generates `on_event`, `key_bindings`, `on_action` methods in the Widget impl.
 pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
     let mut on_annotations: Vec<OnAnnotation> = vec![];
     let mut keybinding_annotations: Vec<KeybindingAnnotation> = vec![];
     let mut errors: Vec<syn::Error> = vec![];
 
-    // Collect and strip annotations from methods
-    for item in &mut input.items {
-        if let ImplItem::Fn(func) = item {
-            let mut retained_attrs = vec![];
+    // Scan methods for annotations and extract them
+    let mut remaining_items: Vec<ImplItem> = vec![];
+
+    for item in input.items.drain(..) {
+        if let ImplItem::Fn(mut func) = item {
+            // Check if this function has #[on(T)] or #[keybinding(...)] attributes
+            let mut on_type: Option<syn::Path> = None;
+            let mut keybinding_info: Option<(String, String, Span)> = None;
+            let mut other_attrs: Vec<syn::Attribute> = vec![];
+
             for attr in func.attrs.drain(..) {
-                if let Some(type_path) = try_parse_on_attr(&attr) {
-                    on_annotations.push(OnAnnotation {
-                        type_path,
-                        method_name: func.sig.ident.clone(),
-                    });
-                    // Strip the attr
-                    continue;
-                } else if let Some((combo, action, span)) = try_parse_keybinding_attr(&attr) {
-                    match parse_key_combo(&combo, span) {
-                        Ok((key_code, modifiers)) => {
-                            keybinding_annotations.push(KeybindingAnnotation {
-                                key_code,
-                                modifiers,
-                                action,
-                                method_name: func.sig.ident.clone(),
-                            });
-                        }
-                        Err(e) => errors.push(e),
-                    }
-                    // Strip the attr
-                    continue;
+                if let Some(tp) = try_parse_on_attr(&attr) {
+                    on_type = Some(tp);
+                    // Strip this attr (don't push to other_attrs)
+                } else if let Some(kb) = try_parse_keybinding_attr(&attr) {
+                    keybinding_info = Some(kb);
+                    // Strip this attr
+                } else {
+                    other_attrs.push(attr);
                 }
-                retained_attrs.push(attr);
             }
-            func.attrs = retained_attrs;
+            func.attrs = other_attrs;
+
+            if let Some(type_path) = on_type {
+                // This method is an #[on(T)] handler — extract it to inherent impl
+                on_annotations.push(OnAnnotation {
+                    type_path,
+                    method_name: func.sig.ident.clone(),
+                    method: func,
+                });
+                // Don't add to remaining_items — it goes to the inherent impl
+            } else if let Some((combo, action, span)) = keybinding_info {
+                match parse_key_combo(&combo, span) {
+                    Ok((key_code, modifiers)) => {
+                        keybinding_annotations.push(KeybindingAnnotation {
+                            key_code,
+                            modifiers,
+                            action,
+                            method_name: func.sig.ident.clone(),
+                            method: func,
+                        });
+                    }
+                    Err(e) => {
+                        errors.push(e);
+                        remaining_items.push(ImplItem::Fn(func));
+                    }
+                }
+                // Don't add to remaining_items — it goes to the inherent impl
+            } else {
+                // Normal Widget trait method — keep in the impl Widget block
+                remaining_items.push(ImplItem::Fn(func));
+            }
+        } else {
+            remaining_items.push(item);
         }
     }
 
-    // If there were parse errors, emit them
+    input.items = remaining_items;
+
     if !errors.is_empty() {
         let err_tokens: TokenStream = errors.into_iter().map(|e| e.to_compile_error()).collect();
         return err_tokens;
     }
 
-    // Determine what methods are already manually provided
+    // Determine what methods are already manually provided in the Widget trait impl
     let has_widget_type_name = method_exists(&input.items, "widget_type_name");
     let has_can_focus = method_exists(&input.items, "can_focus");
     let has_on_mount = method_exists(&input.items, "on_mount");
@@ -204,7 +229,7 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
     let has_key_bindings = method_exists(&input.items, "key_bindings");
     let has_on_action = method_exists(&input.items, "on_action");
 
-    // Build list of injected method token streams
+    // Build injection list for the Widget trait impl
     let mut injected: Vec<TokenStream> = vec![];
 
     if !has_widget_type_name {
@@ -239,7 +264,7 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
         });
     }
 
-    // Generate on_event dispatch from #[on(T)] annotations
+    // Generate on_event from #[on(T)] annotations
     if !has_on_event && !on_annotations.is_empty() {
         let dispatch_arms: Vec<TokenStream> = on_annotations
             .iter()
@@ -297,7 +322,7 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
         });
     }
 
-    // Generate on_action dispatch from #[keybinding] annotations
+    // Generate on_action from #[keybinding] annotations
     if !has_on_action && !keybinding_annotations.is_empty() {
         let action_arms: Vec<TokenStream> = keybinding_annotations
             .iter()
@@ -320,7 +345,7 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
         });
     }
 
-    // Parse and inject all generated methods into the impl block's items
+    // Inject generated methods into the Widget trait impl block
     for method_ts in injected {
         let parsed_fn: Result<ImplItemFn, _> = parse2(method_ts.clone());
         match parsed_fn {
@@ -331,5 +356,27 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
         }
     }
 
-    quote! { #input }
+    // Build the inherent impl block for handler methods (from #[on] and #[keybinding])
+    let self_ty = &input.self_ty;
+
+    let on_handler_methods: Vec<&ImplItemFn> =
+        on_annotations.iter().map(|a| &a.method).collect();
+    let kb_handler_methods: Vec<&ImplItemFn> =
+        keybinding_annotations.iter().map(|a| &a.method).collect();
+
+    let inherent_impl = if !on_handler_methods.is_empty() || !kb_handler_methods.is_empty() {
+        quote! {
+            impl #self_ty {
+                #(#on_handler_methods)*
+                #(#kb_handler_methods)*
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        #input
+        #inherent_impl
+    }
 }
