@@ -23,12 +23,12 @@
 ### Widget Visual Quality
 
 - [ ] **VISUAL-01**: Button renders with 3D depth -- lighter top border, darker bottom; inverted on press
-- [ ] **VISUAL-02**: Switch renders as pill-shaped toggle with distinct knob/track colors
+- [x] **VISUAL-02**: Switch renders as pill-shaped toggle with distinct knob/track colors
 - [ ] **VISUAL-03**: DataTable has zebra-striped rows, bold colored headers, smooth scrollbar
-- [ ] **VISUAL-04**: Tabs show active indicator (underline/color bar) distinguishing selected from inactive
-- [ ] **VISUAL-05**: Markdown renders headings in accent colors, code blocks with dark bg, links colored+underlined
-- [ ] **VISUAL-06**: Placeholder renders with cross-hatch/textured background pattern
-- [ ] **VISUAL-07**: Footer key badges use high-contrast accent colors
+- [x] **VISUAL-04**: Tabs show active indicator (underline/color bar) distinguishing selected from inactive
+- [x] **VISUAL-05**: Markdown renders headings in accent colors, code blocks with dark bg, links colored+underlined
+- [x] **VISUAL-06**: Placeholder renders with cross-hatch/textured background pattern
+- [x] **VISUAL-07**: Footer key badges use high-contrast accent colors
 
 ### Interactive States
 
@@ -40,9 +40,9 @@
 
 ### Demo Quality
 
-- [ ] **DEMO-01**: Demo UI visually comparable to Python Textual widget gallery
-- [ ] **DEMO-02**: IRC demo renders professional-looking client with clear visual hierarchy
-- [ ] **DEMO-03**: Both demos use McGugan Box borders with proper background depth
+- [x] **DEMO-01**: Demo UI visually comparable to Python Textual widget gallery
+- [x] **DEMO-02**: IRC demo renders professional-looking client with clear visual hierarchy
+- [x] **DEMO-03**: Both demos use McGugan Box borders with proper background depth
 
 ## Traceability
 
@@ -63,12 +63,12 @@
 | RENDER-04 | Phase 2 | Pending |
 | RENDER-05 | Phase 2 | Pending |
 | VISUAL-01 | Phase 3 | Pending |
-| VISUAL-02 | Phase 3 | Pending |
+| VISUAL-02 | Phase 3 | Complete |
 | VISUAL-03 | Phase 3 | Pending |
-| VISUAL-04 | Phase 3 | Pending |
-| VISUAL-05 | Phase 3 | Pending |
-| VISUAL-06 | Phase 3 | Pending |
-| VISUAL-07 | Phase 3 | Pending |
-| DEMO-01 | Phase 3 | Pending |
-| DEMO-02 | Phase 3 | Pending |
-| DEMO-03 | Phase 3 | Pending |
+| VISUAL-04 | Phase 3 | Complete |
+| VISUAL-05 | Phase 3 | Complete |
+| VISUAL-06 | Phase 3 | Complete |
+| VISUAL-07 | Phase 3 | Complete |
+| DEMO-01 | Phase 3 | Complete |
+| DEMO-02 | Phase 3 | Complete |
+| DEMO-03 | Phase 3 | Complete |
