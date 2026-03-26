@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to execute
-stopped_at: Completed 04-02-PLAN.md (Input and RadioButton/RadioSet widgets)
-last_updated: "2026-03-26T00:50:03.545Z"
+stopped_at: Completed 04-03-PLAN.md (TextArea and Select widgets)
+last_updated: "2026-03-26T00:50:32.161Z"
 progress:
   total_phases: 5
   completed_phases: 3
@@ -54,7 +54,7 @@ Plan: 3 of 7
 | Phase 03-reactive-system-events-and-testing P02 | 4 | 2 tasks | 9 files |
 | Phase 03-reactive-system-events-and-testing P03 | 5 | 2 tasks | 13 files |
 | Phase 04-built-in-widget-library P01 | 5 | 2 tasks | 14 files |
-| Phase 04-built-in-widget-library P02 | 7 | 2 tasks | 5 files |
+| Phase 04-built-in-widget-library P03 | 8 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -89,9 +89,8 @@ Recent decisions affecting current work:
 - [Phase 04-built-in-widget-library]: Use get_untracked() in all widget render() methods — avoids reactive tracking loops outside reactive owner context
 - [Phase 04-built-in-widget-library]: Cell<Option<WidgetId>> set in on_mount enables post_message from on_action(&self) without &mut; static &[KeyBinding] slices for zero-allocation key bindings
 - [Phase 04-built-in-widget-library]: pending_screen_pushes RefCell on AppContext with push_screen_deferred() — deferred screen push from on_action(&self) for Select widget overlay pattern
-- [Phase 04-built-in-widget-library]: Input on_event handles KeyEvent::Char directly — key_bindings can't match arbitrary characters; returns Stop to consume
-- [Phase 04-built-in-widget-library]: RadioSet mutual exclusion via shared ArcRwSignal: parent stores Vec<ArcRwSignal<bool>>, children share via with_signal(); render reads self.signal not self.checked
-- [Phase 04-built-in-widget-library]: RadioButtonChanged includes source_id: WidgetId so RadioSet can identify which child fired without arena downcast
+- [Phase 04-built-in-widget-library]: TextArea tests verify state via rendered buffer rows — message queue is drained by process_event before assertions
+- [Phase 04-built-in-widget-library]: pending_screen_pops: Cell<usize> and pop_screen_deferred() added to AppContext for Select overlay dismissal
 
 ### Pending Todos
 
@@ -104,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T00:50:03.541Z
-Stopped at: Completed 04-02-PLAN.md (Input and RadioButton/RadioSet widgets)
+Last session: 2026-03-26T00:50:32.157Z
+Stopped at: Completed 04-03-PLAN.md (TextArea and Select widgets)
 Resume file: None

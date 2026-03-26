@@ -67,12 +67,12 @@
 
 - [x] **WIDGET-01**: `Label` — static or reactive text display with markup support
 - [x] **WIDGET-02**: `Button` — pressable button with label, variants (primary/warning/error/success)
-- [x] **WIDGET-03**: `Input` — single-line text input with placeholder, password mode, validation
-- [ ] **WIDGET-04**: `TextArea` — multi-line text editor with line numbers option
+- [ ] **WIDGET-03**: `Input` — single-line text input with placeholder, password mode, validation
+- [x] **WIDGET-04**: `TextArea` — multi-line text editor with line numbers option
 - [x] **WIDGET-05**: `Checkbox` — toggleable boolean input
 - [x] **WIDGET-06**: `Switch` — toggle switch (on/off)
-- [x] **WIDGET-07**: `RadioButton` / `RadioSet` — mutually exclusive selection
-- [ ] **WIDGET-08**: `Select` — dropdown selection widget
+- [ ] **WIDGET-07**: `RadioButton` / `RadioSet` — mutually exclusive selection
+- [x] **WIDGET-08**: `Select` — dropdown selection widget
 - [ ] **WIDGET-09**: `ListView` — scrollable list with selectable items
 - [ ] **WIDGET-10**: `DataTable` — tabular data display with sortable columns, scrolling
 - [ ] **WIDGET-11**: `Tree` — hierarchical tree view with expand/collapse

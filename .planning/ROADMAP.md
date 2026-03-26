@@ -95,8 +95,8 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
-- [x] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
-- [ ] 04-03-PLAN.md — TextArea + Select widgets
+- [ ] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
+- [x] 04-03-PLAN.md — TextArea + Select widgets
 - [ ] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
 - [ ] 04-05-PLAN.md — ListView, Log, ScrollView widgets
 - [ ] 04-06-PLAN.md — DataTable, Tree widgets

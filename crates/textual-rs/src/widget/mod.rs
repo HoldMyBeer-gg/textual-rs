@@ -6,6 +6,8 @@ pub mod checkbox;
 pub mod switch;
 pub mod input;
 pub mod radio;
+pub mod text_area;
+pub mod select;
 
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

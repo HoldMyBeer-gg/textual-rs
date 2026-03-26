@@ -1,5 +1,5 @@
 use std::any::Any;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use slotmap::{DenseSlotMap, SecondaryMap};
 use super::WidgetId;
 use super::Widget;
@@ -29,6 +29,10 @@ pub struct AppContext {
     /// Widgets in on_action(&self) can use push_screen_deferred() to schedule a new screen push
     /// without needing &mut AppContext. The event loop drains this after each action.
     pub pending_screen_pushes: RefCell<Vec<Box<dyn Widget>>>,
+    /// Number of screens to pop, deferred from widgets.
+    /// Widgets in on_action(&self) use pop_screen_deferred() to schedule a screen pop.
+    /// The event loop drains this counter after each action cycle.
+    pub pending_screen_pops: Cell<usize>,
 }
 
 impl AppContext {
@@ -48,6 +52,7 @@ impl AppContext {
             event_tx: None,
             message_queue: RefCell::new(Vec::new()),
             pending_screen_pushes: RefCell::new(Vec::new()),
+            pending_screen_pops: Cell::new(0),
         }
     }
 
@@ -56,6 +61,13 @@ impl AppContext {
     /// The event loop drains `pending_screen_pushes` after each event cycle.
     pub fn push_screen_deferred(&self, screen: Box<dyn Widget>) {
         self.pending_screen_pushes.borrow_mut().push(screen);
+    }
+
+    /// Schedule a screen pop deferred to the next event loop tick.
+    /// Use this from `on_action(&self, ...)` where only &self is available.
+    /// The event loop drains `pending_screen_pops` after each event cycle.
+    pub fn pop_screen_deferred(&self) {
+        self.pending_screen_pops.set(self.pending_screen_pops.get() + 1);
     }
 
     /// Post a typed message from a widget.

@@ -1,0 +1,14 @@
+---
+source: crates/textual-rs/tests/widget_tests.rs
+expression: "format!(\"{}\", test_app.backend())"
+---
+"1 line one                              "
+"2 line two                              "
+"3 line three                            "
+"                                        "
+"                                        "
+"                                        "
+"                                        "
+"                                        "
+"                                        "
+"                                        "

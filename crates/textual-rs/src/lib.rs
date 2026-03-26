@@ -18,3 +18,5 @@ pub use widget::checkbox::Checkbox;
 pub use widget::switch::Switch;
 pub use widget::input::Input;
 pub use widget::radio::{RadioButton, RadioSet};
+pub use widget::text_area::TextArea;
+pub use widget::select::Select;

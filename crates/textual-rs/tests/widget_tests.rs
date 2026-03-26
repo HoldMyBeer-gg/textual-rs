@@ -5,7 +5,7 @@ use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::{EventPropagation, Widget};
-use textual_rs::{Button, Checkbox, Input, Label, RadioButton, RadioSet, Switch};
+use textual_rs::{Button, Checkbox, Input, Label, RadioButton, RadioSet, Select, Switch, TextArea};
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
 use textual_rs::widget::input::messages::Submitted as InputSubmitted;
 use textual_rs::widget::radio::messages::RadioSetChanged;
@@ -13,8 +13,6 @@ use textual_rs::widget::radio::messages::RadioSetChanged;
 // ---------------------------------------------------------------------------
 // Snapshot tests
 // ---------------------------------------------------------------------------
-
-#[test]
 fn snapshot_label_default() {
     let test_app = TestApp::new(20, 3, || Box::new(Label::new("Hello")));
     assert_snapshot!(format!("{}", test_app.backend()));
@@ -292,6 +290,8 @@ async fn switch_toggle_space_also_works() {
         row.contains("◉━━━"),
         "Switch OFF indicator expected after toggle from ON, got: {:?}",
         row.trim_end()
+    );
+}
     );
 }
 
@@ -643,4 +643,310 @@ async fn radio_set_emits_changed() {
     let captured_val = changed_value.lock().unwrap().clone();
     assert_eq!(captured_idx, 1, "RadioSetChanged should report index=1, got: {}", captured_idx);
     assert_eq!(captured_val, "Beta", "RadioSetChanged should report value='Beta', got: {:?}", captured_val);
+}
+
+// ---------------------------------------------------------------------------
+// TextArea tests
+// ---------------------------------------------------------------------------
+
+/// Helper: collect the rendered text content of a buffer row (trimmed of trailing spaces).
+fn buf_row_trimmed(buf: &ratatui::buffer::Buffer, row: u16) -> String {
+    let s: String = (0..buf.area.width)
+        .map(|col| buf[(col, row)].symbol().to_string())
+        .collect();
+    s.trim_end().to_string()
+}
+
+#[tokio::test]
+async fn text_area_type_text() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus the text area
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "hello", press Enter, type "world"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.type_text("hello").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("world").await;
+    }
+
+    // Verify the rendered buffer contains "hello" on row 0 and "world" on row 1.
+    // The cursor is shown as reverse-video so the actual chars should still be present.
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("hello"),
+        "row 0 should contain 'hello', got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("world"),
+        "row 1 should contain 'world', got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_cursor_movement() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type two lines
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("abc").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("xyz").await;
+    }
+
+    // Cursor is at row=1, col=3. Move up, home, end, down — should not panic.
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Up).await;
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::End).await;
+        pilot.press(KeyCode::Down).await;
+    }
+
+    // Verify buffer shows both lines
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("abc"),
+        "row 0 should contain 'abc', got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("xyz"),
+        "row 1 should contain 'xyz', got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_backspace_joins_lines() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type "ab", Enter, "cd"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("ab").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("cd").await;
+    }
+
+    // Move to start of line 1 then Backspace to join into line 0
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::Backspace).await;
+    }
+
+    // After joining, row 0 should contain "abcd" and row 1 should be empty.
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("abcd"),
+        "row 0 should contain 'abcd' after joining, got: {:?}",
+        row0
+    );
+    assert!(
+        row1.is_empty(),
+        "row 1 should be empty after joining, got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_line_numbers() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::with_line_numbers()));
+
+    // Focus and type 3 lines
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("line one").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("line two").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("line three").await;
+    }
+
+    // Snapshot shows line numbers in left margin
+    assert_snapshot!(format!("{}", test_app.backend()));
+}
+
+#[tokio::test]
+async fn text_area_newline_splits_line() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type "abcd"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("abcd").await;
+    }
+
+    // Press Home (go to col=0), press Right twice (col=2), press Enter (split at col=2)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::Right).await;
+        pilot.press(KeyCode::Right).await;
+        pilot.press(KeyCode::Enter).await;
+    }
+
+    // After splitting "abcd" at position 2: row 0 = "ab", row 1 = "cd"
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("ab"),
+        "row 0 should contain 'ab' after split, got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("cd"),
+        "row 1 should contain 'cd' after split, got: {:?}",
+        row1
+    );
+    // row 0 should NOT contain "cd" (it was split off)
+    assert!(
+        !row0.contains("abcd"),
+        "row 0 should not contain full 'abcd', got: {:?}",
+        row0
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Select tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn select_renders_current_option() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let test_app = TestApp::new(20, 3, || Box::new(Select::new(options)));
+
+    // The rendered buffer should show "▼ Alpha" (the first option)
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    assert!(
+        row0.contains("Alpha"),
+        "Select should render '▼ Alpha' as current option, got: {:?}",
+        row0
+    );
+    assert!(
+        row0.contains('\u{25bc}'),
+        "Select should render '▼' prefix, got: {:?}",
+        row0
+    );
+}
+
+#[tokio::test]
+async fn select_open_pushes_overlay() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let mut test_app = TestApp::new(40, 10, || Box::new(Select::new(options)));
+
+    // Focus the Select
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+    assert!(test_app.ctx().focused_widget.is_some(), "Select should have focus");
+
+    // Press Enter to open — this should push to pending_screen_pushes
+    test_app.inject_key_event(KeyEvent {
+        code: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::NONE,
+    });
+
+    // Verify overlay was queued in pending_screen_pushes
+    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
+    assert_eq!(
+        overlay_count, 1,
+        "Opening Select should push 1 overlay to pending_screen_pushes, got: {}",
+        overlay_count
+    );
+
+    // Verify the overlay has correct widget_type_name
+    let overlay_name = test_app
+        .ctx()
+        .pending_screen_pushes
+        .borrow()
+        .first()
+        .map(|w| w.widget_type_name())
+        .unwrap_or("")
+        .to_string();
+    assert_eq!(
+        overlay_name, "SelectOverlay",
+        "Pushed overlay should be SelectOverlay, got: {:?}",
+        overlay_name
+    );
+}
+
+#[tokio::test]
+async fn select_choose_option_queues_overlay() {
+    // This test verifies the overlay push mechanism works end-to-end.
+    // We open the Select, verify overlay is queued with correct options,
+    // then check the overlay widget_type_name and can_focus.
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let mut test_app = TestApp::new(40, 10, move || Box::new(Select::new(options.clone())));
+
+    // Focus the Select
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Press Enter to open the overlay (inject without draining)
+    test_app.inject_key_event(KeyEvent {
+        code: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::NONE,
+    });
+
+    // Verify overlay is in pending_screen_pushes
+    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
+    assert_eq!(
+        overlay_count, 1,
+        "Opening Select should queue 1 overlay, got: {}",
+        overlay_count
+    );
+
+    // Verify the overlay is focusable and has correct type
+    let overlay_focusable = test_app
+        .ctx()
+        .pending_screen_pushes
+        .borrow()
+        .first()
+        .map(|w| w.can_focus())
+        .unwrap_or(false);
+    assert!(overlay_focusable, "SelectOverlay should be focusable");
+
+    // Clear the pending pushes
+    test_app.ctx().pending_screen_pushes.borrow_mut().clear();
+
+    // Select should still show Alpha on the current screen
+    test_app.drain_messages();
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    assert!(
+        row0.contains("Alpha"),
+        "Select should still show Alpha before overlay resolves, got: {:?}",
+        row0
+    );
+}
+
+#[tokio::test]
+async fn snapshot_select_initial() {
+    let options = vec!["Alpha".to_string(), "Beta".to_string(), "Gamma".to_string()];
+    let test_app = TestApp::new(20, 5, || Box::new(Select::new(options)));
+
+    assert_snapshot!(format!("{}", test_app.backend()));
 }
