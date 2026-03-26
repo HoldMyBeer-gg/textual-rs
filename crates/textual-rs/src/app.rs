@@ -131,6 +131,24 @@ impl App {
         self.command_registry.register(name, action);
     }
 
+    /// Create an App without built-in CSS. Used by TestApp so widget tests get raw rendering
+    /// without framework-default borders/sizes interfering with assertions.
+    pub fn new_bare<F>(screen_factory: F) -> Self
+    where
+        F: FnOnce() -> Box<dyn Widget> + 'static,
+    {
+        App {
+            ctx: AppContext::new(),
+            bridge: TaffyBridge::new(),
+            stylesheets: Vec::new(),
+            hit_map: None,
+            root_screen_factory: Some(Box::new(screen_factory)),
+            _owner: None,
+            worker_rx: None,
+            command_registry: crate::command::CommandRegistry::new(),
+        }
+    }
+
     /// Builder: parse and add a TCSS stylesheet. Parse errors are logged to stderr.
     pub fn with_css(mut self, css: &str) -> Self {
         let (stylesheet, errors) = Stylesheet::parse(css);
@@ -625,15 +643,16 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                     // If this widget is focused, enhance its border
                     let is_focused = ctx.focused_widget == Some(id);
                     if is_focused && cs.border != TcssBorder::None {
+                        // Focused widget WITH border — upgrade border color
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163); // accent green
-                        focused_cs.border = TcssBorder::Heavy; // upgrade to heavy
+                        focused_cs.border = TcssBorder::Heavy;
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
                     } else if is_focused && cs.border == TcssBorder::None {
-                        // Focusable widget without border — add one
+                        // Focused widget WITHOUT border — just tint the foreground color.
+                        // Don't add a border; it changes the content area size and breaks layout.
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163);
-                        focused_cs.border = TcssBorder::Heavy;
                         paint_chrome(&focused_cs, rect, frame.buffer_mut())
                     } else {
                         paint_chrome(cs, rect, frame.buffer_mut())

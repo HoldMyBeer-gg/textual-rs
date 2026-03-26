@@ -17,7 +17,7 @@ pub struct Log {
     pub lines: Reactive<Vec<String>>,
     pub scroll_offset: Reactive<usize>,
     auto_scroll: Cell<bool>,
-    viewport_height: Cell<u16>,
+    pub viewport_height: Cell<u16>,
     own_id: Cell<Option<WidgetId>>,
 }
 

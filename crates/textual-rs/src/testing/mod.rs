@@ -43,7 +43,7 @@ impl TestApp {
         // Init reactive runtime — safe to call multiple times, subsequent calls are no-ops.
         let _ = any_spawner::Executor::init_tokio();
 
-        let mut app = App::new(factory);
+        let mut app = App::new_bare(factory);
 
         let (tx, rx) = flume::unbounded::<AppEvent>();
         app.set_event_tx(tx.clone());

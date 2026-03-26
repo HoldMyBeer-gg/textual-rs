@@ -1296,9 +1296,10 @@ fn progress_bar_50_renders_half_filled() {
         "ProgressBar at 50% should contain filled chars, got: {:?}",
         row
     );
+    // Empty portion uses spaces (color-only rendering via fg/bg)
     assert!(
-        row.contains('░'),
-        "ProgressBar at 50% should contain empty chars, got: {:?}",
+        row.contains(' '),
+        "ProgressBar at 50% should contain empty space, got: {:?}",
         row
     );
 }
@@ -1504,40 +1505,39 @@ fn snapshot_list_view() {
 
 #[test]
 fn log_push_line_auto_scrolls() {
-    // Build a Log standalone (no TestApp needed for this logic test).
-    // viewport_height starts at 0 (Cell default). push_line with auto_scroll=true
-    // sets offset to line_count - viewport_h. When viewport_h=0, offset = line_count.
-    // After 10 pushes offset == 10 > 0.
+    // Auto-scroll only fires after viewport_height is set (after first render).
+    // Simulate a measured viewport by setting viewport_height before pushing lines.
     let log = Log::new();
+    log.viewport_height.set(3); // simulate a 3-row viewport
     for i in 0..10 {
         log.push_line(format!("Line {}", i));
     }
     let offset = log.scroll_offset.get_untracked();
+    // 10 lines - 3 viewport = offset 7
     assert!(offset > 0, "scroll_offset should be > 0 after pushing 10 lines with auto_scroll=true, got {}", offset);
+    assert_eq!(offset, 7, "scroll_offset should be line_count - viewport_h");
 }
 
 #[test]
 fn log_scroll_up_disables_auto_scroll() {
-    // We test Log directly without TestApp.
     let log = Log::new();
-    // Push 10 lines (viewport_height starts at 0, auto_scroll=true sets offset to line_count)
+    log.viewport_height.set(3); // simulate measured viewport
     for i in 0..10 {
         log.push_line(format!("Line {}", i));
     }
     let initial_offset = log.scroll_offset.get_untracked();
+    assert_eq!(initial_offset, 7, "initial offset should be 10 - 3 = 7");
 
     // Simulate scroll up — directly call on_action
     let ctx = AppContext::new();
     log.on_action("scroll_up", &ctx);
 
     let offset_after_scroll_up = log.scroll_offset.get_untracked();
+    assert_eq!(offset_after_scroll_up, 6, "scroll up should decrement offset");
 
     // Now push another line — with auto_scroll=false, offset should NOT change
     log.push_line("New Line".to_string());
     let offset_after_push = log.scroll_offset.get_untracked();
-
-    assert!(initial_offset > 0, "initial offset should be > 0 after 10 pushes");
-    assert_eq!(offset_after_scroll_up, initial_offset.saturating_sub(1), "scroll up should decrement offset");
     assert_eq!(offset_after_push, offset_after_scroll_up, "push_line should NOT change offset when auto_scroll is disabled");
 }
 

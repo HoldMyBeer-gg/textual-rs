@@ -61,7 +61,7 @@ pub enum EventPropagation {
 /// impl Widget for MyWidget {
 ///     fn widget_type_name(&self) -> &'static str { "MyWidget" }
 ///     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-///         buf.set_string(area.x, area.y, "Hello!", Default::default());
+///         buf.set_string(area.x, area.y, "Hello!", ratatui::style::Style::default());
 ///     }
 /// }
 /// ```
