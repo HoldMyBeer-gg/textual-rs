@@ -197,6 +197,14 @@ pub trait Widget: 'static {
     fn click_action(&self) -> Option<&str> {
         None
     }
+
+    /// Whether this widget currently has selected text.
+    ///
+    /// Used by the app event loop to route Ctrl+C to copy instead of quit
+    /// when a text widget has an active selection. Returns `false` by default.
+    fn has_text_selection(&self) -> bool {
+        false
+    }
 }
 
 #[cfg(test)]
