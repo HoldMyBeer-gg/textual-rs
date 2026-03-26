@@ -95,7 +95,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
-- [ ] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
+- [x] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
 - [ ] 04-03-PLAN.md — TextArea + Select widgets
 - [ ] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
 - [ ] 04-05-PLAN.md — ListView, Log, ScrollView widgets
@@ -125,5 +125,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
-| 4. Built-in Widget Library | 1/7 | In Progress|  |
+| 4. Built-in Widget Library | 2/7 | In Progress|  |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |
