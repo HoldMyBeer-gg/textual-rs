@@ -175,6 +175,14 @@ pub trait Widget: 'static {
         None
     }
 
+    /// Whether this widget is a transparent overlay (context menu, tooltip, etc.).
+    /// Overlay widgets skip paint_chrome (no background fill, no border from CSS)
+    /// and paint their own chrome in render(). This prevents overlays from
+    /// erasing the underlying screen content.
+    fn is_overlay(&self) -> bool {
+        false
+    }
+
     /// Return context menu items for right-click. Empty vec = no context menu.
     /// Override to provide widget-specific menu items.
     fn context_menu_items(&self) -> Vec<context_menu::ContextMenuItem> {

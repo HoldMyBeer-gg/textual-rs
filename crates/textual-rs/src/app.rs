@@ -752,6 +752,16 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
             // beyond the screen (e.g. content overflow), which would panic in ratatui.
             let rect = raw_rect.intersection(buf_area);
             if rect.width > 0 && rect.height > 0 {
+                // Overlay widgets (context menu, tooltips) skip paint_chrome
+                // to avoid erasing the underlying screen content.
+                let is_overlay = ctx.arena.get(id).map(|w| w.is_overlay()).unwrap_or(false);
+                if is_overlay {
+                    if let Some(widget) = ctx.arena.get(id) {
+                        widget.render(ctx, rect, frame.buffer_mut());
+                    }
+                    continue;
+                }
+
                 // Paint background + borders from computed CSS, get inner content area
                 let content_area = if let Some(cs) = ctx.computed_styles.get(id) {
                     let is_focused = ctx.focused_widget == Some(id);
