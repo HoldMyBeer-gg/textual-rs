@@ -177,11 +177,62 @@ impl Widget for Tabs {
     }
 }
 
+/// A simple tab bar widget used as a child of TabbedContent.
+/// Renders tab labels in a single row — non-focusable, height: 1.
+struct TabBar {
+    labels: Vec<String>,
+    active: Reactive<usize>,
+}
+
+impl Widget for TabBar {
+    fn widget_type_name(&self) -> &'static str { "TabBar" }
+    fn can_focus(&self) -> bool { false }
+    fn default_css() -> &'static str where Self: Sized { "TabBar { height: 1; }" }
+
+    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        if area.height == 0 || area.width == 0 { return; }
+        let base_style = ratatui::style::Style::default();
+        let active_idx = self.active.get_untracked();
+        let separator = " | ";
+        let mut x = area.x;
+        let y = area.y;
+        for (i, label) in self.labels.iter().enumerate() {
+            if x >= area.x + area.width { break; }
+            if i > 0 {
+                for ch in separator.chars() {
+                    if x >= area.x + area.width { break; }
+                    if let Some(cell) = buf.cell_mut((x, y)) {
+                        cell.set_char(ch).set_style(base_style);
+                    }
+                    x += 1;
+                }
+            }
+            if x < area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, y)) { cell.set_char(' ').set_style(base_style); }
+                x += 1;
+            }
+            let style = if i == active_idx {
+                base_style.add_modifier(Modifier::REVERSED)
+            } else { base_style };
+            for ch in label.chars() {
+                if x >= area.x + area.width { break; }
+                if let Some(cell) = buf.cell_mut((x, y)) { cell.set_char(ch).set_style(style); }
+                x += 1;
+            }
+            if x < area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_char(' ').set_style(if i == active_idx { style } else { base_style });
+                }
+                x += 1;
+            }
+        }
+    }
+}
+
 /// A container that combines a Tabs bar with content panes, showing only the active pane.
 ///
-/// Renders the tab bar in the first row and the active pane in the remaining area.
-/// Panes are rendered directly (not via compose tree) so TabbedContent can control
-/// which pane is visible. It propagates computed styles to pane children.
+/// Composes the active pane's children into the widget tree so they participate
+/// in focus cycling and event dispatch.
 pub struct TabbedContent {
     pub tabs: Tabs,
     pub panes: Vec<Box<dyn Widget>>,
@@ -209,38 +260,33 @@ impl Widget for TabbedContent {
     where
         Self: Sized,
     {
-        "TabbedContent { min-height: 3; }"
+        "TabbedContent { min-height: 3; layout-direction: vertical; }"
     }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 {
-            return;
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        // Compose the active pane's children into the widget tree so they
+        // participate in focus cycling and event dispatch.
+        // First child: a TabBar placeholder that renders the tab labels (height: 1).
+        // Remaining children: the active pane's compose output.
+        let mut children: Vec<Box<dyn Widget>> = Vec::new();
+
+        // Tab bar as a real widget child
+        children.push(Box::new(TabBar {
+            labels: self.tabs.tab_labels.clone(),
+            active: Reactive::new(self.tabs.active.get_untracked()),
+        }));
+
+        // Active pane's children
+        let active_idx = self.tabs.active.get_untracked();
+        if let Some(pane) = self.panes.get(active_idx) {
+            children.extend(pane.compose());
         }
 
-        // Render tab bar in the first row
-        let tab_area = Rect {
-            x: area.x,
-            y: area.y,
-            width: area.width,
-            height: 1,
-        };
-        self.tabs.render(ctx, tab_area, buf);
+        children
+    }
 
-        // Render the active pane in the remaining area
-        if area.height > 1 {
-            let pane_area = Rect {
-                x: area.x,
-                y: area.y + 1,
-                width: area.width,
-                height: area.height - 1,
-            };
-            let active_idx = self.tabs.active.get_untracked();
-            if let Some(pane) = self.panes.get(active_idx) {
-                // Panes are not in the compose tree, so we manually render their
-                // children with style propagation from the parent computed style.
-                render_pane_tree(pane.as_ref(), ctx, pane_area, buf);
-            }
-        }
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
+        // Children (TabBar + pane widgets) are rendered by the framework.
     }
 }
 
