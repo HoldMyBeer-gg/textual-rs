@@ -254,6 +254,12 @@ pub const UPPER_ONE_EIGHTH: &str = "\u{2594}";
 pub const LEFT_ONE_QUARTER: &str = "\u{258E}";
 /// Right one-quarter block — thin right border line (Unicode 13 Legacy Computing).
 pub const RIGHT_ONE_QUARTER: &str = "\u{1FB87}";
+/// Fallback right border character (U+2595 RIGHT ONE EIGHTH BLOCK).
+/// U+1FB87 is from the Unicode 13 "Legacy Computing Supplement" block and is
+/// not supported by many terminal fonts. U+2595 has been available since
+/// Unicode 1.1 and is universally supported. Python Textual also uses this
+/// character for broad compatibility.
+pub const RIGHT_BORDER_FALLBACK: &str = "\u{2595}";
 
 /// Draw a McGugan Box — a 1/8-cell-thick border with independent inside and outside colors.
 ///
@@ -299,10 +305,11 @@ pub fn mcgugan_box(
         buf.set_string(x, cy, LEFT_ONE_QUARTER, left_style);
     }
 
-    // Right edge (inner rows): RIGHT_ONE_QUARTER with fg=border, bg=inside
+    // Right edge (inner rows): RIGHT_BORDER_FALLBACK (U+2595) with fg=border, bg=inside
+    // Uses the broadly-compatible fallback instead of U+1FB87 which is missing from many fonts.
     let right_style = Style::default().fg(border_color).bg(inside_color);
     for cy in (y + 1)..y2 {
-        buf.set_string(x2, cy, RIGHT_ONE_QUARTER, right_style);
+        buf.set_string(x2, cy, RIGHT_BORDER_FALLBACK, right_style);
     }
 
     // Inner content area (shrunk by 1 on each side)
@@ -479,8 +486,8 @@ mod tests {
         assert_eq!(buf.cell((0, 1)).unwrap().symbol(), LEFT_ONE_QUARTER);
         assert_eq!(buf.cell((0, 2)).unwrap().symbol(), LEFT_ONE_QUARTER);
 
-        // Right edge: right one-quarter block
-        assert_eq!(buf.cell((5, 1)).unwrap().symbol(), RIGHT_ONE_QUARTER);
+        // Right edge: right border fallback (U+2595) for broad terminal compatibility
+        assert_eq!(buf.cell((5, 1)).unwrap().symbol(), RIGHT_BORDER_FALLBACK);
     }
 
     #[test]

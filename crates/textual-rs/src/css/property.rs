@@ -234,8 +234,11 @@ fn parse_property_value<'i>(
                     )));
                 }
             };
-            // Optionally consume a color after the border style (e.g. "border: solid #4a4a5a")
-            // The color sets the widget's foreground color for the border.
+            // Try variable first (e.g. "border: tall $primary")
+            if let Some(var_name) = try_parse_variable(input) {
+                return Ok(Some(TcssValue::BorderWithVariable(style, var_name)));
+            }
+            // Then try literal color (e.g. "border: solid #4a4a5a")
             let color = parse_color(input).ok();
             if let Some(c) = color {
                 return Ok(Some(TcssValue::BorderWithColor(style, c)));
