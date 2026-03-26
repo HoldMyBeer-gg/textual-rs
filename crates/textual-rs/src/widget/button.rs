@@ -112,7 +112,7 @@ impl Widget for Button {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        use ratatui::style::Modifier;
+        use ratatui::style::{Color, Modifier};
 
         if area.height == 0 || area.width == 0 {
             return;
@@ -120,6 +120,35 @@ impl Widget for Button {
         let base_style = self.own_id.get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
+
+        // --- 3D depth borders ---
+        // Extract the button's background color from the buffer (set by CSS fill_background)
+        let bg = buf.cell((area.x, area.y))
+            .and_then(|c| c.style().bg)
+            .unwrap_or(Color::Rgb(42, 42, 62));
+        let light_edge = crate::canvas::blend_color(bg, Color::Rgb(255, 255, 255), 0.25);
+        let dark_edge = crate::canvas::blend_color(bg, Color::Rgb(0, 0, 0), 0.35);
+
+        let is_pressed = self.pressed.get();
+
+        if area.height >= 3 {
+            // Top row: lighter edge (or darker when pressed)
+            let top_shade = if is_pressed { dark_edge } else { light_edge };
+            let top_y = area.y;
+            for x in area.x..area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, top_y)) {
+                    cell.set_bg(top_shade);
+                }
+            }
+            // Bottom row: darker edge (or lighter when pressed)
+            let bottom_shade = if is_pressed { light_edge } else { dark_edge };
+            let bottom_y = area.y + area.height - 1;
+            for x in area.x..area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, bottom_y)) {
+                    cell.set_bg(bottom_shade);
+                }
+            }
+        }
 
         // Centered label, bold
         let label_len = self.label.chars().count() as u16;
@@ -134,7 +163,6 @@ impl Widget for Button {
             area.y
         };
         let display: String = self.label.chars().take(area.width as usize).collect();
-        let is_pressed = self.pressed.get();
         let label_style = if is_pressed {
             // Single-frame "flash" — invert the label style for pressed feedback
             self.pressed.set(false);
@@ -143,5 +171,99 @@ impl Widget for Button {
             base_style.add_modifier(Modifier::BOLD)
         };
         buf.set_string(x, y, &display, label_style);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::buffer::Buffer;
+    use ratatui::layout::Rect;
+    use ratatui::style::Color;
+    use crate::widget::context::AppContext;
+    use crate::widget::Widget;
+
+    /// Helper: create a buffer pre-filled with a given background color.
+    fn buf_with_bg(area: Rect, bg: Color) -> Buffer {
+        let mut buf = Buffer::empty(area);
+        for y in area.y..area.y + area.height {
+            for x in area.x..area.x + area.width {
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_bg(bg);
+                }
+            }
+        }
+        buf
+    }
+
+    #[test]
+    fn button_3d_depth_top_lighter_bottom_darker() {
+        let bg = Color::Rgb(42, 42, 62);
+        let area = Rect::new(0, 0, 16, 3);
+        let mut buf = buf_with_bg(area, bg);
+        let ctx = AppContext::new();
+        let button = Button::new("OK");
+
+        button.render(&ctx, area, &mut buf);
+
+        let light = crate::canvas::blend_color(bg, Color::Rgb(255, 255, 255), 0.25);
+        let dark = crate::canvas::blend_color(bg, Color::Rgb(0, 0, 0), 0.35);
+
+        // Top row should have light edge background
+        for x in 0..16 {
+            let cell_bg = buf.cell((x, 0)).unwrap().bg;
+            assert_eq!(cell_bg, light, "top row x={} should be light edge", x);
+        }
+        // Bottom row should have dark edge background
+        for x in 0..16 {
+            let cell_bg = buf.cell((x, 2)).unwrap().bg;
+            assert_eq!(cell_bg, dark, "bottom row x={} should be dark edge", x);
+        }
+        // Middle row keeps original bg (unless overwritten by label)
+        // Check a non-label cell (e.g. x=0, the label is centered)
+        let mid_bg = buf.cell((0, 1)).unwrap().bg;
+        assert_eq!(mid_bg, bg, "middle row non-label cell should keep original bg");
+    }
+
+    #[test]
+    fn button_pressed_inverts_depth_shading() {
+        let bg = Color::Rgb(42, 42, 62);
+        let area = Rect::new(0, 0, 16, 3);
+        let mut buf = buf_with_bg(area, bg);
+        let ctx = AppContext::new();
+        let button = Button::new("OK");
+
+        // Simulate press
+        button.pressed.set(true);
+        button.render(&ctx, area, &mut buf);
+
+        let light = crate::canvas::blend_color(bg, Color::Rgb(255, 255, 255), 0.25);
+        let dark = crate::canvas::blend_color(bg, Color::Rgb(0, 0, 0), 0.35);
+
+        // When pressed: top row = dark, bottom row = light (inverted)
+        for x in 0..16 {
+            let cell_bg = buf.cell((x, 0)).unwrap().bg;
+            assert_eq!(cell_bg, dark, "pressed: top row x={} should be dark edge", x);
+        }
+        for x in 0..16 {
+            let cell_bg = buf.cell((x, 2)).unwrap().bg;
+            assert_eq!(cell_bg, light, "pressed: bottom row x={} should be light edge", x);
+        }
+    }
+
+    #[test]
+    fn button_short_height_no_depth_borders() {
+        // With height < 3, no depth borders should be applied
+        let bg = Color::Rgb(42, 42, 62);
+        let area = Rect::new(0, 0, 16, 2);
+        let mut buf = buf_with_bg(area, bg);
+        let ctx = AppContext::new();
+        let button = Button::new("OK");
+
+        button.render(&ctx, area, &mut buf);
+
+        // Non-label cells should keep original bg
+        let cell_bg = buf.cell((0, 0)).unwrap().bg;
+        assert_eq!(cell_bg, bg, "short button should not have depth borders");
     }
 }
