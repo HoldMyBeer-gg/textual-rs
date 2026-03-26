@@ -41,7 +41,8 @@ impl Log {
         if self.auto_scroll.get() {
             let line_count = self.lines.get_untracked().len();
             let viewport_h = self.viewport_height.get() as usize;
-            if line_count > viewport_h {
+            // Only auto-scroll if viewport has been measured (after first render)
+            if viewport_h > 0 && line_count > viewport_h {
                 self.scroll_offset.set(line_count - viewport_h);
             }
         }
@@ -98,7 +99,7 @@ impl Widget for Log {
     where
         Self: Sized,
     {
-        "Log { border: tall; min-height: 3; }"
+        "Log { border: tall; min-height: 3; flex-grow: 1; }"
     }
 
     fn on_mount(&self, id: WidgetId) {

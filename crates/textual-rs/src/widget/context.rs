@@ -4,6 +4,7 @@ use ratatui::style::Style;
 use slotmap::{DenseSlotMap, SecondaryMap};
 use super::WidgetId;
 use super::Widget;
+use crate::css::cascade::Stylesheet;
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
 use crate::css::render_style;
 use crate::event::AppEvent;
@@ -35,6 +36,8 @@ pub struct AppContext {
     /// Widgets in on_action(&self) use pop_screen_deferred() to schedule a screen pop.
     /// The event loop drains this counter after each action cycle.
     pub pending_screen_pops: Cell<usize>,
+    /// User stylesheets — stored here so ad-hoc pane rendering can resolve styles.
+    pub stylesheets: Vec<Stylesheet>,
 }
 
 impl AppContext {
@@ -55,6 +58,7 @@ impl AppContext {
             message_queue: RefCell::new(Vec::new()),
             pending_screen_pushes: RefCell::new(Vec::new()),
             pending_screen_pops: Cell::new(0),
+            stylesheets: Vec::new(),
         }
     }
 

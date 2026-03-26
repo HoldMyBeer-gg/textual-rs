@@ -103,7 +103,7 @@ impl Widget for ListView {
     where
         Self: Sized,
     {
-        "ListView { border: tall; min-height: 3; }"
+        "ListView { border: tall; min-height: 3; flex-grow: 1; }"
     }
 
     fn on_mount(&self, id: WidgetId) {

@@ -70,7 +70,8 @@ impl App {
         for err in &errors {
             eprintln!("[textual-rs] CSS parse error: {}", err);
         }
-        self.stylesheets.push(stylesheet);
+        self.stylesheets.push(stylesheet.clone());
+        self.ctx.stylesheets.push(stylesheet);
         self
     }
 
