@@ -488,9 +488,13 @@ fn collect_subtree_dfs(root: WidgetId, ctx: &AppContext) -> Vec<WidgetId> {
 fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridge, frame: &mut Frame) {
     use crate::css::types::{BorderStyle as TcssBorder, TcssColor};
 
+    let buf_area = frame.area();
     let dfs_ids = collect_subtree_dfs(screen_id, ctx);
     for id in dfs_ids {
-        if let Some(rect) = bridge.rect_for(id) {
+        if let Some(raw_rect) = bridge.rect_for(id) {
+            // Clamp to terminal buffer bounds — Taffy may compute rects that extend
+            // beyond the screen (e.g. content overflow), which would panic in ratatui.
+            let rect = raw_rect.intersection(buf_area);
             if rect.width > 0 && rect.height > 0 {
                 // Paint background + borders from computed CSS, get inner content area
                 let content_area = if let Some(cs) = ctx.computed_styles.get(id) {
