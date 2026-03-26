@@ -94,9 +94,25 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current Milestone: v1.1 Visual Parity with Python Textual
+
+**Goal:** Make textual-rs rendering identical to Python Textual — use the same half-block, sub-cell, and Unicode rendering techniques that give Textual its modern look.
+
+**Target features:**
+- Tall borders (half-block `▀▄▐▌`) as default border style, matching Textual's signature thin frames
+- 3D button depth — lighter top / darker bottom borders simulating lighting; inverted on press
+- Textual-quality Switch — pill-shaped sliding toggle with block elements and color transitions
+- Sub-cell rendering — 1/8th-block characters, half-blocks for higher visual resolution
+- Proper widget chrome — visual feedback for focus, hover, selected, active states via color/modifier
+- Semantic color theming — `$primary`, `$surface`, `$panel`, `$accent` variables with shade generation
+- Background fills and depth — widgets float above background via layered surface hierarchy
+- Footer key badges — styled key indicators matching Textual's footer
+- DataTable polish — zebra striping, hover, bold headers, proper separators
+- Tab underline indicator — colored underline bar on active tab
+
 ---
 ## Current State
 
-v1.0 milestone complete — all 5 phases done. Phase 5 added derive macros, Worker API, command palette, demo apps (widget showcase + IRC client), 5 tutorial examples, and rustdoc. 144+ tests pass across all crates. All examples compile and run.
+v1.0 milestone complete — all 5 phases done. v1.1 started: visual parity with Python Textual. Preliminary work on tall borders, color-differentiated widget states, and modern rendering already in progress on master branch.
 
-*Last updated: 2026-03-26 after Phase 5: Developer Experience and Polish*
+*Last updated: 2026-03-26 — Milestone v1.1 started*
