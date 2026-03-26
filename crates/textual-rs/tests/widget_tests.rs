@@ -467,6 +467,160 @@ async fn input_password_mode() {
 }
 
 // ---------------------------------------------------------------------------
+// Input validation tests
+// ---------------------------------------------------------------------------
+
+fn inject_char(test_app: &mut TestApp, c: char) {
+    test_app.inject_key_event(crossterm::event::KeyEvent {
+        code: KeyCode::Char(c),
+        modifiers: KeyModifiers::NONE,
+        kind: crossterm::event::KeyEventKind::Press,
+        state: crossterm::event::KeyEventState::NONE,
+    });
+}
+
+#[tokio::test]
+async fn input_validation_valid_input() {
+    let mut test_app = TestApp::new(40, 3, || {
+        Box::new(Input::new("").with_validator(|s| s.len() <= 5))
+    });
+
+    // Focus first via pilot (Tab triggers focus)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "abc" using inject_key_event so messages stay in queue
+    inject_char(&mut test_app, 'a');
+    inject_char(&mut test_app, 'b');
+    inject_char(&mut test_app, 'c');
+
+    // Check Changed messages — at least one should have valid: true (3 chars <= 5 limit)
+    let has_valid = test_app
+        .ctx()
+        .message_queue
+        .borrow()
+        .iter()
+        .any(|(_, msg)| {
+            msg.downcast_ref::<textual_rs::widget::input::messages::Changed>()
+                .map(|m| m.valid)
+                .unwrap_or(false)
+        });
+    assert!(has_valid, "Changed message should have valid: true for input within limit");
+}
+
+#[tokio::test]
+async fn input_validation_invalid_input() {
+    let mut test_app = TestApp::new(40, 3, || {
+        Box::new(Input::new("").with_validator(|s| s.len() <= 3))
+    });
+
+    // Focus first via pilot
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "abcd" (4 chars, over limit of 3) using inject_key_event
+    inject_char(&mut test_app, 'a');
+    inject_char(&mut test_app, 'b');
+    inject_char(&mut test_app, 'c');
+    inject_char(&mut test_app, 'd');
+
+    // Check that there is a Changed message with valid: false
+    let has_invalid = test_app
+        .ctx()
+        .message_queue
+        .borrow()
+        .iter()
+        .any(|(_, msg)| {
+            msg.downcast_ref::<textual_rs::widget::input::messages::Changed>()
+                .map(|m| !m.valid)
+                .unwrap_or(false)
+        });
+    assert!(has_invalid, "Changed message should have valid: false for input over limit");
+}
+
+#[tokio::test]
+async fn input_no_validator_always_valid() {
+    let mut test_app = TestApp::new(40, 3, || {
+        Box::new(Input::new(""))
+    });
+
+    // Focus first via pilot
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "hello" using inject_key_event
+    for c in "hello".chars() {
+        inject_char(&mut test_app, c);
+    }
+
+    // All Changed messages should have valid: true (no validator set)
+    let queue = test_app.ctx().message_queue.borrow();
+    let changed_msgs: Vec<bool> = queue
+        .iter()
+        .filter_map(|(_, msg)| {
+            msg.downcast_ref::<textual_rs::widget::input::messages::Changed>()
+                .map(|m| m.valid)
+        })
+        .collect();
+    assert!(!changed_msgs.is_empty(), "Should have at least one Changed message");
+    assert!(changed_msgs.iter().all(|&v| v), "Input with no validator should always produce valid: true, got: {:?}", changed_msgs);
+}
+
+#[tokio::test]
+async fn input_changed_message_includes_valid() {
+    let mut test_app = TestApp::new(40, 3, || {
+        // Validator: non-empty string is valid
+        Box::new(Input::new("").with_validator(|s| !s.is_empty()))
+    });
+
+    // Focus first via pilot
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "a" and check the Changed message has valid: true
+    inject_char(&mut test_app, 'a');
+    let has_valid_true = test_app
+        .ctx()
+        .message_queue
+        .borrow()
+        .iter()
+        .any(|(_, msg)| {
+            msg.downcast_ref::<textual_rs::widget::input::messages::Changed>()
+                .map(|m| m.valid && m.value == "a")
+                .unwrap_or(false)
+        });
+    assert!(has_valid_true, "Changed message for 'a' should have valid: true");
+
+    // Backspace to clear (value becomes empty -> valid: false)
+    test_app.inject_key_event(crossterm::event::KeyEvent {
+        code: KeyCode::Backspace,
+        modifiers: KeyModifiers::NONE,
+        kind: crossterm::event::KeyEventKind::Press,
+        state: crossterm::event::KeyEventState::NONE,
+    });
+
+    let has_valid_false = test_app
+        .ctx()
+        .message_queue
+        .borrow()
+        .iter()
+        .any(|(_, msg)| {
+            msg.downcast_ref::<textual_rs::widget::input::messages::Changed>()
+                .map(|m| !m.valid && m.value.is_empty())
+                .unwrap_or(false)
+        });
+    assert!(has_valid_false, "Changed message for empty string should have valid: false");
+}
+
+// ---------------------------------------------------------------------------
 // RadioButton render tests
 // ---------------------------------------------------------------------------
 

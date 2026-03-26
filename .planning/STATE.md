@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to execute
-stopped_at: Completed 04-09-PLAN.md (REQUIREMENTS.md checkbox accuracy)
-last_updated: "2026-03-26T01:54:36.066Z"
+stopped_at: Completed 04-08 and 04-09 gap closure plans
+last_updated: "2026-03-26T02:00:32.805Z"
 progress:
   total_phases: 5
   completed_phases: 3
@@ -55,6 +55,7 @@ Plan: 4 of 7
 | Phase 03-reactive-system-events-and-testing P03 | 5 | 2 tasks | 13 files |
 | Phase 04-built-in-widget-library P01 | 5 | 2 tasks | 14 files |
 | Phase 04-built-in-widget-library P03 | 8 | 2 tasks | 8 files |
+| Phase 04-built-in-widget-library P08 | 10 | 1 tasks | 2 files |
 | Phase 04-built-in-widget-library P09 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
@@ -92,7 +93,10 @@ Recent decisions affecting current work:
 - [Phase 04-built-in-widget-library]: pending_screen_pushes RefCell on AppContext with push_screen_deferred() — deferred screen push from on_action(&self) for Select widget overlay pattern
 - [Phase 04-built-in-widget-library]: TextArea tests verify state via rendered buffer rows — message queue is drained by process_event before assertions
 - [Phase 04-built-in-widget-library]: pending_screen_pops: Cell<usize> and pop_screen_deferred() added to AppContext for Select overlay dismissal
-- [Phase 04-built-in-widget-library]: WIDGET-03 marked partial ([~]) in REQUIREMENTS.md — validation gap addressed separately in plan 04-08; all other WIDGET-* marked complete
+- [Phase 04-built-in-widget-library]: Cell<bool> for valid state in Input — consistent with Cell<usize> cursor pattern, avoids &mut in event handlers
+- [Phase 04-built-in-widget-library]: run_validation() called inside emit_changed() — single call site keeps validity fresh before message emission
+- [Phase 04-built-in-widget-library]: Input validation tests use inject_key_event() not pilot.type_text() — type_text drains queue via settle(), leaving nothing to inspect
+- [Phase 04-built-in-widget-library]: All 22 WIDGET-* requirements marked complete in REQUIREMENTS.md after gap closure
 
 ### Pending Todos
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T01:54:36.061Z
-Stopped at: Completed 04-09-PLAN.md (REQUIREMENTS.md checkbox accuracy)
+Last session: 2026-03-26T02:00:32.801Z
+Stopped at: Completed 04-08 and 04-09 gap closure plans
 Resume file: None

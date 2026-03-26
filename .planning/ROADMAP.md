@@ -101,7 +101,7 @@ Plans:
 - [x] 04-05-PLAN.md — ListView, Log, ScrollView widgets
 - [x] 04-06-PLAN.md — DataTable, Tree widgets
 - [x] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
-- [ ] 04-08-PLAN.md — Gap closure: Input validation API (validator callback, error state rendering)
+- [x] 04-08-PLAN.md — Gap closure: Input validation API (validator callback, error state rendering)
 - [x] 04-09-PLAN.md — Gap closure: Update REQUIREMENTS.md checkbox markers to match verification status
 
 **UI hint**: yes
@@ -127,5 +127,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 2/2 | Complete    | 2026-03-25 |
 | 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
 | 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
-| 4. Built-in Widget Library | 7/9 | In Progress (gap closure)|  |
+| 4. Built-in Widget Library | 8/9 | In Progress|  |
 | 5. Developer Experience and Polish | 0/2 | Not started | - |

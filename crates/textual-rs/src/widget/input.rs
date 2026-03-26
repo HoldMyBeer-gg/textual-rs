@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::{Color, Modifier, Style};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::context::AppContext;
@@ -16,6 +16,7 @@ pub mod messages {
     /// Emitted on each keystroke with the current value.
     pub struct Changed {
         pub value: String,
+        pub valid: bool,
     }
     impl Message for Changed {}
 
@@ -26,13 +27,15 @@ pub mod messages {
     impl Message for Submitted {}
 }
 
-/// A single-line text input widget with cursor, placeholder, and password mode.
+/// A single-line text input widget with cursor, placeholder, password mode, and validation.
 ///
 /// Emits `messages::Changed` on each keystroke and `messages::Submitted` on Enter.
 pub struct Input {
     pub value: Reactive<String>,
     pub placeholder: String,
     pub password: bool,
+    validator: Option<Box<dyn Fn(&str) -> bool>>,
+    valid: Cell<bool>,
     cursor_pos: Cell<usize>,
     own_id: Cell<Option<WidgetId>>,
 }
@@ -44,6 +47,8 @@ impl Input {
             value: Reactive::new(String::new()),
             placeholder: placeholder.into(),
             password: false,
+            validator: None,
+            valid: Cell::new(true),
             cursor_pos: Cell::new(0),
             own_id: Cell::new(None),
         }
@@ -53,6 +58,27 @@ impl Input {
     pub fn with_password(mut self) -> Self {
         self.password = true;
         self
+    }
+
+    /// Set a validator callback. Called on every change; returns `true` if valid.
+    pub fn with_validator(mut self, f: impl Fn(&str) -> bool + 'static) -> Self {
+        self.validator = Some(Box::new(f));
+        self
+    }
+
+    /// Returns whether the current value passes validation.
+    /// Always `true` if no validator has been set.
+    pub fn is_valid(&self) -> bool {
+        self.valid.get()
+    }
+
+    /// Run the validator against the current value and update the validity state.
+    fn run_validation(&self) {
+        let is_valid = match &self.validator {
+            Some(f) => f(&self.value.get_untracked()),
+            None => true,
+        };
+        self.valid.set(is_valid);
     }
 
     // ---- cursor helpers ----
@@ -146,9 +172,10 @@ impl Input {
     }
 
     fn emit_changed(&self, ctx: &AppContext) {
+        self.run_validation();
         if let Some(id) = self.own_id.get() {
             let val = self.value.get_untracked();
-            ctx.post_message(id, messages::Changed { value: val });
+            ctx.post_message(id, messages::Changed { value: val, valid: self.valid.get() });
         }
     }
 }
@@ -358,13 +385,21 @@ impl Widget for Input {
             0
         };
 
+        let is_invalid = !self.valid.get() && !val.is_empty();
+
         let mut col = area.x;
         for (char_idx, ch) in display_chars.iter().enumerate().skip(view_start) {
             if col >= area.x + area.width {
                 break;
             }
             let style = if char_idx == cursor_char_idx && focused {
-                Style::default().add_modifier(Modifier::REVERSED)
+                if is_invalid {
+                    Style::default().fg(Color::Red).add_modifier(Modifier::REVERSED)
+                } else {
+                    Style::default().add_modifier(Modifier::REVERSED)
+                }
+            } else if is_invalid {
+                Style::default().fg(Color::Red)
             } else {
                 Style::default()
             };
@@ -376,7 +411,12 @@ impl Widget for Input {
         if focused && cursor_char_idx >= display_chars.len() {
             let cursor_col = area.x + (cursor_char_idx - view_start).min(area.width as usize - 1) as u16;
             if cursor_col < area.x + area.width {
-                buf.set_string(cursor_col, area.y, " ", Style::default().add_modifier(Modifier::REVERSED));
+                let cursor_style = if is_invalid {
+                    Style::default().fg(Color::Red).add_modifier(Modifier::REVERSED)
+                } else {
+                    Style::default().add_modifier(Modifier::REVERSED)
+                };
+                buf.set_string(cursor_col, area.y, " ", cursor_style);
             }
         }
     }
