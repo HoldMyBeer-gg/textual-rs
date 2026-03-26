@@ -95,14 +95,14 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
-- [ ] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
+- [x] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
 - [x] 04-03-PLAN.md — TextArea + Select widgets
-- [ ] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
-- [ ] 04-05-PLAN.md — ListView, Log, ScrollView widgets
-- [ ] 04-06-PLAN.md — DataTable, Tree widgets
-- [ ] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
+- [x] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
+- [x] 04-05-PLAN.md — ListView, Log, ScrollView widgets
+- [x] 04-06-PLAN.md — DataTable, Tree widgets
+- [x] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
 - [ ] 04-08-PLAN.md — Gap closure: Input validation API (validator callback, error state rendering)
-- [ ] 04-09-PLAN.md — Gap closure: Update REQUIREMENTS.md checkbox markers to match verification status
+- [x] 04-09-PLAN.md — Gap closure: Update REQUIREMENTS.md checkbox markers to match verification status
 
 **UI hint**: yes
 
