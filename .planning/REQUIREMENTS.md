@@ -53,8 +53,8 @@
 - [ ] **PROD-03**: Select overlay and CommandPalette use active_overlay pattern (no screen blank)
 - [ ] **PROD-04**: CSS $variable in border shorthand — `border: tall $primary` resolves correctly
 - [ ] **PROD-05**: McGugan Box fallback for terminals without U+1FB87 — use U+2595 instead
-- [ ] **PROD-06**: Terminal capability detection — color depth, Unicode support, mouse
-- [ ] **PROD-07**: Resize reflow — full layout recomputation on terminal resize
+- [x] **PROD-06**: Terminal capability detection — color depth, Unicode support, mouse
+- [x] **PROD-07**: Resize reflow — full layout recomputation on terminal resize
 
 ### Important Features (Should Have)
 
@@ -107,8 +107,8 @@
 | PROD-03 | Phase 4 | Pending |
 | PROD-04 | Phase 4 | Pending |
 | PROD-05 | Phase 4 | Pending |
-| PROD-06 | Phase 4 | Pending |
-| PROD-07 | Phase 4 | Pending |
+| PROD-06 | Phase 4 | Complete |
+| PROD-07 | Phase 4 | Complete |
 | PROD-08 | Phase 4 | Pending |
 | PROD-09 | Phase 4 | Pending |
 | PROD-10 | Phase 4 | Pending |

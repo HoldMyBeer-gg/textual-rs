@@ -140,7 +140,7 @@ Plans:
 Plans:
 - [ ] 04-01-PLAN.md -- Clipboard integration + text selection for Input/TextArea
 - [ ] 04-02-PLAN.md -- Select/CommandPalette overlay fix, CSS variable in border, McGugan fallback
-- [ ] 04-03-PLAN.md -- Terminal capability detection + resize reflow
+- [x] 04-03-PLAN.md -- Terminal capability detection + resize reflow
 - [ ] 04-04-PLAN.md -- Animation system, text-align, horizontal scroll, worker progress, CSS hot-reload
 - [ ] 04-05-PLAN.md -- Light theme, 5+ built-in themes, syntax highlighting, hatch/keyline/image primitives
 
