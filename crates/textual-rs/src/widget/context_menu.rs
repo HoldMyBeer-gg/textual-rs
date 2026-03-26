@@ -102,6 +102,21 @@ impl Widget for ContextMenuOverlay {
         true
     }
 
+    fn is_overlay(&self) -> bool {
+        true
+    }
+
+    fn default_css() -> &'static str
+    where
+        Self: Sized,
+    {
+        ""
+    }
+
+    fn widget_default_css(&self) -> &'static str {
+        ""
+    }
+
     fn key_bindings(&self) -> &[KeyBinding] {
         CONTEXT_MENU_BINDINGS
     }
