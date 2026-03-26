@@ -79,11 +79,11 @@
   2. `$primary-lighten-2` and `$primary-darken-1` produce visibly distinct shades of the primary color
   3. The default dark theme produces colors matching Python Textual's textual-dark palette on visual comparison
   4. A user-provided CSS file can override theme variables and the change propagates to all widgets using those variables
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Theme struct, HSL shade generation, default dark theme
+- [ ] 01-02-PLAN.md -- CSS variable resolution ($name tokens), theme wiring into cascade, custom theme support
 
 ### Phase 2: Interactive States & Rendering Integration
 **Goal**: Users see clear visual feedback for focus, hover, press, selection, and validation; sub-cell rendering primitives work correctly in real widget contexts
@@ -131,6 +131,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 3. Reactive System, Events, and Testing | v1.0 | 3/3 | Complete | 2026-03-25 |
 | 4. Built-in Widget Library | v1.0 | 9/9 | Complete | 2026-03-26 |
 | 5. Developer Experience and Polish | v1.0 | 4/4 | Complete | 2026-03-26 |
-| 1. Semantic Theme Engine | v1.1 | 0/0 | Not started | - |
+| 1. Semantic Theme Engine | v1.1 | 0/2 | In progress | - |
 | 2. Interactive States & Rendering Integration | v1.1 | 0/0 | Not started | - |
 | 3. Widget Visual Polish & Demos | v1.1 | 0/0 | Not started | - |
