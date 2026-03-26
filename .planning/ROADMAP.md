@@ -1,15 +1,62 @@
 # Roadmap: textual-rs
 
-## Overview
+## Milestones
 
-textual-rs delivers a Textual-quality TUI framework for Rust, built on top of ratatui and
-crossterm. The five phases follow a strict dependency order: the terminal infrastructure and
-async event loop must exist before the widget tree, which must be stable before the CSS and
-reactive layers can be layered on top, and the test harness must be solid before the built-in
-widget library can be verified. Developer experience polish comes last, when the full stack is
-proven. Every phase closes with observable, user-verifiable outcomes — not just "code written."
+- **v1.0 MVP** - Phases 1-5 (shipped 2026-03-26)
+- **v1.1 Visual Parity with Python Textual** - Phases 1-3 (in progress)
 
-## Milestone: v1.0
+<details>
+<summary>v1.0 MVP (Phases 1-5) - SHIPPED 2026-03-26</summary>
+
+## v1.0 Phases
+
+- [x] **Phase 1: Foundation** - Terminal layer, async event loop, and project scaffolding (completed 2026-03-25)
+- [x] **Phase 2: Widget Tree, Layout, and Styling** - SlotMap widget arena, Taffy layout engine, and TCSS styling engine
+- [x] **Phase 3: Reactive System, Events, and Testing** - Reactive properties, typed message passing, and TestApp harness (completed 2026-03-25)
+- [x] **Phase 4: Built-in Widget Library** - All 22 v1 widgets with styling, interaction, and snapshot tests
+- [x] **Phase 5: Developer Experience and Polish** - Proc-macro derive, Worker API, command palette, documentation (completed 2026-03-26)
+
+### Phase 1: Foundation
+**Goal**: A runnable Cargo workspace where `cargo run` opens a ratatui frame in the alternate screen, handles keyboard input, exits cleanly on `q` or panic, and responds to terminal resize.
+**Depends on**: Nothing (first phase)
+**Requirements**: FOUND-01, FOUND-02, FOUND-03, FOUND-04, FOUND-05, FOUND-06
+**Success Criteria** (what must be TRUE):
+  1. `cargo build` succeeds on stable Rust with no nightly features
+  2. `cargo run` opens an alternate-screen TUI, renders visible content, and exits cleanly with `q`
+  3. Panic in any code path restores the terminal to its original state
+  4. Resizing the terminal window triggers a layout recomputation and re-render within one event tick
+  5. The same binary produces correct output on Windows 10+, macOS, and Linux
+**Plans**: 2 plans (complete)
+
+### Phase 2: Widget Tree, Layout, and Styling
+**Goal**: Developers can declare a widget tree with parent/child relationships, lay it out using Taffy Flexbox/Grid/Dock, and style widgets using a `.tcss` stylesheet.
+**Depends on**: Phase 1
+**Requirements**: TREE-01 through TREE-05, LAYOUT-01 through LAYOUT-07, CSS-01 through CSS-09
+**Plans**: 4 plans (complete)
+
+### Phase 3: Reactive System, Events, and Testing
+**Goal**: Widget state changes trigger re-renders; typed messages bubble up the tree; keyboard/mouse events route correctly; TestApp/Pilot harness works.
+**Depends on**: Phase 2
+**Requirements**: REACT-01 through REACT-05, EVENT-01 through EVENT-08, TEST-01 through TEST-06
+**Plans**: 3 plans (complete)
+
+### Phase 4: Built-in Widget Library
+**Goal**: All 22 v1 widgets implemented, styled, keyboard-interactive, and snapshot-tested.
+**Depends on**: Phase 3
+**Requirements**: WIDGET-01 through WIDGET-22
+**Plans**: 9 plans (complete)
+
+### Phase 5: Developer Experience and Polish
+**Goal**: Ergonomic API with derive macros, Worker API, command palette, and documentation.
+**Depends on**: Phase 4
+**Requirements**: DX-01 through DX-05
+**Plans**: 4 plans (complete)
+
+</details>
+
+## v1.1: Visual Parity with Python Textual
+
+**Milestone Goal:** Make textual-rs rendering identical to Python Textual -- use the same half-block, sub-cell, and Unicode rendering techniques that give Textual its modern look. Semantic color theming, interactive state feedback, and per-widget visual polish.
 
 ## Phases
 
@@ -17,124 +64,73 @@ proven. Every phase closes with observable, user-verifiable outcomes — not jus
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: Foundation** - Terminal layer, async event loop, and project scaffolding (completed 2026-03-25)
-- [ ] **Phase 2: Widget Tree, Layout, and Styling** - SlotMap widget arena, Taffy layout engine, and TCSS styling engine
-- [x] **Phase 3: Reactive System, Events, and Testing** - Reactive<T> properties, typed message passing, and TestApp harness (completed 2026-03-25)
-- [ ] **Phase 4: Built-in Widget Library** - All 22 v1 widgets with styling, interaction, and snapshot tests
-- [x] **Phase 5: Developer Experience and Polish** - Proc-macro derive, Worker API, command palette, documentation (completed 2026-03-26)
+- [ ] **Phase 1: Semantic Theme Engine** - CSS variable resolution, shade generation, dark theme, custom theme support
+- [ ] **Phase 2: Interactive States & Rendering Integration** - Focus/hover/active/selected/invalid visual feedback; sub-cell rendering primitives in real widgets
+- [ ] **Phase 3: Widget Visual Polish & Demos** - Per-widget visual quality matching Python Textual; demo apps proving the full stack
 
 ## Phase Details
 
-### Phase 1: Foundation
-**Goal**: A runnable Cargo workspace where `cargo run` opens a ratatui frame in the alternate screen, handles keyboard input, exits cleanly on `q` or panic, and responds to terminal resize — proving the full ratatui + crossterm + Tokio stack works end-to-end on Windows, macOS, and Linux.
-**Depends on**: Nothing (first phase)
-**Requirements**: FOUND-01, FOUND-02, FOUND-03, FOUND-04, FOUND-05, FOUND-06
+### Phase 1: Semantic Theme Engine
+**Goal**: Widgets can reference semantic colors ($primary, $surface, $accent) in CSS and get correct RGB values with shade variants
+**Depends on**: Nothing (first v1.1 phase; builds on existing CSS engine from v1.0)
+**Requirements**: THEME-01, THEME-02, THEME-03, THEME-04
 **Success Criteria** (what must be TRUE):
-  1. `cargo build` succeeds on stable Rust with no nightly features
-  2. `cargo run` opens an alternate-screen TUI, renders visible content, and exits cleanly with `q`
-  3. Panic in any code path restores the terminal to its original state (no broken shell)
-  4. Resizing the terminal window triggers a layout recomputation and re-render within one event tick
-  5. The same binary produces correct output on Windows 10+, macOS, and Linux with no platform branches in application code
-**Plans**: 2 plans
+  1. A widget styled with `color: $primary` renders in the theme's primary color (not silently ignored or black)
+  2. `$primary-lighten-2` and `$primary-darken-1` produce visibly distinct shades of the primary color
+  3. The default dark theme produces colors matching Python Textual's textual-dark palette on visual comparison
+  4. A user-provided CSS file can override theme variables and the change propagates to all widgets using those variables
+**Plans**: TBD
 
 Plans:
-- [x] 01-01: Cargo workspace setup, dependencies, basic App skeleton, Tokio LocalSet event loop with crossterm EventStream and flume channel
-- [x] 01-02: Terminal management — alt-screen entry/exit, raw mode, panic hook with terminal restore, resize event handling, TestBackend integration
+- [ ] 01-01: TBD
+- [ ] 01-02: TBD
 
-### Phase 2: Widget Tree, Layout, and Styling
-**Goal**: Developers can declare a widget tree (`App > Screen > Widget`) with parent/child relationships, lay it out using Taffy Flexbox/Grid/Dock, and style widgets using a `.tcss` stylesheet — and see the correct visual result rendered via ratatui.
+### Phase 2: Interactive States & Rendering Integration
+**Goal**: Users see clear visual feedback for focus, hover, press, selection, and validation; sub-cell rendering primitives work correctly in real widget contexts
 **Depends on**: Phase 1
-**Requirements**: TREE-01, TREE-02, TREE-03, TREE-04, TREE-05, LAYOUT-01, LAYOUT-02, LAYOUT-03, LAYOUT-04, LAYOUT-05, LAYOUT-06, LAYOUT-07, CSS-01, CSS-02, CSS-03, CSS-04, CSS-05, CSS-06, CSS-07, CSS-08, CSS-09
+**Requirements**: STATE-01, STATE-02, STATE-03, STATE-04, STATE-05, RENDER-01, RENDER-02, RENDER-03, RENDER-04, RENDER-05
 **Success Criteria** (what must be TRUE):
-  1. A widget added via `compose()` appears on screen; a widget removed via `unmount()` disappears — without unsafe code or runtime borrow panics
-  2. Pressing Tab moves keyboard focus through widgets in declared tab order; focused widget receives `:focus` pseudo-class styling
-  3. A layout with `dock: top`, `dock: bottom`, and a flex-column center region renders correctly at multiple terminal sizes with fractional (`1fr`, `2fr`) sizing
-  4. A `.tcss` stylesheet with type, class, and ID selectors applies correct cascade and specificity — inline styles win over class styles, which win over type styles
-  5. Border styles (`solid`, `rounded`, `heavy`, `double`, `ascii`), padding, color, and background properties render correctly when declared in TCSS
-**Plans**: 4 plans
+  1. Pressing Tab to focus a widget shows a visible focus indicator (border color change or highlight) distinct from unfocused state
+  2. Moving the mouse over a hoverable widget changes its appearance (color shift, border change, or highlight)
+  3. Clicking and holding a Button shows a visually depressed state that reverts on release
+  4. Selecting an item in a ListView or similar widget highlights it with accent color and bold text (not terminal REVERSE attribute)
+  5. An Input field in invalid state shows red border/text; valid state shows normal or green indication
+  6. Scrollable widgets show eighth-block scrollbar thumbs that move at sub-cell resolution
+**Plans**: TBD
 
 Plans:
-- [x] 02-01-PLAN.md — Widget tree: SlotMap arena, Widget trait, AppContext, CSS type definitions, screen stack, focus management
-- [x] 02-02-PLAN.md — Layout engine: TaffyBridge, ComputedStyle-to-Taffy conversion, flex/grid/dock layouts, dirty-flag incremental relayout, mouse hit map
-- [x] 02-03-PLAN.md — CSS/TCSS styling engine: cssparser tokenizer, selector parser/matcher, property parser, cascade resolver, pseudo-classes, default CSS
-- [ ] 02-04-PLAN.md — Render loop integration: wire AppContext + TaffyBridge + Stylesheet into App, IRC demo example
+- [ ] 02-01: TBD
+- [ ] 02-02: TBD
 
-**UI hint**: yes
-
-### Phase 3: Reactive System, Events, and Testing
-**Goal**: Widget state changes automatically trigger re-renders; typed messages bubble up the tree and are handled via `on_` methods; keyboard/mouse events route to the correct widget; and a `TestApp`/`Pilot` harness lets tests simulate user interaction with no real terminal.
+### Phase 3: Widget Visual Polish & Demos
+**Goal**: Individual widgets match Python Textual's visual quality; demo apps prove the full visual stack works together
 **Depends on**: Phase 2
-**Requirements**: REACT-01, REACT-02, REACT-03, REACT-04, REACT-05, EVENT-01, EVENT-02, EVENT-03, EVENT-04, EVENT-05, EVENT-06, EVENT-07, EVENT-08, TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06
+**Requirements**: VISUAL-01, VISUAL-02, VISUAL-03, VISUAL-04, VISUAL-05, VISUAL-06, VISUAL-07, DEMO-01, DEMO-02, DEMO-03
 **Success Criteria** (what must be TRUE):
-  1. Mutating a `Reactive<T>` field on a widget triggers exactly one re-render per tick, even when multiple reactive fields change in the same tick
-  2. A `Button::Pressed` message emitted by a child widget is received by an `on_button_pressed` handler on any ancestor widget; stopping propagation prevents further bubbling
-  3. A key bound via `key_bindings` on a widget fires the declared action when that key is pressed while the widget has focus
-  4. `TestApp::new(app).pilot()` runs the app headlessly; `pilot.press(Key::Tab).await` and `settle().await` produce the expected focused widget without a real terminal
-  5. `assert_snapshot!` captures the rendered buffer and fails the test when the widget output changes unexpectedly
-**Plans**: 3 plans
-
-Plans:
-- [x] 03-01-PLAN.md — Reactive property system: Reactive<T>, ComputedReactive<T>, reactive_graph integration, Executor/Owner init, RenderRequest batching
-- [x] 03-02-PLAN.md — Event system: Message trait, on_event dispatch, bubbling, keyboard/mouse routing, key bindings, timer/interval
-- [x] 03-03-PLAN.md — Test infrastructure: TestApp/Pilot harness, settle(), insta snapshots, assert_buffer_lines, proptest CSS fuzzing
-
-**Research note — Phase 3 planning requires a spike:** `reactive_graph` + Tokio `LocalSet` integration has MEDIUM confidence. Verify `Executor::init_tokio()` works with `LocalSet` and that effects can be debounced into a single render tick before committing to the API design. Run this spike before `/gsd:plan-phase 3`.
-
-### Phase 4: Built-in Widget Library
-**Goal**: All 22 v1 widgets are implemented, styled via TCSS, keyboard-interactive where applicable, and covered by snapshot tests — making textual-rs usable as a complete application framework.
-**Depends on**: Phase 3
-**Requirements**: WIDGET-01, WIDGET-02, WIDGET-03, WIDGET-04, WIDGET-05, WIDGET-06, WIDGET-07, WIDGET-08, WIDGET-09, WIDGET-10, WIDGET-11, WIDGET-12, WIDGET-13, WIDGET-14, WIDGET-15, WIDGET-16, WIDGET-17, WIDGET-18, WIDGET-19, WIDGET-20, WIDGET-21, WIDGET-22
-**Success Criteria** (what must be TRUE):
-  1. Each of the 22 widgets renders correctly in a `TestApp` snapshot test with default TCSS styles
-  2. Interactive widgets (Input, TextArea, Button, Checkbox, Switch, RadioSet, Select, ListView, DataTable, Tree, Tabs, Collapsible) respond correctly to keyboard events delivered via `Pilot`
-  3. ScrollView, ListView, DataTable, and Tree widgets scroll their content when content exceeds the available area
-  4. Each widget emits the documented messages (e.g., `Button::Pressed`, `Input::Changed`) when user interaction occurs, verifiable via TestApp message capture
-**Plans**: 9 plans
-
-Plans:
-- [x] 04-01-PLAN.md — Deps + infrastructure + Label, Button, Checkbox, Switch widgets
-- [x] 04-02-PLAN.md — Input + RadioButton/RadioSet widgets
-- [x] 04-03-PLAN.md — TextArea + Select widgets
-- [x] 04-04-PLAN.md — Vertical/Horizontal, Header, Footer, Placeholder, ProgressBar, Sparkline widgets
-- [x] 04-05-PLAN.md — ListView, Log, ScrollView widgets
-- [x] 04-06-PLAN.md — DataTable, Tree widgets
-- [x] 04-07-PLAN.md — Tabs/TabbedContent, Collapsible, Markdown widgets
-- [x] 04-08-PLAN.md — Gap closure: Input validation API (validator callback, error state rendering)
-- [x] 04-09-PLAN.md — Gap closure: Update REQUIREMENTS.md checkbox markers to match verification status
-
+  1. Button renders with 3D depth effect (lighter top, darker bottom borders) that inverts visually on press
+  2. Switch renders as a pill-shaped toggle with distinct knob/track colors
+  3. DataTable shows zebra-striped rows, bold colored headers, and a smooth scrollbar
+  4. Tabs show a colored underline/bar on the active tab clearly distinguishing it from inactive tabs
+  5. Running the widget gallery demo produces output visually comparable to Python Textual's gallery screenshots
+**Plans**: TBD
 **UI hint**: yes
 
-### Phase 5: Developer Experience and Polish
-**Goal**: The framework API is ergonomic enough to build real applications — a `#[derive(Widget)]` macro reduces boilerplate, the Worker API handles background tasks cleanly, `notify()`/`post_message()` enables inter-widget communication, a command palette is available, and the documentation is complete enough for a new user to build a Textual-quality app from the guide.
-**Depends on**: Phase 4
-**Requirements**: DX-01, DX-02, DX-03, DX-04, DX-05
-**Success Criteria** (what must be TRUE):
-  1. `#[derive(Widget)]` on a struct generates the Widget trait boilerplate, compiles without errors, and is recognized by rust-analyzer without IDE red-underlines
-  2. `self.run_worker(async_fn)` executes a blocking or async task without blocking the event loop; the result arrives as a typed message handled by `on_` dispatch
-  3. A widget can call `self.notify(message)` to post to ancestors and `app.post_message(target_id, message)` to post to any widget by ID
-  4. An app with command palette enabled shows a searchable command list when the palette key binding is triggered, and executing a command dispatches the correct action
-  5. A developer new to textual-rs can follow the documentation guide and produce a working multi-screen TUI with styled widgets and event handlers
-**Plans**: 4 plans
-
 Plans:
-- [x] 05-01-PLAN.md — Proc-macro crate: #[derive(Widget)] + #[widget_impl] with #[on] and #[keybinding] support
-- [x] 05-02-PLAN.md — Worker API (run_worker, WorkerResult, auto-cancel) + notify() convenience wrapper
-- [x] 05-03-PLAN.md — Command Palette: CommandRegistry, CommandPalette widget, Ctrl+P integration, fuzzy search
-- [x] 05-04-PLAN.md — Demos (widget showcase + IRC client) + tutorial examples + rustdoc
-
-**UI hint**: yes
+- [ ] 03-01: TBD
+- [ ] 03-02: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Foundation | 2/2 | Complete    | 2026-03-25 |
-| 2. Widget Tree, Layout, and Styling | 3/4 | In Progress|  |
-| 3. Reactive System, Events, and Testing | 3/3 | Complete   | 2026-03-25 |
-| 4. Built-in Widget Library | 8/9 | In Progress|  |
-| 5. Developer Experience and Polish | 4/4 | Complete   | 2026-03-26 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation | v1.0 | 2/2 | Complete | 2026-03-25 |
+| 2. Widget Tree, Layout, and Styling | v1.0 | 4/4 | Complete | 2026-03-26 |
+| 3. Reactive System, Events, and Testing | v1.0 | 3/3 | Complete | 2026-03-25 |
+| 4. Built-in Widget Library | v1.0 | 9/9 | Complete | 2026-03-26 |
+| 5. Developer Experience and Polish | v1.0 | 4/4 | Complete | 2026-03-26 |
+| 1. Semantic Theme Engine | v1.1 | 0/0 | Not started | - |
+| 2. Interactive States & Rendering Integration | v1.1 | 0/0 | Not started | - |
+| 3. Widget Visual Polish & Demos | v1.1 | 0/0 | Not started | - |

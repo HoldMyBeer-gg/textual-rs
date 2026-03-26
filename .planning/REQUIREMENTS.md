@@ -1,7 +1,7 @@
 # Requirements: textual-rs
 
 **Defined:** 2026-03-24 (v1.0), updated 2026-03-26 (v1.1)
-**Core Value:** Developers can build Textual-quality TUI applications in Rust — declare widgets, style with CSS, react to events, get a polished result on any terminal.
+**Core Value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
 
 ## v1.1: Visual Parity with Python Textual
 
@@ -22,7 +22,7 @@
 
 ### Widget Visual Quality
 
-- [ ] **VISUAL-01**: Button renders with 3D depth — lighter top border, darker bottom; inverted on press
+- [ ] **VISUAL-01**: Button renders with 3D depth -- lighter top border, darker bottom; inverted on press
 - [ ] **VISUAL-02**: Switch renders as pill-shaped toggle with distinct knob/track colors
 - [ ] **VISUAL-03**: DataTable has zebra-striped rows, bold colored headers, smooth scrollbar
 - [ ] **VISUAL-04**: Tabs show active indicator (underline/color bar) distinguishing selected from inactive
@@ -46,10 +46,29 @@
 
 ## Traceability
 
-| Requirement | Phase |
-|-------------|-------|
-| RENDER-01 through RENDER-05 | TBD |
-| THEME-01 through THEME-04 | TBD |
-| VISUAL-01 through VISUAL-07 | TBD |
-| STATE-01 through STATE-05 | TBD |
-| DEMO-01 through DEMO-03 | TBD |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| THEME-01 | Phase 1 | Pending |
+| THEME-02 | Phase 1 | Pending |
+| THEME-03 | Phase 1 | Pending |
+| THEME-04 | Phase 1 | Pending |
+| STATE-01 | Phase 2 | Pending |
+| STATE-02 | Phase 2 | Pending |
+| STATE-03 | Phase 2 | Pending |
+| STATE-04 | Phase 2 | Pending |
+| STATE-05 | Phase 2 | Pending |
+| RENDER-01 | Phase 2 | Pending |
+| RENDER-02 | Phase 2 | Pending |
+| RENDER-03 | Phase 2 | Pending |
+| RENDER-04 | Phase 2 | Pending |
+| RENDER-05 | Phase 2 | Pending |
+| VISUAL-01 | Phase 3 | Pending |
+| VISUAL-02 | Phase 3 | Pending |
+| VISUAL-03 | Phase 3 | Pending |
+| VISUAL-04 | Phase 3 | Pending |
+| VISUAL-05 | Phase 3 | Pending |
+| VISUAL-06 | Phase 3 | Pending |
+| VISUAL-07 | Phase 3 | Pending |
+| DEMO-01 | Phase 3 | Pending |
+| DEMO-02 | Phase 3 | Pending |
+| DEMO-03 | Phase 3 | Pending |
