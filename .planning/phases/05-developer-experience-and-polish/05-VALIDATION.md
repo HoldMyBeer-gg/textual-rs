@@ -2,8 +2,8 @@
 phase: 5
 slug: developer-experience-and-polish
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-25
 ---
 
@@ -49,8 +49,8 @@ created: 2026-03-25
 | 05-04-01 | 04 | 2 | DX-04 | integration (TestApp) | `cargo test -p textual-rs command_palette_opens` | ❌ W0 | ⬜ pending |
 | 05-04-02 | 04 | 2 | DX-04 | unit | `cargo test -p textual-rs command_palette_fuzzy_search` | ❌ W0 | ⬜ pending |
 | 05-04-03 | 04 | 2 | DX-04 | integration | `cargo test -p textual-rs command_palette_dispatch` | ❌ W0 | ⬜ pending |
-| 05-05-01 | 05 | 3 | DX-05 | smoke | `cargo doc --no-deps 2>&1 \| grep -E "warning\|error"` | N/A | ⬜ pending |
-| 05-05-02 | 05 | 3 | DX-05 | compile smoke | `cargo build --example tutorial_01_hello` | ❌ W0 | ⬜ pending |
+| 05-04-03 | 04 | 3 | DX-05 | smoke | `cargo doc --no-deps 2>&1 \| grep -E "warning\|error"` | N/A | ⬜ pending |
+| 05-04-04 | 04 | 3 | DX-05 | compile smoke | `cargo build --example tutorial_01_hello` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -85,4 +85,4 @@ created: 2026-03-25
 - [ ] Feedback latency < 30s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-25
