@@ -1,26 +1,26 @@
-/* IRC demo — weechat-style layout with Textual-quality visuals */
+/* IRC demo — weechat-style layout with theme variables */
 
 Screen {
-    background: #0f0f1a;
-    color: #e0e0e0;
+    background: $background;
+    color: $foreground;
 }
 
 Header {
-    background: #1a1a2e;
-    color: #00d4ff;
+    background: $panel;
+    color: $primary;
     height: 1;
 }
 
 Footer {
-    background: #1a1a2e;
-    color: #e0e0e0;
+    background: $panel;
+    color: $foreground;
     height: 1;
 }
 
 IrcScreen {
     layout-direction: vertical;
-    background: #0f0f1a;
-    color: #e0e0e0;
+    background: $background;
+    color: $foreground;
 }
 
 MainRegion {
@@ -30,23 +30,23 @@ MainRegion {
 
 ChannelPane {
     width: 20;
-    border: inner #4a4a5a;
-    background: #1a1a2e;
-    color: #e0e0e0;
+    border: tall #4a4a5a;
+    background: $panel;
+    color: $foreground;
 }
 
 ChatLog {
     flex-grow: 1;
-    border: inner #4a4a5a;
-    background: #12121f;
-    color: #00ffa3;
+    border: tall #4a4a5a;
+    background: $background;
+    color: $success;
 }
 
 UserPane {
     width: 22;
-    border: inner #4a4a5a;
-    background: #1a1a2e;
-    color: #e0e0e0;
+    border: tall #4a4a5a;
+    background: $panel;
+    color: $foreground;
 }
 
 InputRegion {
@@ -54,15 +54,15 @@ InputRegion {
 }
 
 Input {
-    border: inner #4a4a5a;
+    border: tall #4a4a5a;
     flex-grow: 1;
     height: 3;
-    color: #e0e0e0;
-    background: #1a1a2e;
+    color: $foreground;
+    background: $panel;
 }
 
 *:focus {
-    border: inner #00ffa3;
+    border: tall #00ffa3;
 }
 
 ListView {
