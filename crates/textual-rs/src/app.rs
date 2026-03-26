@@ -187,10 +187,24 @@ impl App {
                 Ok(AppEvent::Mouse(m)) => {
                     use crossterm::event::MouseEventKind;
                     match m.kind {
-                        MouseEventKind::Down(_)
-                        | MouseEventKind::ScrollDown
-                        | MouseEventKind::ScrollUp => {
+                        MouseEventKind::Down(_) => {
                             // Hit test to find target widget
+                            if let Some(ref hit_map) = self.hit_map {
+                                if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                                    // Click-to-focus: if target is focusable, set focus
+                                    if let Some(widget) = self.ctx.arena.get(target_id) {
+                                        if widget.can_focus() {
+                                            self.ctx.focused_widget = Some(target_id);
+                                        }
+                                    }
+                                    dispatch_message(target_id, &m, &self.ctx);
+                                    self.drain_message_queue();
+                                    self.full_render_pass(&mut terminal)?;
+                                }
+                            }
+                        }
+                        MouseEventKind::ScrollDown
+                        | MouseEventKind::ScrollUp => {
                             if let Some(ref hit_map) = self.hit_map {
                                 if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
                                     dispatch_message(target_id, &m, &self.ctx);
@@ -426,13 +440,30 @@ fn collect_subtree_dfs(root: WidgetId, ctx: &AppContext) -> Vec<WidgetId> {
 
 /// Walk the active screen subtree in DFS order and call each widget's render().
 fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridge, frame: &mut Frame) {
+    use crate::css::types::{BorderStyle as TcssBorder, TcssColor};
+
     let dfs_ids = collect_subtree_dfs(screen_id, ctx);
     for id in dfs_ids {
         if let Some(rect) = bridge.rect_for(id) {
             if rect.width > 0 && rect.height > 0 {
                 // Paint background + borders from computed CSS, get inner content area
                 let content_area = if let Some(cs) = ctx.computed_styles.get(id) {
-                    paint_chrome(cs, rect, frame.buffer_mut())
+                    // If this widget is focused, enhance its border
+                    let is_focused = ctx.focused_widget == Some(id);
+                    if is_focused && cs.border != TcssBorder::None {
+                        let mut focused_cs = cs.clone();
+                        focused_cs.color = TcssColor::Rgb(0, 255, 163); // accent green
+                        focused_cs.border = TcssBorder::Heavy; // upgrade to heavy
+                        paint_chrome(&focused_cs, rect, frame.buffer_mut())
+                    } else if is_focused && cs.border == TcssBorder::None {
+                        // Focusable widget without border — add one
+                        let mut focused_cs = cs.clone();
+                        focused_cs.color = TcssColor::Rgb(0, 255, 163);
+                        focused_cs.border = TcssBorder::Heavy;
+                        paint_chrome(&focused_cs, rect, frame.buffer_mut())
+                    } else {
+                        paint_chrome(cs, rect, frame.buffer_mut())
+                    }
                 } else {
                     rect
                 };
