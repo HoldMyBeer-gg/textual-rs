@@ -1,0 +1,237 @@
+use std::cell::Cell;
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::style::{Modifier, Style};
+use crossterm::event::{KeyCode, KeyModifiers};
+
+use super::context::AppContext;
+use super::{Widget, WidgetId};
+use crate::event::keybinding::KeyBinding;
+use crate::reactive::Reactive;
+
+/// Messages emitted by a Select.
+pub mod messages {
+    use crate::event::message::Message;
+
+    /// Emitted when a new option is chosen from the overlay.
+    pub struct Changed {
+        pub value: String,
+        pub index: usize,
+    }
+
+    impl Message for Changed {}
+}
+
+/// A dropdown selection widget that displays the current selection and opens an
+/// overlay on Enter to let the user pick from a list of options.
+pub struct Select {
+    pub options: Vec<String>,
+    pub selected: Reactive<usize>,
+    own_id: Cell<Option<WidgetId>>,
+}
+
+impl Select {
+    /// Create a new Select with the given options. Initial selection is index 0.
+    pub fn new(options: Vec<String>) -> Self {
+        Self {
+            options,
+            selected: Reactive::new(0),
+            own_id: Cell::new(None),
+        }
+    }
+}
+
+static SELECT_BINDINGS: &[KeyBinding] = &[KeyBinding {
+    key: KeyCode::Enter,
+    modifiers: KeyModifiers::NONE,
+    action: "open",
+    description: "Open",
+    show: true,
+}];
+
+impl Widget for Select {
+    fn widget_type_name(&self) -> &'static str {
+        "Select"
+    }
+
+    fn can_focus(&self) -> bool {
+        true
+    }
+
+    fn default_css() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Select { border: tall; height: 3; }"
+    }
+
+    fn on_mount(&self, id: WidgetId) {
+        self.own_id.set(Some(id));
+    }
+
+    fn on_unmount(&self, _id: WidgetId) {
+        self.own_id.set(None);
+    }
+
+    fn key_bindings(&self) -> &[KeyBinding] {
+        SELECT_BINDINGS
+    }
+
+    fn on_action(&self, action: &str, ctx: &AppContext) {
+        if action == "open" {
+            let current = self.selected.get_untracked();
+            let overlay = SelectOverlay {
+                options: self.options.clone(),
+                current,
+                cursor: Cell::new(current),
+                source_id: self.own_id.get(),
+            };
+            ctx.push_screen_deferred(Box::new(overlay));
+        }
+    }
+
+    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        if area.height == 0 || area.width == 0 {
+            return;
+        }
+        let selected = self.selected.get_untracked();
+        let label = self.options.get(selected).map(|s| s.as_str()).unwrap_or("");
+        let text = format!("\u{25bc} {}", label); // "▼ label"
+        let display: String = text.chars().take(area.width as usize).collect();
+        buf.set_string(area.x, area.y, &display, Style::default());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// SelectOverlay — private screen shown when Select is opened
+// ---------------------------------------------------------------------------
+
+struct SelectOverlay {
+    options: Vec<String>,
+    /// The index that was selected when the overlay opened (kept for future selection highlighting).
+    #[allow(dead_code)]
+    current: usize,
+    /// Cursor position within the overlay list.
+    cursor: Cell<usize>,
+    /// The WidgetId of the originating Select widget (to post Changed back).
+    source_id: Option<WidgetId>,
+}
+
+static OVERLAY_BINDINGS: &[KeyBinding] = &[
+    KeyBinding {
+        key: KeyCode::Up,
+        modifiers: KeyModifiers::NONE,
+        action: "cursor_up",
+        description: "Move up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Down,
+        modifiers: KeyModifiers::NONE,
+        action: "cursor_down",
+        description: "Move down",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Enter,
+        modifiers: KeyModifiers::NONE,
+        action: "select",
+        description: "Select",
+        show: true,
+    },
+    KeyBinding {
+        key: KeyCode::Esc,
+        modifiers: KeyModifiers::NONE,
+        action: "cancel",
+        description: "Cancel",
+        show: true,
+    },
+];
+
+impl Widget for SelectOverlay {
+    fn widget_type_name(&self) -> &'static str {
+        "SelectOverlay"
+    }
+
+    fn can_focus(&self) -> bool {
+        true
+    }
+
+    fn key_bindings(&self) -> &[KeyBinding] {
+        OVERLAY_BINDINGS
+    }
+
+    fn on_action(&self, action: &str, ctx: &AppContext) {
+        match action {
+            "cursor_up" => {
+                let cursor = self.cursor.get();
+                if cursor > 0 {
+                    self.cursor.set(cursor - 1);
+                } else {
+                    // Wrap to bottom
+                    self.cursor.set(self.options.len().saturating_sub(1));
+                }
+            }
+            "cursor_down" => {
+                let cursor = self.cursor.get();
+                if cursor + 1 < self.options.len() {
+                    self.cursor.set(cursor + 1);
+                } else {
+                    // Wrap to top
+                    self.cursor.set(0);
+                }
+            }
+            "select" => {
+                let idx = self.cursor.get();
+                // Post Changed to the originating Select widget
+                if let Some(source_id) = self.source_id {
+                    if let Some(value) = self.options.get(idx) {
+                        // Update the Select widget's reactive selected field
+                        if let Some(widget) = ctx.arena.get(source_id) {
+                            // Downcast to Select to update selected index
+                            if widget.widget_type_name() == "Select" {
+                                // We post the Changed message; the Select widget's
+                                // on_event can handle updating its own state.
+                                ctx.post_message(
+                                    source_id,
+                                    messages::Changed {
+                                        value: value.clone(),
+                                        index: idx,
+                                    },
+                                );
+                            }
+                        }
+                    }
+                }
+                ctx.pop_screen_deferred();
+            }
+            "cancel" => {
+                ctx.pop_screen_deferred();
+            }
+            _ => {}
+        }
+    }
+
+    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+        if area.height == 0 || area.width == 0 {
+            return;
+        }
+        let cursor = self.cursor.get();
+        for (i, option) in self.options.iter().enumerate() {
+            let y = area.y + i as u16;
+            if y >= area.y + area.height {
+                break;
+            }
+            let display: String = option.chars().take(area.width as usize).collect();
+            let style = if i == cursor {
+                Style::default().add_modifier(Modifier::REVERSED)
+            } else {
+                Style::default()
+            };
+            // Clear the row first
+            let blank: String = " ".repeat(area.width as usize);
+            buf.set_string(area.x, y, &blank, Style::default());
+            buf.set_string(area.x, y, &display, style);
+        }
+    }
+}
