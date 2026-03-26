@@ -446,38 +446,41 @@ impl App {
     where
         B::Error: Send + Sync + 'static,
     {
-        let screen_id = match self.ctx.screen_stack.last().copied() {
-            Some(id) => id,
-            None => return Ok(()), // no screen mounted yet
-        };
-
-        // a. Apply CSS cascade
-        apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
-
-        // b. Sync layout tree (full sync after recomposition, dirty-only otherwise)
-        if self.needs_full_sync {
-            self.bridge.sync_subtree(screen_id, &self.ctx);
-            self.needs_full_sync = false;
-        } else {
-            self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
+        if self.ctx.screen_stack.is_empty() {
+            return Ok(());
         }
 
-        // c. Compute layout
         let size = terminal.size()?;
-        self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
 
-        // d. Clear dirty flags
-        clear_dirty_subtree(screen_id, &mut self.ctx);
+        // Process ALL screens in the stack (bottom-to-top) so overlays
+        // render on top of the underlying screen content.
+        for &screen_id in &self.ctx.screen_stack.clone() {
+            apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
 
-        // e. Build hit map (DFS widget ids)
-        let dfs_ids = collect_subtree_dfs(screen_id, &self.ctx);
+            if self.needs_full_sync {
+                self.bridge.sync_subtree(screen_id, &self.ctx);
+            } else {
+                self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
+            }
+
+            self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
+            clear_dirty_subtree(screen_id, &mut self.ctx);
+        }
+        self.needs_full_sync = false;
+
+        // Build hit map from the TOP screen only (events go to the topmost overlay)
+        let top_screen_id = *self.ctx.screen_stack.last().unwrap();
+        let dfs_ids = collect_subtree_dfs(top_screen_id, &self.ctx);
         self.hit_map = Some(MouseHitMap::build(&dfs_ids, self.bridge.layout_cache()));
 
-        // f. Render
+        // Render all screens bottom-to-top in a single frame
         let ctx_ref = &self.ctx;
         let bridge_ref = &self.bridge;
+        let screen_stack = self.ctx.screen_stack.clone();
         terminal.draw(|frame| {
-            render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
+            for &screen_id in &screen_stack {
+                render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
+            }
         })?;
 
         Ok(())
