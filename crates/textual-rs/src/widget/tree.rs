@@ -119,6 +119,37 @@ pub fn compose_subtree(root_id: WidgetId, ctx: &mut AppContext) {
     }
 }
 
+/// Recompose a widget: unmount all its children and recompose from scratch.
+/// Used when a widget's compose() output changes dynamically (e.g. tab switching).
+pub fn recompose_widget(id: WidgetId, ctx: &mut AppContext) {
+    // Unmount all existing children
+    let children: Vec<WidgetId> = ctx.children.get(id).cloned().unwrap_or_default();
+    for child_id in children {
+        unmount_widget(child_id, ctx);
+    }
+    // Recompose
+    compose_subtree(id, ctx);
+    // Mark the entire subtree dirty so the layout bridge creates new Taffy nodes
+    mark_subtree_dirty(id, ctx);
+    // Re-focus the first focusable child (e.g. TabBar after tab switch)
+    let new_children: Vec<WidgetId> = ctx.children.get(id).cloned().unwrap_or_default();
+    for child_id in new_children {
+        if ctx.arena.get(child_id).map_or(false, |w| w.can_focus()) {
+            ctx.focused_widget = Some(child_id);
+            break;
+        }
+    }
+}
+
+/// Mark a widget and all its descendants as dirty.
+fn mark_subtree_dirty(id: WidgetId, ctx: &mut AppContext) {
+    ctx.dirty.insert(id, true);
+    let children: Vec<WidgetId> = ctx.children.get(id).cloned().unwrap_or_default();
+    for child_id in children {
+        mark_subtree_dirty(child_id, ctx);
+    }
+}
+
 /// Push a new screen onto the screen stack and compose its entire subtree.
 pub fn push_screen(screen: Box<dyn Widget>, ctx: &mut AppContext) -> WidgetId {
     let id = mount_widget(screen, None, ctx);
