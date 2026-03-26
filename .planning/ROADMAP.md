@@ -82,7 +82,7 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Theme struct, HSL shade generation, default dark theme
+- [x] 01-01-PLAN.md -- Theme struct, HSL shade generation, default dark theme
 - [ ] 01-02-PLAN.md -- CSS variable resolution ($name tokens), theme wiring into cascade, custom theme support
 
 ### Phase 2: Interactive States & Rendering Integration
@@ -131,6 +131,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 3. Reactive System, Events, and Testing | v1.0 | 3/3 | Complete | 2026-03-25 |
 | 4. Built-in Widget Library | v1.0 | 9/9 | Complete | 2026-03-26 |
 | 5. Developer Experience and Polish | v1.0 | 4/4 | Complete | 2026-03-26 |
-| 1. Semantic Theme Engine | v1.1 | 0/2 | In progress | - |
+| 1. Semantic Theme Engine | v1.1 | 1/2 | In progress | - |
 | 2. Interactive States & Rendering Integration | v1.1 | 0/0 | Not started | - |
 | 3. Widget Visual Polish & Demos | v1.1 | 0/0 | Not started | - |

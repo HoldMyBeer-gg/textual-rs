@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: "Visual Parity with Python Textual"
-status: Ready to plan
-stopped_at: "Roadmap created, Phase 1 ready for planning"
-last_updated: "2026-03-26T19:00:00.000Z"
+status: In progress
+stopped_at: "Completed 01-01-PLAN.md (Theme struct, shade generation, default dark theme)"
+last_updated: "2026-03-26T20:53:34Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -24,15 +24,19 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 1 of 3 (Semantic Theme Engine)
-Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-03-26 -- Roadmap created for v1.1
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-03-26 -- Completed 01-01 (Theme struct, shade generation, default dark theme)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50% (1/2 plans)
 
 ## Performance Metrics
 
 **Velocity:** Carried from v1.0
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 01 | 01 | 188s | 1 | 2 |
 
 ## Accumulated Context
 
@@ -44,6 +48,8 @@ Progress: [░░░░░░░░░░] 0%
 - [v1.1-pre]: border: inner CSS keyword maps to McguganBox style
 - [v1.1-pre]: All widgets upgraded with color-differentiated states (green accent for active/selected, muted for inactive)
 - [v1.1-pre]: Mouse click support added to all interactive widgets via click_action() and on_event()
+- [v1.1-01-01]: Pure-math HSL conversion (no external crate) for shade generation
+- [v1.1-01-01]: Panel color = blend(surface, primary, 0.1) matching Python Textual
 
 ### Pending Todos
 
@@ -58,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Roadmap created for v1.1, Phase 1 ready to plan
+Stopped at: Completed 01-01-PLAN.md (Theme struct, shade generation, default dark theme)
 Resume file: None

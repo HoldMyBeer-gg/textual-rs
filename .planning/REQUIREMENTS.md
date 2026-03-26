@@ -16,8 +16,8 @@
 ### Semantic Color Theming
 
 - [ ] **THEME-01**: CSS variables ($primary, $secondary, $accent, $surface, $panel, $background, $success, $warning, $error, $foreground) resolve to concrete RGB values during cascade
-- [ ] **THEME-02**: Shade generation (-lighten-1/2/3, -darken-1/2/3) works on any color variable
-- [ ] **THEME-03**: A default dark theme ships matching Python Textual's textual-dark palette
+- [x] **THEME-02**: Shade generation (-lighten-1/2/3, -darken-1/2/3) works on any color variable
+- [x] **THEME-03**: A default dark theme ships matching Python Textual's textual-dark palette
 - [ ] **THEME-04**: User can provide a custom theme via CSS
 
 ### Widget Visual Quality
@@ -49,8 +49,8 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | THEME-01 | Phase 1 | Pending |
-| THEME-02 | Phase 1 | Pending |
-| THEME-03 | Phase 1 | Pending |
+| THEME-02 | Phase 1 | Complete |
+| THEME-03 | Phase 1 | Complete |
 | THEME-04 | Phase 1 | Pending |
 | STATE-01 | Phase 2 | Pending |
 | STATE-02 | Phase 2 | Pending |
