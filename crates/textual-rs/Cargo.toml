@@ -21,6 +21,7 @@ any_spawner = { version = "0.3.0", features = ["tokio"] }
 pulldown-cmark = { version = "0.13", default-features = false }
 arboard = { version = "3.6", default-features = false }
 unicode-width = "0.2"
+strsim = "0.11"
 
 [dev-dependencies]
 insta = "1.46.3"

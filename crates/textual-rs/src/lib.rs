@@ -1,4 +1,5 @@
 pub mod app;
+pub mod command;
 pub mod css;
 pub mod event;
 pub mod layout;
@@ -40,3 +41,4 @@ pub use widget::tabs::{Tabs, TabbedContent};
 pub use widget::collapsible::Collapsible;
 pub use widget::markdown::Markdown;
 pub use worker::WorkerResult;
+pub use command::{CommandPalette, CommandRegistry};
