@@ -34,6 +34,8 @@ pub struct App {
     /// Receiver end of the dedicated worker result channel.
     /// The sender is stored on AppContext so widgets can spawn workers.
     worker_rx: Option<flume::Receiver<(WidgetId, Box<dyn std::any::Any + Send>)>>,
+    /// Registry for app-level commands. Discover all commands via discover_all().
+    command_registry: crate::command::CommandRegistry,
 }
 
 impl App {
@@ -65,7 +67,14 @@ impl App {
             root_screen_factory: Some(Box::new(screen_factory)),
             _owner: None,
             worker_rx: None,
+            command_registry: crate::command::CommandRegistry::new(),
         }
+    }
+
+    /// Register an app-level command in the command palette.
+    /// Registered commands appear in the palette alongside widget key bindings.
+    pub fn register_command(&mut self, name: &str, action: &str) {
+        self.command_registry.register(name, action);
     }
 
     /// Builder: parse and add a TCSS stylesheet. Parse errors are logged to stderr.
@@ -150,6 +159,20 @@ impl App {
                         Ok(AppEvent::Key(k)) if k.kind != KeyEventKind::Press => {}
 
                         Ok(AppEvent::Key(k)) => {
+                            // 0. Ctrl+P: open command palette
+                            if k.code == KeyCode::Char('p')
+                                && k.modifiers.contains(KeyModifiers::CONTROL)
+                            {
+                                let commands = self.command_registry.discover_all(&self.ctx);
+                                let palette = crate::command::CommandPalette::new(commands);
+                                self.ctx.push_screen_deferred(Box::new(palette));
+                                self.process_deferred_screens();
+                                // Auto-focus the palette widget on the new overlay screen
+                                advance_focus(&mut self.ctx);
+                                self.full_render_pass(&mut terminal)?;
+                                continue;
+                            }
+
                             // 1. Check global quit bindings first
                             if k.code == KeyCode::Char('q')
                                 || (k.code == KeyCode::Char('c')
@@ -374,6 +397,17 @@ impl App {
     /// Handle a key event: check bindings, dispatch to focused widget, advance focus on Tab.
     /// Returns true if the event was handled by a binding or on_event handler.
     pub fn handle_key_event(&mut self, k: crossterm::event::KeyEvent) -> bool {
+        // 0. Ctrl+P: open command palette
+        if k.code == KeyCode::Char('p') && k.modifiers.contains(KeyModifiers::CONTROL) {
+            let commands = self.command_registry.discover_all(&self.ctx);
+            let palette = crate::command::CommandPalette::new(commands);
+            self.ctx.push_screen_deferred(Box::new(palette));
+            self.process_deferred_screens();
+            // Auto-focus the palette on the new screen
+            advance_focus(&mut self.ctx);
+            return true;
+        }
+
         // 1. Check focused widget's key bindings
         let mut handled = false;
         if let Some(focused_id) = self.ctx.focused_widget {

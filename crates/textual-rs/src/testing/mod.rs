@@ -112,6 +112,7 @@ impl TestApp {
             _ => {}
         }
         self.app.drain_message_queue();
+        self.app.process_deferred_screens();
         self.app
             .render_to_terminal(&mut self.terminal)
             .expect("failed to render in process_event");

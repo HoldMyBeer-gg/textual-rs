@@ -1967,6 +1967,7 @@ dependencies = [
  "ratatui",
  "reactive_graph",
  "slotmap",
+ "strsim",
  "taffy",
  "textual-rs-macros",
  "tokio",
