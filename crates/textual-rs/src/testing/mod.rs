@@ -58,6 +58,24 @@ impl TestApp {
         TestApp { app, terminal, tx, rx }
     }
 
+    /// Create a TestApp WITH built-in CSS (for tests that need proper widget layout).
+    pub fn new_styled(
+        cols: u16,
+        rows: u16,
+        css: &str,
+        factory: impl FnOnce() -> Box<dyn Widget> + 'static,
+    ) -> Self {
+        let _ = any_spawner::Executor::init_tokio();
+        let mut app = App::new(factory).with_css(css);
+        let (tx, rx) = flume::unbounded::<AppEvent>();
+        app.set_event_tx(tx.clone());
+        let backend = TestBackend::new(cols, rows);
+        let mut terminal = Terminal::new(backend).expect("failed to create TestBackend terminal");
+        app.mount_root_screen();
+        app.render_to_terminal(&mut terminal).expect("failed initial render");
+        TestApp { app, terminal, tx, rx }
+    }
+
     /// Get a Pilot for sending simulated input events.
     pub fn pilot(&mut self) -> Pilot<'_> {
         Pilot::new(self)

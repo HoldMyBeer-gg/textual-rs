@@ -183,6 +183,8 @@ struct TabBar {
     labels: Vec<String>,
     active: std::rc::Rc<Cell<usize>>,
     own_id: Cell<Option<WidgetId>>,
+    /// Last rendered area — used to translate absolute mouse coords to tab positions.
+    last_area_x: Cell<u16>,
 }
 
 static TAB_BAR_BINDINGS: &[KeyBinding] = &[
@@ -202,6 +204,20 @@ static TAB_BAR_BINDINGS: &[KeyBinding] = &[
     },
 ];
 
+impl TabBar {
+    fn switch_to(&self, idx: usize, ctx: &AppContext) {
+        if idx >= self.labels.len() || idx == self.active.get() {
+            return;
+        }
+        self.active.set(idx);
+        if let Some(id) = self.own_id.get() {
+            if let Some(&Some(parent_id)) = ctx.parent.get(id) {
+                ctx.request_recompose(parent_id);
+            }
+        }
+    }
+}
+
 impl Widget for TabBar {
     fn widget_type_name(&self) -> &'static str { "TabBar" }
     fn can_focus(&self) -> bool { true }
@@ -211,6 +227,34 @@ impl Widget for TabBar {
     fn on_unmount(&self, _id: WidgetId) { self.own_id.set(None); }
     fn key_bindings(&self) -> &[KeyBinding] { TAB_BAR_BINDINGS }
 
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
+        use crossterm::event::{MouseEvent, MouseEventKind};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(_)) {
+                // Translate absolute screen x to widget-local x
+                let area_x = self.last_area_x.get();
+                let local_col = m.column.saturating_sub(area_x);
+                // Compute which tab label was clicked
+                let separator = " | ";
+                let mut x: u16 = 0;
+                for (i, label) in self.labels.iter().enumerate() {
+                    if i > 0 {
+                        x += separator.len() as u16;
+                    }
+                    let start = x;
+                    x += 1; // leading space
+                    x += label.chars().count() as u16;
+                    x += 1; // trailing space
+                    if local_col >= start && local_col < x {
+                        self.switch_to(i, ctx);
+                        return super::EventPropagation::Stop;
+                    }
+                }
+            }
+        }
+        super::EventPropagation::Continue
+    }
+
     fn on_action(&self, action: &str, ctx: &AppContext) {
         let current = self.active.get();
         let count = self.labels.len();
@@ -219,18 +263,12 @@ impl Widget for TabBar {
             "next_tab" if current + 1 < count => current + 1,
             _ => return,
         };
-        self.active.set(new_idx);
-        // Request recomposition on our parent (TabbedContent) so it remounts
-        // the new active pane's children.
-        if let Some(id) = self.own_id.get() {
-            if let Some(&Some(parent_id)) = ctx.parent.get(id) {
-                ctx.request_recompose(parent_id);
-            }
-        }
+        self.switch_to(new_idx, ctx);
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 { return; }
+        self.last_area_x.set(area.x);
         let base_style = ratatui::style::Style::default();
         let active_idx = self.active.get();
         let separator = " | ";
@@ -315,6 +353,7 @@ impl Widget for TabbedContent {
             labels: self.labels.clone(),
             active: self.active.clone(),
             own_id: Cell::new(None),
+            last_area_x: Cell::new(0),
         }));
 
         // Active pane's children
