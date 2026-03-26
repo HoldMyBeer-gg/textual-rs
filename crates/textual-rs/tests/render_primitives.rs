@@ -54,10 +54,10 @@ fn mcgugan_box_uses_eighth_block_chars() {
         assert_eq!(cell.bg, inside, "left bg y={y}");
     }
 
-    // Right edge (inner rows): RIGHT_ONE_QUARTER with fg=border, bg=inside
+    // Right edge (inner rows): RIGHT_BORDER_FALLBACK (U+2595) with fg=border, bg=inside
     for y in 1..4 {
         let cell = buf.cell((7, y)).unwrap();
-        assert_eq!(cell.symbol(), canvas::RIGHT_ONE_QUARTER, "right edge y={y}");
+        assert_eq!(cell.symbol(), canvas::RIGHT_BORDER_FALLBACK, "right edge y={y}");
         assert_eq!(cell.fg, border, "right fg y={y}");
         assert_eq!(cell.bg, inside, "right bg y={y}");
     }

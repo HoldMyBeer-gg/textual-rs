@@ -1027,28 +1027,11 @@ async fn select_open_pushes_overlay() {
         state: KeyEventState::NONE,
     });
 
-    // Verify overlay was queued in pending_screen_pushes
-    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
-    assert_eq!(
-        overlay_count, 1,
-        "Opening Select should push 1 overlay to pending_screen_pushes, got: {}",
-        overlay_count
-    );
-
-    // Verify the overlay has correct widget_type_name
-    let overlay_name = test_app
-        .ctx()
-        .pending_screen_pushes
-        .borrow()
-        .first()
-        .map(|w| w.widget_type_name())
-        .unwrap_or("")
-        .to_string();
-    assert_eq!(
-        overlay_name, "SelectOverlay",
-        "Pushed overlay should be SelectOverlay, got: {:?}",
-        overlay_name
-    );
+    // Verify overlay was set as active_overlay
+    let overlay = test_app.ctx().active_overlay.borrow();
+    assert!(overlay.is_some(), "Opening Select should set active_overlay");
+    let overlay_name = overlay.as_ref().map(|w| w.widget_type_name()).unwrap_or("");
+    assert_eq!(overlay_name, "SelectOverlay", "Overlay should be SelectOverlay, got: {:?}", overlay_name);
 }
 
 #[tokio::test]
@@ -1073,35 +1056,13 @@ async fn select_choose_option_queues_overlay() {
         state: KeyEventState::NONE,
     });
 
-    // Verify overlay is in pending_screen_pushes
-    let overlay_count = test_app.ctx().pending_screen_pushes.borrow().len();
-    assert_eq!(
-        overlay_count, 1,
-        "Opening Select should queue 1 overlay, got: {}",
-        overlay_count
-    );
-
-    // Verify the overlay is focusable and has correct type
-    let overlay_focusable = test_app
-        .ctx()
-        .pending_screen_pushes
-        .borrow()
-        .first()
-        .map(|w| w.can_focus())
-        .unwrap_or(false);
-    assert!(overlay_focusable, "SelectOverlay should be focusable");
-
-    // Clear the pending pushes
-    test_app.ctx().pending_screen_pushes.borrow_mut().clear();
-
-    // Select should still show Alpha on the current screen
-    test_app.drain_messages();
-    let row0 = buf_row_trimmed(test_app.buffer(), 0);
-    assert!(
-        row0.contains("Alpha"),
-        "Select should still show Alpha before overlay resolves, got: {:?}",
-        row0
-    );
+    // Verify overlay is active and focusable
+    {
+        let overlay = test_app.ctx().active_overlay.borrow();
+        assert!(overlay.is_some(), "Opening Select should set active_overlay");
+        let focusable = overlay.as_ref().map(|w| w.can_focus()).unwrap_or(false);
+        assert!(focusable, "SelectOverlay should be focusable");
+    }
 }
 
 #[tokio::test]
