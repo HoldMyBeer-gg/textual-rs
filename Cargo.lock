@@ -1968,8 +1968,18 @@ dependencies = [
  "reactive_graph",
  "slotmap",
  "taffy",
+ "textual-rs-macros",
  "tokio",
  "unicode-width",
+]
+
+[[package]]
+name = "textual-rs-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]
