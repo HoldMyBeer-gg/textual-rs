@@ -72,5 +72,5 @@ pub use widget::tree_view::{Tree, TreeNode};
 pub use widget::tabs::{Tabs, TabbedContent};
 pub use widget::collapsible::Collapsible;
 pub use widget::markdown::Markdown;
-pub use worker::WorkerResult;
+pub use worker::{WorkerResult, WorkerProgress};
 pub use command::{CommandPalette, CommandRegistry};

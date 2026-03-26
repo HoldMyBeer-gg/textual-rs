@@ -92,6 +92,16 @@ pub struct App {
     last_ctrl_c: Option<std::time::Instant>,
     /// Current theme index in the builtin_themes list (for Ctrl+T cycling).
     theme_index: usize,
+    /// CSS files being watched for hot-reload. Polled every 2 seconds.
+    watched_css: Vec<WatchedCss>,
+}
+
+/// A CSS file being watched for changes (hot-reload support).
+struct WatchedCss {
+    path: std::path::PathBuf,
+    last_modified: std::time::SystemTime,
+    /// Index into App::stylesheets where this file's parsed rules live.
+    stylesheet_index: usize,
 }
 
 impl App {
@@ -132,6 +142,7 @@ impl App {
             needs_full_sync: false,
             last_ctrl_c: None,
             theme_index: 0,
+            watched_css: Vec::new(),
         }
     }
 
@@ -159,6 +170,7 @@ impl App {
             needs_full_sync: false,
             last_ctrl_c: None,
             theme_index: 0,
+            watched_css: Vec::new(),
         }
     }
 
@@ -170,6 +182,52 @@ impl App {
         }
         self.stylesheets.push(stylesheet.clone());
         self.ctx.stylesheets.push(stylesheet);
+        self
+    }
+
+    /// Builder: load a TCSS file, parse it, and watch for changes (hot-reload).
+    ///
+    /// The file is read and parsed immediately. During `run()`, the file is polled
+    /// every 2 seconds for changes. If modified, the CSS is re-parsed and styles
+    /// are re-cascaded to all widgets.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use textual_rs::App;
+    /// # struct S;
+    /// # impl textual_rs::Widget for S {
+    /// #     fn widget_type_name(&self) -> &'static str { "S" }
+    /// #     fn render(&self, _: &textual_rs::widget::context::AppContext, _: ratatui::layout::Rect, _: &mut ratatui::buffer::Buffer) {}
+    /// # }
+    /// let app = App::new(|| Box::new(S))
+    ///     .with_css_file("styles/app.tcss");
+    /// ```
+    pub fn with_css_file(mut self, path: impl AsRef<std::path::Path>) -> Self {
+        let path = path.as_ref().to_path_buf();
+        match std::fs::read_to_string(&path) {
+            Ok(css_text) => {
+                let (stylesheet, errors) = Stylesheet::parse(&css_text);
+                for err in &errors {
+                    eprintln!("[textual-rs] CSS parse error in {:?}: {}", path, err);
+                }
+                let index = self.stylesheets.len();
+                self.stylesheets.push(stylesheet.clone());
+                self.ctx.stylesheets.push(stylesheet);
+
+                // Record for hot-reload polling
+                let last_modified = std::fs::metadata(&path)
+                    .and_then(|m| m.modified())
+                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                self.watched_css.push(WatchedCss {
+                    path,
+                    last_modified,
+                    stylesheet_index: index,
+                });
+            }
+            Err(e) => {
+                eprintln!("[textual-rs] Failed to read CSS file {:?}: {}", path, e);
+            }
+        }
         self
     }
 
@@ -252,7 +310,11 @@ impl App {
         // Take worker_rx out of self to avoid borrow issues in select!
         let worker_rx = self.worker_rx.take().expect("worker_rx not initialized");
 
-        // Main event loop — select! between app events and worker results
+        // CSS hot-reload polling interval (only active if watching files)
+        let mut css_poll = tokio::time::interval(std::time::Duration::from_secs(2));
+        css_poll.tick().await; // consume the immediate first tick
+
+        // Main event loop — select! between app events, worker results, and CSS poll
         loop {
             tokio::select! {
                 event = rx.recv_async() => {
@@ -550,6 +612,40 @@ impl App {
                         self.ctx.message_queue.borrow_mut().push((source_id, payload));
                         self.drain_message_queue();
                         self.process_deferred_screens();
+                        self.full_render_pass(&mut terminal)?;
+                    }
+                }
+
+                _ = css_poll.tick(), if !self.watched_css.is_empty() => {
+                    // Check watched CSS files for changes
+                    let mut any_changed = false;
+                    for watch in &mut self.watched_css {
+                        if let Ok(meta) = std::fs::metadata(&watch.path) {
+                            if let Ok(modified) = meta.modified() {
+                                if modified > watch.last_modified {
+                                    watch.last_modified = modified;
+                                    if let Ok(css_text) = std::fs::read_to_string(&watch.path) {
+                                        let (new_sheet, errors) = Stylesheet::parse(&css_text);
+                                        for err in &errors {
+                                            eprintln!("[textual-rs] CSS hot-reload parse error in {:?}: {}", watch.path, err);
+                                        }
+                                        // Replace the stylesheet at the stored index
+                                        if watch.stylesheet_index < self.stylesheets.len() {
+                                            self.stylesheets[watch.stylesheet_index] = new_sheet.clone();
+                                        }
+                                        if watch.stylesheet_index < self.ctx.stylesheets.len() {
+                                            self.ctx.stylesheets[watch.stylesheet_index] = new_sheet;
+                                        }
+                                        any_changed = true;
+                                        #[cfg(debug_assertions)]
+                                        eprintln!("[textual-rs] Hot-reloaded CSS from {:?}", watch.path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if any_changed {
+                        self.needs_full_sync = true;
                         self.full_render_pass(&mut terminal)?;
                     }
                 }

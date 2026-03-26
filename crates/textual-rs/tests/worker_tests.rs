@@ -279,6 +279,56 @@ fn post_message_to_target() {
     assert_eq!(count_a.load(Ordering::SeqCst), 0, "widget A should not receive message");
 }
 
+// ---- Worker progress delivery test ----
+
+/// Verify that ctx.run_worker_with_progress delivers WorkerProgress<P> messages
+/// as well as the final WorkerResult<T>.
+#[tokio::test]
+async fn worker_progress_delivered() {
+    use textual_rs::WorkerProgress;
+
+    let local = tokio::task::LocalSet::new();
+    local.run_until(async {
+        let mut ctx = AppContext::new();
+        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+        ctx.worker_tx = Some(worker_tx);
+
+        let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+
+        // Spawn worker with progress reporting
+        let _handle = ctx.run_worker_with_progress(id, |progress_tx| {
+            Box::pin(async move {
+                for i in 0..3 {
+                    let _ = progress_tx.send(i as f32);
+                    tokio::task::yield_now().await;
+                }
+                "done"
+            })
+        });
+
+        // Yield generously to let all tasks complete
+        for _ in 0..50 {
+            tokio::task::yield_now().await;
+        }
+
+        // Collect all messages from the channel
+        let mut progress_values: Vec<f32> = Vec::new();
+        let mut got_result = false;
+        while let Ok((source_id, payload)) = worker_rx.try_recv() {
+            assert_eq!(source_id, id);
+            if let Some(p) = payload.downcast_ref::<WorkerProgress<f32>>() {
+                progress_values.push(p.progress);
+            } else if let Some(r) = payload.downcast_ref::<WorkerResult<&str>>() {
+                assert_eq!(r.value, "done");
+                got_result = true;
+            }
+        }
+
+        assert_eq!(progress_values, vec![0.0, 1.0, 2.0], "should receive 3 progress updates");
+        assert!(got_result, "should receive final result");
+    }).await;
+}
+
 // ---- cancel_workers only cancels for the given widget ----
 
 /// Verify cancel_workers() only removes handles for the specified widget.

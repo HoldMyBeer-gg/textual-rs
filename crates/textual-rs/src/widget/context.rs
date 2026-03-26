@@ -178,6 +178,56 @@ impl AppContext {
         abort
     }
 
+    /// Spawn an async worker with a progress channel. The worker receives a
+    /// `flume::Sender<P>` for sending progress updates, and its final result is
+    /// delivered as a `WorkerResult<T>` message. Progress updates are delivered
+    /// as `WorkerProgress<P>` messages to the source widget.
+    ///
+    /// # Example
+    /// ```ignore
+    /// ctx.run_worker_with_progress(my_id, |progress_tx| {
+    ///     Box::pin(async move {
+    ///         for i in 0..100 {
+    ///             let _ = progress_tx.send(i as f32 / 100.0);
+    ///             tokio::time::sleep(Duration::from_millis(50)).await;
+    ///         }
+    ///         "done"
+    ///     })
+    /// });
+    /// ```
+    pub fn run_worker_with_progress<T, P>(
+        &self,
+        source_id: WidgetId,
+        progress_fn: impl FnOnce(flume::Sender<P>) -> std::pin::Pin<Box<dyn std::future::Future<Output = T>>> + 'static,
+    ) -> tokio::task::AbortHandle
+    where
+        T: Send + 'static,
+        P: Send + 'static,
+    {
+        let worker_tx = self.worker_tx.clone()
+            .expect("worker_tx not initialized — run_worker_with_progress called outside App::run()");
+
+        let (progress_sender, progress_receiver) = flume::unbounded::<P>();
+
+        // Spawn progress forwarding task — receives P from the worker and wraps
+        // it as a WorkerProgress<P> message to the owning widget.
+        let ptx = worker_tx.clone();
+        let sid = source_id;
+        tokio::task::spawn_local(async move {
+            while let Ok(p) = progress_receiver.recv_async().await {
+                let msg = crate::worker::WorkerProgress {
+                    source_id: sid,
+                    progress: p,
+                };
+                let _ = ptx.send((sid, Box::new(msg)));
+            }
+        });
+
+        // Create the main future using the progress sender
+        let fut = progress_fn(progress_sender);
+        self.run_worker(source_id, fut)
+    }
+
     /// Cancel all workers associated with a widget. Called automatically during unmount.
     pub fn cancel_workers(&self, widget_id: WidgetId) {
         if let Some(handles) = self.worker_handles.borrow_mut().remove(widget_id) {

@@ -389,4 +389,33 @@ mod tests {
         let inner = draw_border(&cs, area, &mut buf);
         assert_eq!(inner, area); // too small, returns unchanged
     }
+
+    #[test]
+    fn align_text_left() {
+        use crate::css::types::TextAlign;
+        let result = align_text("hello", 10, TextAlign::Left);
+        assert_eq!(result, "hello");
+    }
+
+    #[test]
+    fn align_text_center() {
+        use crate::css::types::TextAlign;
+        let result = align_text("hi", 10, TextAlign::Center);
+        assert_eq!(result, "    hi");
+    }
+
+    #[test]
+    fn align_text_right() {
+        use crate::css::types::TextAlign;
+        let result = align_text("hi", 10, TextAlign::Right);
+        assert_eq!(result, "        hi");
+    }
+
+    #[test]
+    fn align_text_wider_than_width() {
+        use crate::css::types::TextAlign;
+        // When text is wider than width, return unchanged
+        let result = align_text("hello world", 5, TextAlign::Center);
+        assert_eq!(result, "hello world");
+    }
 }
