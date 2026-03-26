@@ -78,6 +78,19 @@ impl TestApp {
         self.terminal.backend()
     }
 
+    /// Inject a key event without draining the message queue.
+    ///
+    /// Used in tests that need to inspect the raw message queue immediately after
+    /// key dispatch (e.g., to verify a specific message was posted before bubbling).
+    pub fn inject_key_event(&mut self, key: crossterm::event::KeyEvent) {
+        self.app.handle_key_event(key);
+    }
+
+    /// Drain the message queue explicitly (e.g., after inject_key_event).
+    pub fn drain_messages(&self) {
+        self.app.drain_message_queue();
+    }
+
     /// Process a single event synchronously and re-render.
     ///
     /// Used by Pilot to inject input. Can also be called directly for precise control.
