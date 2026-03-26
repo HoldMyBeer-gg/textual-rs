@@ -5,7 +5,7 @@ use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::Widget;
-use textual_rs::{Button, Checkbox, Label, Switch};
+use textual_rs::{Button, Checkbox, Label, Switch, TextArea};
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
 
 // ---------------------------------------------------------------------------
@@ -290,5 +290,183 @@ async fn switch_toggle_space_also_works() {
         row.contains("◉━━━"),
         "Switch OFF indicator expected after toggle from ON, got: {:?}",
         row.trim_end()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// TextArea tests
+// ---------------------------------------------------------------------------
+
+/// Helper: collect the rendered text content of a buffer row (trimmed of trailing spaces).
+fn buf_row_trimmed(buf: &ratatui::buffer::Buffer, row: u16) -> String {
+    let s: String = (0..buf.area.width)
+        .map(|col| buf[(col, row)].symbol().to_string())
+        .collect();
+    s.trim_end().to_string()
+}
+
+#[tokio::test]
+async fn text_area_type_text() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus the text area
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Type "hello", press Enter, type "world"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.type_text("hello").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("world").await;
+    }
+
+    // Verify the rendered buffer contains "hello" on row 0 and "world" on row 1.
+    // The cursor is shown as reverse-video so the actual chars should still be present.
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("hello"),
+        "row 0 should contain 'hello', got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("world"),
+        "row 1 should contain 'world', got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_cursor_movement() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type two lines
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("abc").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("xyz").await;
+    }
+
+    // Cursor is at row=1, col=3. Move up, home, end, down — should not panic.
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Up).await;
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::End).await;
+        pilot.press(KeyCode::Down).await;
+    }
+
+    // Verify buffer shows both lines
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("abc"),
+        "row 0 should contain 'abc', got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("xyz"),
+        "row 1 should contain 'xyz', got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_backspace_joins_lines() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type "ab", Enter, "cd"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("ab").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("cd").await;
+    }
+
+    // Move to start of line 1 then Backspace to join into line 0
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::Backspace).await;
+    }
+
+    // After joining, row 0 should contain "abcd" and row 1 should be empty.
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("abcd"),
+        "row 0 should contain 'abcd' after joining, got: {:?}",
+        row0
+    );
+    assert!(
+        row1.is_empty(),
+        "row 1 should be empty after joining, got: {:?}",
+        row1
+    );
+}
+
+#[tokio::test]
+async fn text_area_line_numbers() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::with_line_numbers()));
+
+    // Focus and type 3 lines
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("line one").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("line two").await;
+        pilot.press(KeyCode::Enter).await;
+        pilot.type_text("line three").await;
+    }
+
+    // Snapshot shows line numbers in left margin
+    assert_snapshot!(format!("{}", test_app.backend()));
+}
+
+#[tokio::test]
+async fn text_area_newline_splits_line() {
+    let mut test_app = TestApp::new(40, 10, || Box::new(TextArea::new()));
+
+    // Focus and type "abcd"
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.type_text("abcd").await;
+    }
+
+    // Press Home (go to col=0), press Right twice (col=2), press Enter (split at col=2)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Home).await;
+        pilot.press(KeyCode::Right).await;
+        pilot.press(KeyCode::Right).await;
+        pilot.press(KeyCode::Enter).await;
+    }
+
+    // After splitting "abcd" at position 2: row 0 = "ab", row 1 = "cd"
+    let row0 = buf_row_trimmed(test_app.buffer(), 0);
+    let row1 = buf_row_trimmed(test_app.buffer(), 1);
+    assert!(
+        row0.contains("ab"),
+        "row 0 should contain 'ab' after split, got: {:?}",
+        row0
+    );
+    assert!(
+        row1.contains("cd"),
+        "row 1 should contain 'cd' after split, got: {:?}",
+        row1
+    );
+    // row 0 should NOT contain "cd" (it was split off)
+    assert!(
+        !row0.contains("abcd"),
+        "row 0 should not contain full 'abcd', got: {:?}",
+        row0
     );
 }
