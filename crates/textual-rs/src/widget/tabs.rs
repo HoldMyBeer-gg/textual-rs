@@ -352,36 +352,82 @@ fn render_pane_tree(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &mut
 }
 
 /// Render a single child widget with CSS-like chrome (background, border).
+/// Since pane children aren't in the arena, we build a synthetic ComputedStyle
+/// by first checking the arena for a matching type, then falling back to parsing
+/// the widget's default_css() and any user stylesheet rules.
 fn render_child_styled(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-    use crate::css::render_style::{draw_border, to_ratatui_color};
-    use crate::css::types::{BorderStyle as TcssBorder, ComputedStyle, TcssColor};
+    use crate::css::render_style::draw_border;
+    use crate::css::types::ComputedStyle;
 
     if area.width == 0 || area.height == 0 {
         return;
     }
 
-    // Try to find a matching CSS rule for this widget type
-    // Since these widgets aren't in the arena, we check the parent's computed styles
-    // and build a synthetic style from any matching stylesheet rules
     let type_name = widget.widget_type_name();
 
-    // Look through all computed styles to find one that might match this widget type
-    // This is a heuristic: we search for a computed style that was applied to the same
-    // widget type name earlier in the tree
-    let mut matched_style: Option<&ComputedStyle> = None;
+    // Try arena first (works if another widget of same type exists in the tree)
+    let mut matched_style: Option<ComputedStyle> = None;
     for (id, w) in ctx.arena.iter() {
         if w.widget_type_name() == type_name {
             if let Some(cs) = ctx.computed_styles.get(id) {
-                matched_style = Some(cs);
+                matched_style = Some(cs.clone());
                 break;
             }
         }
     }
 
-    let content_area = if let Some(cs) = matched_style {
-        // Apply the matched style's background
+    // Fallback: build style from default_css() + user stylesheets
+    if matched_style.is_none() {
+        let mut cs = ComputedStyle::default();
+
+        // Apply widget's default CSS
+        let default_css = get_default_css_for_type(type_name);
+        if !default_css.is_empty() {
+            let (stylesheet, _) = crate::css::cascade::Stylesheet::parse(default_css);
+            for rule in &stylesheet.rules {
+                cs.apply_declarations(&rule.declarations);
+            }
+        }
+
+        // Apply user stylesheets (higher priority — overrides defaults)
+        for stylesheet in &ctx.stylesheets {
+            for rule in &stylesheet.rules {
+                for sel in &rule.selectors {
+                    // Simple type selector match
+                    if matches!(sel, crate::css::selector::Selector::Type(name) if name == type_name) {
+                        cs.apply_declarations(&rule.declarations);
+                    }
+                }
+            }
+        }
+
+        // Inherit fg/bg from parent buffer if not set by CSS
+        if cs.color == crate::css::types::TcssColor::Reset {
+            if let Some(cell) = buf.cell((area.x, area.y)) {
+                if let Some(fg) = cell.style().fg {
+                    cs.color = match fg {
+                        ratatui::style::Color::Rgb(r, g, b) => crate::css::types::TcssColor::Rgb(r, g, b),
+                        _ => crate::css::types::TcssColor::Reset,
+                    };
+                }
+            }
+        }
+        if cs.background == crate::css::types::TcssColor::Reset {
+            if let Some(cell) = buf.cell((area.x, area.y)) {
+                if let Some(bg) = cell.style().bg {
+                    cs.background = match bg {
+                        ratatui::style::Color::Rgb(r, g, b) => crate::css::types::TcssColor::Rgb(r, g, b),
+                        _ => crate::css::types::TcssColor::Reset,
+                    };
+                }
+            }
+        }
+
+        matched_style = Some(cs);
+    }
+
+    let content_area = if let Some(ref cs) = matched_style {
         fill_background(cs, area, buf);
-        // Draw border
         draw_border(cs, area, buf)
     } else {
         area
@@ -395,5 +441,26 @@ fn render_child_styled(widget: &dyn Widget, ctx: &AppContext, area: Rect, buf: &
     } else {
         // Container — recurse
         render_pane_tree(widget, ctx, content_area, buf);
+    }
+}
+
+/// Get default CSS string for known widget types.
+/// This is used for ad-hoc pane children that aren't in the arena.
+fn get_default_css_for_type(type_name: &str) -> &'static str {
+    match type_name {
+        "Button" => "Button { border: heavy; min-width: 16; height: 3; text-align: center; }",
+        "Input" => "Input { border: rounded; height: 3; }",
+        "Label" => "Label { min-height: 1; }",
+        "Checkbox" => "Checkbox { height: 1; }",
+        "Switch" => "Switch { height: 1; width: 8; }",
+        "RadioSet" => "",
+        "DataTable" => "DataTable { border: rounded; min-height: 3; }",
+        "ListView" => "ListView { border: tall; min-height: 3; flex-grow: 1; }",
+        "Log" => "Log { border: tall; min-height: 3; flex-grow: 1; }",
+        "ProgressBar" => "ProgressBar { height: 1; }",
+        "Sparkline" => "Sparkline { height: 1; }",
+        "Placeholder" => "Placeholder { border: rounded; min-height: 3; min-width: 10; }",
+        "Collapsible" => "",
+        _ => "",
     }
 }
