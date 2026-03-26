@@ -263,9 +263,17 @@ impl App {
                                 }
                                 MouseEventKind::ScrollDown
                                 | MouseEventKind::ScrollUp => {
+                                    let action = if m.kind == MouseEventKind::ScrollUp {
+                                        "scroll_up"
+                                    } else {
+                                        "scroll_down"
+                                    };
                                     if let Some(ref hit_map) = self.hit_map {
                                         if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                                            dispatch_message(target_id, &m, &self.ctx);
+                                            // Dispatch as action, bubbling up the parent chain
+                                            // so scrollable containers (Log, ScrollView, ListView)
+                                            // respond to mouse wheel.
+                                            dispatch_scroll_action(target_id, action, &self.ctx);
                                             self.drain_message_queue();
                                             self.process_deferred_screens();
                                             self.full_render_pass(&mut terminal)?;
@@ -469,10 +477,22 @@ impl App {
     pub fn handle_mouse_event(&mut self, m: crossterm::event::MouseEvent) {
         use crossterm::event::MouseEventKind;
         match m.kind {
-            MouseEventKind::Down(_) | MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+            MouseEventKind::Down(_) => {
                 if let Some(ref hit_map) = self.hit_map {
                     if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
                         dispatch_message(target_id, &m, &self.ctx);
+                    }
+                }
+            }
+            MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                let action = if m.kind == MouseEventKind::ScrollUp {
+                    "scroll_up"
+                } else {
+                    "scroll_down"
+                };
+                if let Some(ref hit_map) = self.hit_map {
+                    if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
+                        dispatch_scroll_action(target_id, action, &self.ctx);
                     }
                 }
             }
@@ -521,6 +541,22 @@ impl App {
 }
 
 // ---- Internal helpers ----
+
+/// Dispatch a scroll action (scroll_up/scroll_down) to a widget and bubble up the parent chain.
+/// Stops when a widget handles the action (has it in key_bindings).
+fn dispatch_scroll_action(target: WidgetId, action: &str, ctx: &AppContext) {
+    use crate::event::dispatch::collect_parent_chain;
+    let chain = collect_parent_chain(target, ctx);
+    for &id in &chain {
+        if let Some(widget) = ctx.arena.get(id) {
+            // Check if this widget has a scroll action binding
+            if widget.key_bindings().iter().any(|kb| kb.action == action) {
+                widget.on_action(action, ctx);
+                return;
+            }
+        }
+    }
+}
 
 /// DFS traversal of widget subtree (pre-order).
 fn collect_subtree_dfs(root: WidgetId, ctx: &AppContext) -> Vec<WidgetId> {
