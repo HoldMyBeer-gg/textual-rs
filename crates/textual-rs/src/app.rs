@@ -9,6 +9,36 @@ use tokio::task;
 use tokio::task::LocalSet;
 
 use crate::css::cascade::{apply_cascade_to_tree, Stylesheet};
+
+/// Built-in default CSS for all framework widgets. Loaded at lowest priority
+/// so user stylesheets always win. This replaces the per-widget default_css()
+/// static method which was never actually collected by the framework.
+const BUILTIN_CSS: &str = r#"
+Button { border: heavy; min-width: 16; height: 3; }
+Checkbox { height: 1; }
+Collapsible { min-height: 1; }
+DataTable { border: rounded; min-height: 5; }
+Footer { height: 1; }
+Header { height: 1; }
+Horizontal { layout-direction: horizontal; }
+Input { border: rounded; height: 3; }
+Label { min-height: 1; }
+ListView { min-height: 3; flex-grow: 1; }
+Log { min-height: 3; flex-grow: 1; }
+Markdown { min-height: 3; }
+Placeholder { border: rounded; min-height: 3; min-width: 10; }
+ProgressBar { height: 1; }
+RadioButton { height: 1; }
+RadioSet { layout-direction: vertical; }
+ScrollView { overflow: auto; }
+Select { border: rounded; height: 3; }
+Sparkline { height: 1; }
+Switch { height: 1; }
+TabbedContent { min-height: 3; }
+TextArea { border: rounded; min-height: 5; }
+Tree { border: rounded; min-height: 5; }
+Vertical { layout-direction: vertical; }
+"#;
 use crate::css::render_style::paint_chrome;
 use crate::event::dispatch::dispatch_message;
 use crate::event::AppEvent;
@@ -78,10 +108,15 @@ impl App {
     where
         F: FnOnce() -> Box<dyn Widget> + 'static,
     {
+        // Parse built-in default CSS at lowest priority
+        let (builtin_sheet, _) = Stylesheet::parse(BUILTIN_CSS);
+        let mut ctx = AppContext::new();
+        ctx.stylesheets.push(builtin_sheet.clone());
+
         App {
-            ctx: AppContext::new(),
+            ctx,
             bridge: TaffyBridge::new(),
-            stylesheets: Vec::new(),
+            stylesheets: vec![builtin_sheet],
             hit_map: None,
             root_screen_factory: Some(Box::new(screen_factory)),
             _owner: None,

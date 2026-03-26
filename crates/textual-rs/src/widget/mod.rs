@@ -122,7 +122,7 @@ pub trait Widget: 'static {
         None
     }
 
-    /// Built-in default CSS for this widget type.
+    /// Built-in default CSS for this widget type (static version).
     ///
     /// Applied at lowest priority (before user stylesheets). Override to provide
     /// sensible defaults like `"Button { border: heavy; height: 3; }"`.
@@ -130,6 +130,13 @@ pub trait Widget: 'static {
     where
         Self: Sized,
     {
+        ""
+    }
+
+    /// Instance-callable version of `default_css()`. Override this alongside
+    /// `default_css()` to return the same value — this version is callable on
+    /// `dyn Widget` and used by the framework to collect default styles at mount time.
+    fn widget_default_css(&self) -> &'static str {
         ""
     }
 
