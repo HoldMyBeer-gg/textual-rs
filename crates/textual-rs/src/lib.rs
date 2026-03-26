@@ -17,3 +17,4 @@ pub use widget::button::{Button, ButtonVariant};
 pub use widget::checkbox::Checkbox;
 pub use widget::switch::Switch;
 pub use widget::input::Input;
+pub use widget::radio::{RadioButton, RadioSet};

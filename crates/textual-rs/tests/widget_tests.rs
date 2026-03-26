@@ -4,10 +4,11 @@ use ratatui::{buffer::Buffer, layout::Rect};
 use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::widget::context::AppContext;
-use textual_rs::widget::Widget;
-use textual_rs::{Button, Checkbox, Input, Label, Switch};
+use textual_rs::widget::{EventPropagation, Widget};
+use textual_rs::{Button, Checkbox, Input, Label, RadioButton, RadioSet, Switch};
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
 use textual_rs::widget::input::messages::Submitted as InputSubmitted;
+use textual_rs::widget::radio::messages::RadioSetChanged;
 
 // ---------------------------------------------------------------------------
 // Snapshot tests
@@ -457,4 +458,189 @@ async fn input_password_mode() {
         "Password mode should mask input with '*', got: {:?}",
         row
     );
+}
+
+// ---------------------------------------------------------------------------
+// RadioButton render tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn radio_button_renders_checked() {
+    let test_app = TestApp::new(20, 3, || Box::new(RadioButton::new("Option A", true)));
+    let buf = test_app.buffer();
+    let row: String = (0..12u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    // Checked renders as "(●) Option A"
+    assert!(
+        row.contains('\u{25cf}'),
+        "Checked RadioButton should render filled circle '\u{25cf}', got: {:?}",
+        row
+    );
+}
+
+#[test]
+fn radio_button_renders_unchecked() {
+    let test_app = TestApp::new(20, 3, || Box::new(RadioButton::new("Option B", false)));
+    let buf = test_app.buffer();
+    let row: String = (0..12u16)
+        .map(|col| buf[(col, 0)].symbol().to_string())
+        .collect();
+    // Unchecked renders as "( ) Option B"
+    assert!(
+        row.starts_with("( )"),
+        "Unchecked RadioButton should render '( )', got: {:?}",
+        row
+    );
+}
+
+// ---------------------------------------------------------------------------
+// RadioSet interaction tests
+// ---------------------------------------------------------------------------
+
+/// Screen wrapping a RadioSet to test interaction — captures RadioSetChanged via on_event.
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+struct RadioSetCaptureScreen {
+    changed_index: Arc<AtomicUsize>,
+}
+
+impl RadioSetCaptureScreen {
+    fn new(changed_index: Arc<AtomicUsize>) -> Self {
+        Self { changed_index }
+    }
+}
+
+impl Widget for RadioSetCaptureScreen {
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+    fn widget_type_name(&self) -> &'static str {
+        "RadioSetCaptureScreen"
+    }
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        vec![Box::new(RadioSet::new(vec![
+            "Option A".to_string(),
+            "Option B".to_string(),
+            "Option C".to_string(),
+        ]))]
+    }
+    fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> EventPropagation {
+        if let Some(changed) = event.downcast_ref::<RadioSetChanged>() {
+            self.changed_index.store(changed.index, Ordering::SeqCst);
+            return EventPropagation::Stop;
+        }
+        EventPropagation::Continue
+    }
+}
+
+#[tokio::test]
+async fn radio_set_mutual_exclusion() {
+    // RadioSet with 3 options. Verify mutual exclusion via the RadioSetChanged index
+    // and that only one button is selected at a time.
+    // Uses the capture screen to receive the RadioSetChanged event.
+    let changed_index = Arc::new(AtomicUsize::new(999));
+    let idx_clone = changed_index.clone();
+
+    let mut test_app = TestApp::new(40, 10, move || {
+        Box::new(RadioSetCaptureScreen::new(idx_clone))
+    });
+
+    // Tab to first RadioButton (first focusable in DFS under RadioSet)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+    assert!(test_app.ctx().focused_widget.is_some(), "RadioButton should have focus after Tab");
+
+    // Tab to second RadioButton
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Press Space to select second button (index 1)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Char(' ')).await;
+    }
+
+    // The RadioSetCaptureScreen captures the index via on_event
+    let captured_idx = changed_index.load(Ordering::SeqCst);
+    assert_eq!(
+        captured_idx, 1,
+        "Selecting second RadioButton should emit RadioSetChanged with index=1, got: {}",
+        captured_idx
+    );
+
+    // Tab to third RadioButton and select it (index 2)
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.press(KeyCode::Char(' ')).await;
+    }
+
+    let captured_idx2 = changed_index.load(Ordering::SeqCst);
+    assert_eq!(
+        captured_idx2, 2,
+        "Selecting third RadioButton should emit RadioSetChanged with index=2, got: {}",
+        captured_idx2
+    );
+}
+
+#[tokio::test]
+async fn radio_set_emits_changed() {
+    // Use capture screen to verify RadioSetChanged event index
+    let changed_index = Arc::new(AtomicUsize::new(999));
+    let idx_clone = changed_index.clone();
+
+    let changed_value: Arc<std::sync::Mutex<String>> = Arc::new(std::sync::Mutex::new(String::new()));
+    let val_clone = changed_value.clone();
+
+    struct RadioCaptureScreen {
+        changed_index: Arc<AtomicUsize>,
+        changed_value: Arc<std::sync::Mutex<String>>,
+    }
+    impl Widget for RadioCaptureScreen {
+        fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+        fn widget_type_name(&self) -> &'static str { "RadioCaptureScreen" }
+        fn compose(&self) -> Vec<Box<dyn Widget>> {
+            vec![Box::new(RadioSet::new(vec![
+                "Alpha".to_string(),
+                "Beta".to_string(),
+            ]))]
+        }
+        fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> EventPropagation {
+            if let Some(changed) = event.downcast_ref::<RadioSetChanged>() {
+                self.changed_index.store(changed.index, Ordering::SeqCst);
+                *self.changed_value.lock().unwrap() = changed.value.clone();
+                return EventPropagation::Stop;
+            }
+            EventPropagation::Continue
+        }
+    }
+
+    let mut test_app = TestApp::new(40, 10, move || {
+        Box::new(RadioCaptureScreen {
+            changed_index: idx_clone,
+            changed_value: val_clone,
+        })
+    });
+
+    // Tab to first RadioButton, then second
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Tab).await;
+        pilot.press(KeyCode::Tab).await;
+    }
+
+    // Press Space to select the second button (index 1, "Beta")
+    {
+        let mut pilot = test_app.pilot();
+        pilot.press(KeyCode::Char(' ')).await;
+    }
+
+    let captured_idx = changed_index.load(Ordering::SeqCst);
+    let captured_val = changed_value.lock().unwrap().clone();
+    assert_eq!(captured_idx, 1, "RadioSetChanged should report index=1, got: {}", captured_idx);
+    assert_eq!(captured_val, "Beta", "RadioSetChanged should report value='Beta', got: {:?}", captured_val);
 }
