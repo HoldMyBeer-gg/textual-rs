@@ -4,6 +4,7 @@
 
 - **v1.0 MVP** - Phases 1-5 (shipped 2026-03-26)
 - **v1.1 Visual Parity with Python Textual** - Phases 1-3 (in progress)
+- **v1.2 Production Readiness** - Phase 4 (planned)
 
 <details>
 <summary>v1.0 MVP (Phases 1-5) - SHIPPED 2026-03-26</summary>
@@ -119,10 +120,34 @@ Plans:
 - [x] 03-01-PLAN.md -- Button 3D depth borders, DataTable zebra-striped rows
 - [x] 03-02-PLAN.md -- Demo and IRC demo visual polish pass with human verification
 
+### Phase 4: Production Readiness
+**Goal**: Fix critical bugs, add missing essentials (clipboard, text selection, terminal detection), and polish features (animations, themes, hot-reload) needed for real-world apps
+**Depends on**: Phase 3
+**Requirements**: PROD-01 through PROD-19
+**Success Criteria** (what must be TRUE):
+  1. Ctrl+C copies selected text when Input/TextArea has selection (not quit)
+  2. Shift+arrow keys create visible text selection in Input and TextArea
+  3. Select dropdown and CommandPalette use active_overlay (no screen blank)
+  4. `border: tall $primary` CSS works correctly
+  5. McGugan Box renders on terminals without U+1FB87
+  6. Terminal capabilities detected at startup
+  7. Resize triggers full layout recomputation
+  8. Switch and Tab underline animate smoothly
+  9. 7+ built-in themes with runtime Ctrl+T switching
+  10. Markdown code blocks have syntax highlighting
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Clipboard integration + text selection for Input/TextArea
+- [ ] 04-02-PLAN.md -- Select/CommandPalette overlay fix, CSS variable in border, McGugan fallback
+- [ ] 04-03-PLAN.md -- Terminal capability detection + resize reflow
+- [ ] 04-04-PLAN.md -- Animation system, text-align, horizontal scroll, worker progress, CSS hot-reload
+- [ ] 04-05-PLAN.md -- Light theme, 5+ built-in themes, syntax highlighting, hatch/keyline/image primitives
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -134,3 +159,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 1. Semantic Theme Engine | v1.1 | 1/2 | In progress | - |
 | 2. Interactive States & Rendering Integration | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 3. Widget Visual Polish & Demos | v1.1 | 0/2 | Not started | - |
+| 4. Production Readiness | v1.2 | 0/5 | Not started | - |
