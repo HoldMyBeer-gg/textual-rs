@@ -67,26 +67,26 @@
 
 - [x] **WIDGET-01**: `Label` — static or reactive text display with markup support
 - [x] **WIDGET-02**: `Button` — pressable button with label, variants (primary/warning/error/success)
-- [ ] **WIDGET-03**: `Input` — single-line text input with placeholder, password mode, validation
+- [~] **WIDGET-03**: `Input` — single-line text input with placeholder, password mode, validation (partial — validation being added in 04-08)
 - [x] **WIDGET-04**: `TextArea` — multi-line text editor with line numbers option
 - [x] **WIDGET-05**: `Checkbox` — toggleable boolean input
 - [x] **WIDGET-06**: `Switch` — toggle switch (on/off)
-- [ ] **WIDGET-07**: `RadioButton` / `RadioSet` — mutually exclusive selection
+- [x] **WIDGET-07**: `RadioButton` / `RadioSet` — mutually exclusive selection
 - [x] **WIDGET-08**: `Select` — dropdown selection widget
-- [ ] **WIDGET-09**: `ListView` — scrollable list with selectable items
-- [ ] **WIDGET-10**: `DataTable` — tabular data display with sortable columns, scrolling
-- [ ] **WIDGET-11**: `Tree` — hierarchical tree view with expand/collapse
-- [ ] **WIDGET-12**: `ProgressBar` — determinate and indeterminate progress display
-- [ ] **WIDGET-13**: `Sparkline` — inline chart widget
-- [ ] **WIDGET-14**: `Log` — scrolling log display with auto-scroll
-- [ ] **WIDGET-15**: `Markdown` — rendered Markdown display
-- [ ] **WIDGET-16**: `Tabs` / `TabbedContent` — tabbed container navigation
-- [ ] **WIDGET-17**: `Collapsible` — expand/collapse container
-- [ ] **WIDGET-18**: `Vertical` / `Horizontal` — layout container widgets
-- [ ] **WIDGET-19**: `ScrollView` — scrollable container with optional scrollbars
-- [ ] **WIDGET-20**: `Header` — application header bar with title/subtitle
-- [ ] **WIDGET-21**: `Footer` — key binding help bar
-- [ ] **WIDGET-22**: `Placeholder` — development placeholder widget
+- [x] **WIDGET-09**: `ListView` — scrollable list with selectable items
+- [x] **WIDGET-10**: `DataTable` — tabular data display with sortable columns, scrolling
+- [x] **WIDGET-11**: `Tree` — hierarchical tree view with expand/collapse
+- [x] **WIDGET-12**: `ProgressBar` — determinate and indeterminate progress display
+- [x] **WIDGET-13**: `Sparkline` — inline chart widget
+- [x] **WIDGET-14**: `Log` — scrolling log display with auto-scroll
+- [x] **WIDGET-15**: `Markdown` — rendered Markdown display
+- [x] **WIDGET-16**: `Tabs` / `TabbedContent` — tabbed container navigation
+- [x] **WIDGET-17**: `Collapsible` — expand/collapse container
+- [x] **WIDGET-18**: `Vertical` / `Horizontal` — layout container widgets
+- [x] **WIDGET-19**: `ScrollView` — scrollable container with optional scrollbars
+- [x] **WIDGET-20**: `Header` — application header bar with title/subtitle
+- [x] **WIDGET-21**: `Footer` — key binding help bar
+- [x] **WIDGET-22**: `Placeholder` — development placeholder widget
 
 ### Testing Infrastructure
 
@@ -147,7 +147,7 @@
 | REACT-01 through REACT-05 | Phase 3 | Pending |
 | EVENT-01 through EVENT-08 | Phase 3 | Pending |
 | TEST-01 through TEST-06 | Phase 3 | Pending |
-| WIDGET-01 through WIDGET-22 | Phase 4 | Pending |
+| WIDGET-01 through WIDGET-22 | Phase 4 | Complete (WIDGET-03 partial) |
 | DX-01 through DX-05 | Phase 5 | Pending |
 
 **Coverage:**
