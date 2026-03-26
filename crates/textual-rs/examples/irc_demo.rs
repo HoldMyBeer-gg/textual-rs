@@ -17,62 +17,6 @@ use textual_rs::{
 };
 use textual_rs::widget::context::AppContext;
 
-// ---- TCSS Stylesheet ----
-
-const IRC_STYLESHEET: &str = r#"
-IrcScreen {
-    layout-direction: vertical;
-    background: rgb(10,10,15);
-    color: rgb(224,224,224);
-}
-Header {
-    height: 1;
-    background: rgb(18,18,26);
-    color: rgb(0,255,163);
-}
-Footer {
-    height: 1;
-    background: rgb(18,18,26);
-    color: rgb(224,224,224);
-}
-MainRegion {
-    layout-direction: horizontal;
-    flex-grow: 1;
-}
-ChannelPane {
-    width: 20;
-    border: solid;
-    color: rgb(224,224,224);
-}
-ChatLog {
-    flex-grow: 1;
-    border: solid;
-    color: rgb(0,255,163);
-}
-UserPane {
-    width: 22;
-    border: solid;
-    color: rgb(224,224,224);
-}
-InputRegion {
-    height: 3;
-}
-Input {
-    border: rounded;
-    flex-grow: 1;
-    height: 3;
-    color: rgb(224,224,224);
-}
-ListView {
-    flex-grow: 1;
-    border: none;
-}
-Log {
-    flex-grow: 1;
-    border: none;
-}
-"#;
-
 // ---- Widget wrappers ----
 
 /// Sidebar showing channel list. CSS selector "ChannelPane" controls width.
@@ -199,7 +143,7 @@ impl Widget for IrcScreen {
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
-            Box::new(Header::new("textual-rs IRC").with_subtitle("#general -- 7 users")),
+            Box::new(Header::new("textual-rs IRC").with_subtitle("weechat-style terminal client")),
             Box::new(MainRegion),
             Box::new(InputRegion),
             Box::new(Footer),
@@ -212,6 +156,7 @@ impl Widget for IrcScreen {
 // ---- main ----
 
 fn main() -> anyhow::Result<()> {
-    let mut app = App::new(|| Box::new(IrcScreen)).with_css(IRC_STYLESHEET);
+    let mut app = App::new(|| Box::new(IrcScreen))
+        .with_css(include_str!("irc_demo.tcss"));
     app.run()
 }

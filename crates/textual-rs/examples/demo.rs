@@ -1,15 +1,17 @@
-/// Widget showcase demo — tabbed layout demonstrating textual-rs built-in widgets.
+/// textual-rs demo — widget showcase with a tabbed layout.
+///
+/// Demonstrates all major widget categories in a lazeport-inspired dark theme.
 ///
 /// Layout:
-/// ┌──────────────────── Header (dock: top) ─────────────────────┐
-/// ├─────────────────────────────────────────────────────────────┤
-/// │  Controls | Data | Lists    (TabbedContent)                 │
-/// │ ┌─────────────────────────────────────────────────────────┐ │
-/// │ │  Active pane content (compose-based children)           │ │
-/// │ └─────────────────────────────────────────────────────────┘ │
-/// ├─────────────────────────────────────────────────────────────┤
-/// │  Footer (dock: bottom)                                      │
-/// └─────────────────────────────────────────────────────────────┘
+/// ┌──────────────── Header (textual-rs demo) ──────────────────┐
+/// ├────────────────────────────────────────────────────────────┤
+/// │  Inputs | Display | Layout | Interactive   (TabbedContent) │
+/// │ ┌──────────────────────────────────────────────────────── ┐│
+/// │ │  Active pane content                                    ││
+/// │ └──────────────────────────────────────────────────────── ┘│
+/// ├────────────────────────────────────────────────────────────┤
+/// │  Footer (ctrl+p Command Palette  q Quit)                   │
+/// └────────────────────────────────────────────────────────────┘
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use textual_rs::{
@@ -21,112 +23,32 @@ use textual_rs::{
     Label,
     DataTable, ColumnDef,
     ProgressBar, Sparkline,
-    ListView, Log,
+    ListView,
     TabbedContent,
     Header, Footer,
+    Collapsible, Placeholder,
+    Markdown,
+    Tree, TreeNode,
+    Select,
+    Horizontal, Vertical,
 };
 use textual_rs::widget::context::AppContext;
 
-// ---- Demo stylesheet ----
+// ---- Inputs tab ----
 
-const DEMO_CSS: &str = r#"
-DemoScreen {
-    layout-direction: vertical;
-    background: rgb(10,10,15);
-    color: rgb(224,224,224);
-}
-Header {
-    height: 1;
-    background: rgb(18,18,26);
-    color: rgb(0,212,255);
-}
-Footer {
-    height: 1;
-    background: rgb(18,18,26);
-    color: rgb(224,224,224);
-}
-TabbedContent {
-    flex-grow: 1;
-}
-ControlsPane {
-    layout-direction: vertical;
-    padding: 1;
-}
-DataPane {
-    layout-direction: vertical;
-    padding: 1;
-}
-ListsPane {
-    layout-direction: horizontal;
-}
-Button {
-    border: heavy;
-    min-width: 16;
-    height: 3;
-    color: rgb(0,255,163);
-}
-Input {
-    border: rounded;
-    height: 3;
-    color: rgb(224,224,224);
-}
-DataTable {
-    border: rounded;
-    min-height: 8;
-    color: rgb(224,224,224);
-}
-ListView {
-    border: rounded;
-    min-height: 6;
-    flex-grow: 1;
-    color: rgb(224,224,224);
-}
-Log {
-    border: rounded;
-    min-height: 6;
-    flex-grow: 1;
-    color: rgb(0,255,163);
-}
-ProgressBar {
-    height: 1;
-    color: rgb(0,255,163);
-}
-Sparkline {
-    height: 1;
-    color: rgb(0,212,255);
-}
-Label {
-    height: 1;
-    color: rgb(0,212,255);
-}
-Checkbox {
-    height: 1;
-    color: rgb(224,224,224);
-}
-Switch {
-    height: 1;
-    color: rgb(224,224,224);
-}
-RadioSet {
-    height: 3;
-    color: rgb(224,224,224);
-}
-"#;
+/// Inputs tab: form controls — Input, RadioSet, Checkbox, Switch, Button.
+struct InputsPane;
 
-// ---- Tab pane widgets ----
-
-/// Controls tab: form widgets composed as children.
-struct ControlsPane;
-
-impl Widget for ControlsPane {
+impl Widget for InputsPane {
     fn widget_type_name(&self) -> &'static str {
-        "ControlsPane"
+        "InputsPane"
     }
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Label::new("Form Controls")),
             Box::new(Input::new("Type something...")),
+            Box::new(Input::new("email@example.com").with_validator(|v| v.contains('@'))),
             Box::new(Checkbox::new("Enable notifications", true)),
             Box::new(Switch::new(false)),
             Box::new(RadioSet::new(vec![
@@ -139,92 +61,136 @@ impl Widget for ControlsPane {
         ]
     }
 
-    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
-        // Container only — children render via compose tree
-    }
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
 }
 
-/// Data tab: table, progress bar, sparkline.
-struct DataPane;
+// ---- Display tab ----
 
-impl Widget for DataPane {
+/// Display tab: Label, ProgressBar, Sparkline, Markdown, Placeholder.
+struct DisplayPane;
+
+impl Widget for DisplayPane {
     fn widget_type_name(&self) -> &'static str {
-        "DataPane"
+        "DisplayPane"
+    }
+
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        vec![
+            Box::new(Label::new("Static text via Label widget")),
+            Box::new(Label::new("Build progress: 65%")),
+            Box::new(ProgressBar::new(0.65)),
+            Box::new(Label::new("CPU activity:")),
+            Box::new(Sparkline::new(vec![1.0, 3.0, 7.0, 2.0, 8.0, 4.0, 6.0, 5.0, 9.0, 3.0])),
+            Box::new(Markdown::new("# textual-rs\n\nA **Rust** TUI framework inspired by Textual.\n\n- 22 built-in widgets\n- Reactive state\n- CSS styling")),
+            Box::new(Placeholder::new()),
+        ]
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+}
+
+// ---- Layout tab ----
+
+/// Layout tab: Horizontal/Vertical containers, Collapsible section.
+struct LayoutPane;
+
+impl Widget for LayoutPane {
+    fn widget_type_name(&self) -> &'static str {
+        "LayoutPane"
+    }
+
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        vec![
+            Box::new(Label::new("Horizontal container (3 panels):")),
+            Box::new(Horizontal::with_children(vec![
+                Box::new(Label::new("Panel 1")),
+                Box::new(Label::new("Panel 2")),
+                Box::new(Label::new("Panel 3")),
+            ])),
+            Box::new(Label::new("Vertical container (2 rows):")),
+            Box::new(Vertical::with_children(vec![
+                Box::new(Label::new("Row A")),
+                Box::new(Label::new("Row B")),
+            ])),
+            Box::new(Collapsible::new("Advanced Options", vec![
+                Box::new(Label::new("Option 1: enabled")),
+                Box::new(Label::new("Option 2: disabled")),
+            ])),
+        ]
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+}
+
+// ---- Interactive tab ----
+
+/// Interactive tab: Button, ListView, DataTable, Tree, Select.
+struct InteractivePane;
+
+impl Widget for InteractivePane {
+    fn widget_type_name(&self) -> &'static str {
+        "InteractivePane"
     }
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         let mut table = DataTable::new(vec![
-            ColumnDef::new("Widget").with_width(20),
-            ColumnDef::new("Status").with_width(12),
-            ColumnDef::new("Version").with_width(10),
+            ColumnDef::new("Name").with_width(18),
+            ColumnDef::new("Type").with_width(14),
+            ColumnDef::new("Status").with_width(10),
         ]);
-        table.add_row(vec!["Label".into(), "Stable".into(), "v1.0".into()]);
-        table.add_row(vec!["Button".into(), "Stable".into(), "v1.0".into()]);
-        table.add_row(vec!["Input".into(), "Stable".into(), "v1.0".into()]);
-        table.add_row(vec!["Checkbox".into(), "Stable".into(), "v1.0".into()]);
-        table.add_row(vec!["DataTable".into(), "Stable".into(), "v1.0".into()]);
+        table.add_row(vec!["Label".into(), "Display".into(), "Stable".into()]);
+        table.add_row(vec!["Button".into(), "Interactive".into(), "Stable".into()]);
+        table.add_row(vec!["Input".into(), "Form".into(), "Stable".into()]);
+        table.add_row(vec!["ListView".into(), "List".into(), "Stable".into()]);
+        table.add_row(vec!["DataTable".into(), "Table".into(), "Stable".into()]);
+
+        // Tree with a sample directory hierarchy
+        let widget_dir = TreeNode::with_children("widget/", vec![
+            TreeNode::new("mod.rs"),
+            TreeNode::new("button.rs"),
+            TreeNode::new("input.rs"),
+        ]);
+        let root = TreeNode::with_children("src/", vec![
+            TreeNode::new("app.rs"),
+            TreeNode::new("lib.rs"),
+            widget_dir,
+        ]);
+        let tree = Tree::new(root);
+
+        let select = Select::new(vec![
+            "Rust".to_string(),
+            "Python".to_string(),
+            "Go".to_string(),
+            "TypeScript".to_string(),
+            "Zig".to_string(),
+        ]);
 
         vec![
-            Box::new(Label::new("Data Widgets")),
-            Box::new(table),
-            Box::new(Label::new("Build progress: 65%")),
-            Box::new(ProgressBar::new(0.65)),
-            Box::new(Label::new("CPU activity:")),
-            Box::new(Sparkline::new(vec![
-                2.0, 4.0, 3.0, 7.0, 5.0, 6.0, 8.0, 4.0, 3.0, 5.0,
-                7.0, 6.0, 4.0, 2.0, 5.0, 8.0, 7.0, 3.0, 6.0, 4.0,
-            ])),
-        ]
-    }
-
-    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
-        // Container only
-    }
-}
-
-/// Lists tab: list view and log side by side.
-struct ListsPane;
-
-impl Widget for ListsPane {
-    fn widget_type_name(&self) -> &'static str {
-        "ListsPane"
-    }
-
-    fn compose(&self) -> Vec<Box<dyn Widget>> {
-        let log = Log::new();
-        log.push_line("[INFO]  server started on port 8080".to_string());
-        log.push_line("[DEBUG] loading configuration file".to_string());
-        log.push_line("[INFO]  database connection established".to_string());
-        log.push_line("[WARN]  cache miss rate above threshold".to_string());
-        log.push_line("[INFO]  request GET /api/widgets 200 OK".to_string());
-        log.push_line("[DEBUG] widget tree recomposed, 12 nodes".to_string());
-        log.push_line("[INFO]  request POST /api/submit 201 Created".to_string());
-        log.push_line("[INFO]  CSS stylesheet reloaded".to_string());
-        log.push_line("[WARN]  memory usage at 72%".to_string());
-        log.push_line("[INFO]  reactive effect batched 3 updates".to_string());
-
-        vec![
+            Box::new(Button::new("Click Me").with_variant(ButtonVariant::Primary)),
             Box::new(ListView::new(vec![
-                "apple".to_string(),
-                "banana".to_string(),
-                "cherry".to_string(),
-                "date".to_string(),
-                "elderberry".to_string(),
-                "fig".to_string(),
-                "grape".to_string(),
-                "honeydew".to_string(),
+                "#general".to_string(),
+                "#rust".to_string(),
+                "#tui-dev".to_string(),
+                "#announcements".to_string(),
+                "#help".to_string(),
+                "#off-topic".to_string(),
+                "#code-review".to_string(),
+                "#random".to_string(),
+                "#feedback".to_string(),
+                "#releases".to_string(),
             ])),
-            Box::new(log),
+            Box::new(table),
+            Box::new(tree),
+            Box::new(select),
         ]
     }
 
-    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
-        // Container only
-    }
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
 }
 
 // ---- Top-level screen ----
 
+/// Root screen: Header + TabbedContent (4 tabs) + Footer.
 struct DemoScreen;
 
 impl Widget for DemoScreen {
@@ -235,30 +201,31 @@ impl Widget for DemoScreen {
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         let tabbed = TabbedContent::new(
             vec![
-                "Controls".to_string(),
-                "Data".to_string(),
-                "Lists".to_string(),
+                "Inputs".to_string(),
+                "Display".to_string(),
+                "Layout".to_string(),
+                "Interactive".to_string(),
             ],
             vec![
-                Box::new(ControlsPane),
-                Box::new(DataPane),
-                Box::new(ListsPane),
+                Box::new(InputsPane),
+                Box::new(DisplayPane),
+                Box::new(LayoutPane),
+                Box::new(InteractivePane),
             ],
         );
 
         vec![
-            Box::new(Header::new("textual-rs Widget Showcase").with_subtitle("Tab to navigate | q to quit")),
+            Box::new(Header::new("textual-rs demo").with_subtitle("A showcase of built-in widgets")),
             Box::new(tabbed),
             Box::new(Footer),
         ]
     }
 
-    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {
-        // Container only — children do the rendering.
-    }
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut app = App::new(|| Box::new(DemoScreen)).with_css(DEMO_CSS);
+    let mut app = App::new(|| Box::new(DemoScreen))
+        .with_css(include_str!("demo.tcss"));
     app.run()
 }
