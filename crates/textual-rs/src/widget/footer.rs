@@ -23,7 +23,7 @@ impl Widget for Footer {
     where
         Self: Sized,
     {
-        "Footer { dock: bottom; height: 1; background: $primary; color: $text; }"
+        "Footer { height: 1; background: $primary; color: $text; }"
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {

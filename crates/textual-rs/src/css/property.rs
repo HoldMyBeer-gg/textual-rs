@@ -121,8 +121,14 @@ pub fn parse_declaration_block<'i>(
                     value,
                 });
             }
-            Ok(None) => {} // Unknown property, skipped
-            Err(_) => {}   // Parse error, skipped
+            Ok(None) | Err(_) => {
+                // Unknown property or parse error — consume everything up to the
+                // next semicolon so we don't eat the following property's tokens.
+                let _ = input.parse_until_after(cssparser::Delimiter::Semicolon, |_| {
+                    Ok::<(), ParseError<'i, PropertyParseError>>(())
+                });
+                continue;
+            }
         }
 
         // Skip to semicolon or end
@@ -164,6 +170,12 @@ fn parse_property_value<'i>(
                     )));
                 }
             };
+            // Optionally consume a color after the border style (e.g. "border: solid #4a4a5a")
+            // The color sets the widget's foreground color for the border.
+            let color = parse_color(input).ok();
+            if let Some(c) = color {
+                return Ok(Some(TcssValue::BorderWithColor(style, c)));
+            }
             Ok(Some(TcssValue::Border(style)))
         }
         "border-title" => {

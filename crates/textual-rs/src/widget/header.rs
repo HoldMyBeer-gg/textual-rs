@@ -38,7 +38,7 @@ impl Widget for Header {
     where
         Self: Sized,
     {
-        "Header { dock: top; height: 1; background: $primary; color: $text; }"
+        "Header { height: 1; background: $primary; color: $text; }"
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {

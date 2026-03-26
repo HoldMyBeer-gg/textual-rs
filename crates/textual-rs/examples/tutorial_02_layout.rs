@@ -3,7 +3,7 @@
 // This tutorial shows how to:
 //   1. Use compose() to declare child widgets
 //   2. Apply CSS styling via with_css()
-//   3. Use dock layout (Header/Footer) and flex layout
+//   3. Use flex layout with fixed-height Header/Footer
 //   4. Use built-in container widgets (Header, Footer, Label)
 //
 // Run with: cargo run --example tutorial_02_layout
@@ -24,7 +24,6 @@ use textual_rs::widget::context::AppContext;
 //   background: #rrggbb        — background color
 //   color: #rrggbb             — foreground text color
 //   height: N                  — fixed height in rows
-//   dock: top | bottom         — pin widget to screen edge
 //   layout-direction: vertical — stack children top-to-bottom (default)
 //   flex-grow: 1               — expand to fill remaining space
 // ---------------------------------------------------------------------------
@@ -38,13 +37,13 @@ Header {
     height: 1;
     background: #12121a;
     color: #00d4ff;
-    dock: top;
+
 }
 Footer {
     height: 1;
     background: #12121a;
     color: #4a4a5a;
-    dock: bottom;
+
 }
 ContentArea {
     flex-grow: 1;
@@ -92,7 +91,7 @@ impl Widget for ContentArea {
 // LayoutScreen — the root screen.
 //
 // It composes Header + ContentArea + Footer.
-// The CSS dock rules pin Header to the top and Footer to the bottom.
+// Header (height:1) sits at top, Footer (height:1) at bottom.
 // ContentArea fills the remaining space (flex-grow: 1).
 // ---------------------------------------------------------------------------
 struct LayoutScreen;
