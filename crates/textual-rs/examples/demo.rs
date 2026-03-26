@@ -36,13 +36,11 @@ DemoScreen {
     color: rgb(224,224,224);
 }
 Header {
-    dock: top;
     height: 1;
     background: rgb(18,18,26);
     color: rgb(0,212,255);
 }
 Footer {
-    dock: bottom;
     height: 1;
     background: rgb(18,18,26);
     color: rgb(224,224,224);
@@ -250,8 +248,8 @@ impl Widget for DemoScreen {
 
         vec![
             Box::new(Header::new("textual-rs Widget Showcase").with_subtitle("Tab to navigate | q to quit")),
-            Box::new(Footer),
             Box::new(tabbed),
+            Box::new(Footer),
         ]
     }
 

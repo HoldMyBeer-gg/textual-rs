@@ -99,7 +99,7 @@ impl Widget for Log {
     where
         Self: Sized,
     {
-        "Log { border: tall; min-height: 3; flex-grow: 1; }"
+        "Log { min-height: 3; flex-grow: 1; }"
     }
 
     fn on_mount(&self, id: WidgetId) {
