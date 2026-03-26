@@ -52,6 +52,9 @@ pub struct AppContext {
     /// Widgets that need recomposition (e.g. TabbedContent after tab switch).
     /// Drained by the event loop after each event cycle.
     pub pending_recompose: RefCell<Vec<WidgetId>>,
+    /// Active floating overlay (context menu, etc.). Rendered last, on top of everything.
+    /// Not part of the widget tree — painted directly to the frame buffer at absolute coords.
+    pub active_overlay: RefCell<Option<Box<dyn Widget>>>,
 }
 
 impl AppContext {
@@ -78,6 +81,7 @@ impl AppContext {
             worker_tx: None,
             worker_handles: RefCell::new(SecondaryMap::new()),
             pending_recompose: RefCell::new(Vec::new()),
+            active_overlay: RefCell::new(None),
         }
     }
 
@@ -85,6 +89,11 @@ impl AppContext {
     /// Used by widgets like TabbedContent when their compose() output changes.
     pub fn request_recompose(&self, id: WidgetId) {
         self.pending_recompose.borrow_mut().push(id);
+    }
+
+    /// Dismiss the active floating overlay (context menu, etc.).
+    pub fn dismiss_overlay(&self) {
+        *self.active_overlay.borrow_mut() = None;
     }
 
     /// Schedule a new screen push deferred to the next event loop tick.

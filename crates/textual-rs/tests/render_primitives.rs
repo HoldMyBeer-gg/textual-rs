@@ -217,3 +217,74 @@ fn vertical_gradient_produces_half_block_cells() {
     assert_eq!(top_cell.fg, Color::Rgb(255, 0, 0), "Top fg should be pure red");
     assert_eq!(bot_cell.bg, Color::Rgb(0, 0, 255), "Bottom bg should be pure blue");
 }
+
+// ---------------------------------------------------------------------------
+// OVERLAY TEST: Verify overlays don't erase underlying content
+// ---------------------------------------------------------------------------
+
+#[test]
+fn overlay_preserves_underlying_screen_content() {
+    use textual_rs::{Label, Widget};
+    use textual_rs::widget::context::AppContext;
+    use textual_rs::widget::context_menu::ContextMenuItem;
+    use textual_rs::event::AppEvent;
+    use crossterm::event::{MouseEvent, MouseEventKind, MouseButton, KeyModifiers as KMods};
+
+    // Screen with visible text and a context menu
+    struct TestScreen;
+    impl Widget for TestScreen {
+        fn widget_type_name(&self) -> &'static str { "TestScreen" }
+        fn compose(&self) -> Vec<Box<dyn Widget>> {
+            vec![Box::new(Label::new("VISIBLE_TEXT_HERE"))]
+        }
+        fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+        fn context_menu_items(&self) -> Vec<ContextMenuItem> {
+            vec![ContextMenuItem::new("Test Action", "test")]
+        }
+    }
+
+    let css = "TestScreen { layout-direction: vertical; } Label { height: 1; }";
+    let mut test_app = TestApp::new_styled(40, 10, css, || Box::new(TestScreen));
+
+    // Verify label rendered
+    let buf = test_app.buffer();
+    let row0: String = (0..40u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
+    assert!(row0.contains("VISIBLE_TEXT_HERE"), "Before overlay: {:?}", row0.trim());
+
+    // Right-click at row 5 (away from the label at row 0) to spawn context menu
+    let right_click = MouseEvent {
+        kind: MouseEventKind::Down(MouseButton::Right),
+        column: 5,
+        row: 5,
+        modifiers: KMods::NONE,
+    };
+    test_app.process_event(AppEvent::Mouse(right_click));
+
+    // Check overlay is active
+    assert!(test_app.ctx().active_overlay.borrow().is_some(), "Overlay should be active after right-click");
+
+    let buf = test_app.buffer();
+
+    // Debug: dump all rows
+    let mut all_rows = String::new();
+    for y in 0..10u16 {
+        let row: String = (0..40u16).map(|x| buf[(x, y)].symbol().to_string()).collect();
+        all_rows.push_str(&format!("  row {}: {:?}\n", y, row.trim_end()));
+    }
+
+    // Label at row 0 should survive (menu renders at row 5, not row 0)
+    let row0: String = (0..40u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
+    assert!(row0.contains("VISIBLE_TEXT_HERE"),
+        "Label should survive when menu is below it.\nBuffer:\n{}", all_rows);
+
+    // Context menu should be visible somewhere in the lower rows
+    let mut found_menu = false;
+    for y in 4..10u16 {
+        let row: String = (0..40u16).map(|x| buf[(x, y)].symbol().to_string()).collect();
+        if row.contains("Test Action") {
+            found_menu = true;
+            break;
+        }
+    }
+    assert!(found_menu, "Context menu should be visible.\nBuffer:\n{}", all_rows);
+}
