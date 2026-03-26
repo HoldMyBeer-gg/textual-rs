@@ -2,12 +2,12 @@
 source: crates/textual-rs/tests/widget_tests.rs
 expression: "format!(\"{}\", test_app.backend())"
 ---
-"├── ▼ Branch A                          "
-"│   ├── Leaf A1                         "
-"│   └── Leaf A2                         "
-"├── ▼ Branch B                          "
-"│   └── Leaf B1                         "
-"└── Leaf C                              "
+"├── ▼ Branch ABranch A                  "
+"│   ├── Leaf A1Leaf A1                  "
+"│   └── Leaf A2Leaf A2                  "
+"├── ▼ Branch BBranch B                  "
+"│   └── Leaf B1Leaf B1                  "
+"└── Leaf CLeaf C                        "
 "                                        "
 "                                        "
 "                                        "

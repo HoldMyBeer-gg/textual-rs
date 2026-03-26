@@ -85,13 +85,13 @@ fn button_renders_label_in_row() {
 #[test]
 fn checkbox_renders_checked_indicator() {
     let test_app = TestApp::new(20, 3, || Box::new(Checkbox::new("Test", true)));
-    assert_buffer_lines(test_app.buffer(), &["[X] Test"]);
+    assert_buffer_lines(test_app.buffer(), &["✓ Test"]);
 }
 
 #[test]
 fn checkbox_renders_unchecked_indicator() {
     let test_app = TestApp::new(20, 3, || Box::new(Checkbox::new("Test", false)));
-    assert_buffer_lines(test_app.buffer(), &["[ ] Test"]);
+    assert_buffer_lines(test_app.buffer(), &["☐ Test"]);
 }
 
 // ---------------------------------------------------------------------------
@@ -107,8 +107,8 @@ fn switch_renders_on_indicator() {
         .collect();
     let trimmed = row.trim_end();
     assert!(
-        trimmed.contains("━━━◉"),
-        "switch ON should render '━━━◉', got: {:?}",
+        trimmed.contains("██") && trimmed.contains("▌"),
+        "switch ON should render pill with knob, got: {:?}",
         trimmed
     );
 }
@@ -122,8 +122,8 @@ fn switch_renders_off_indicator() {
         .collect();
     let trimmed = row.trim_end();
     assert!(
-        trimmed.contains("◉━━━"),
-        "switch OFF should render '◉━━━', got: {:?}",
+        trimmed.contains("▐██") && trimmed.contains("━"),
+        "switch OFF should render pill with knob on left, got: {:?}",
         trimmed
     );
 }
@@ -199,7 +199,7 @@ async fn checkbox_toggle_space_changes_state() {
     assert!(test_app.ctx().focused_widget.is_some(), "Checkbox should have focus");
 
     // Verify initial render shows unchecked
-    assert_buffer_lines(test_app.buffer(), &["[ ] Opt"]);
+    assert_buffer_lines(test_app.buffer(), &["☐ Opt"]);
 
     // Press Space to toggle
     {
@@ -208,7 +208,7 @@ async fn checkbox_toggle_space_changes_state() {
     }
 
     // Verify checkbox is now checked
-    assert_buffer_lines(test_app.buffer(), &["[X] Opt"]);
+    assert_buffer_lines(test_app.buffer(), &["✓ Opt"]);
 }
 
 #[tokio::test]
@@ -226,7 +226,7 @@ async fn checkbox_toggle_enter_also_works() {
         pilot.press(KeyCode::Enter).await;
     }
 
-    assert_buffer_lines(test_app.buffer(), &["[X] Go"]);
+    assert_buffer_lines(test_app.buffer(), &["✓ Go"]);
 }
 
 // ---------------------------------------------------------------------------
@@ -244,15 +244,15 @@ async fn switch_toggle_enter_changes_state() {
     }
     assert!(test_app.ctx().focused_widget.is_some(), "Switch should have focus");
 
-    // Verify initial render shows OFF indicator
+    // Verify initial render shows OFF indicator (knob on left)
     {
         let buf = test_app.buffer();
         let row: String = (0..buf.area.width)
             .map(|col| buf[(col, 0)].symbol().to_string())
             .collect();
         assert!(
-            row.contains("◉━━━"),
-            "Initial OFF state should show '◉━━━', got: {:?}",
+            row.contains("▐██"),
+            "Initial OFF state should show knob on left, got: {:?}",
             row.trim_end()
         );
     }
@@ -263,14 +263,14 @@ async fn switch_toggle_enter_changes_state() {
         pilot.press(KeyCode::Enter).await;
     }
 
-    // Verify switch is now ON
+    // Verify switch is now ON (knob on right)
     let buf = test_app.buffer();
     let row: String = (0..buf.area.width)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
     assert!(
-        row.contains("━━━◉"),
-        "Switch ON indicator expected after toggle, got: {:?}",
+        row.contains("██▌"),
+        "Switch ON indicator expected after toggle (knob on right), got: {:?}",
         row.trim_end()
     );
 }
@@ -295,7 +295,7 @@ async fn switch_toggle_space_also_works() {
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
     assert!(
-        row.contains("◉━━━"),
+        row.contains("▐██") && row.contains("━"),
         "Switch OFF indicator expected after toggle from ON, got: {:?}",
         row.trim_end()
     );
@@ -631,10 +631,10 @@ fn radio_button_renders_checked() {
     let row: String = (0..12u16)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    // Checked renders as "(●) Option A"
+    // Checked renders as "◉ Option A"
     assert!(
-        row.contains('\u{25cf}'),
-        "Checked RadioButton should render filled circle '\u{25cf}', got: {:?}",
+        row.contains('◉'),
+        "Checked RadioButton should render '◉', got: {:?}",
         row
     );
 }
@@ -646,10 +646,10 @@ fn radio_button_renders_unchecked() {
     let row: String = (0..12u16)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    // Unchecked renders as "( ) Option B"
+    // Unchecked renders as "○ Option B"
     assert!(
-        row.starts_with("( )"),
-        "Unchecked RadioButton should render '( )', got: {:?}",
+        row.starts_with("○"),
+        "Unchecked RadioButton should render '○', got: {:?}",
         row
     );
 }
@@ -1235,9 +1235,9 @@ fn placeholder_renders_dimensions() {
         let line: String = (0..buf.area.width)
             .map(|col| buf[(col, row)].symbol().to_string())
             .collect();
-        line.contains("20x5")
+        line.contains("20×5") || line.contains("20x5")
     });
-    assert!(has_dimensions, "Placeholder should render dimensions '20x5'");
+    assert!(has_dimensions, "Placeholder should render dimensions '20×5'");
 }
 
 #[test]
@@ -1422,8 +1422,8 @@ async fn list_view_navigate_down() {
     // Row 2 (index 2) should have reversed style
     let cell = &buf[(0, 2)];
     assert!(
-        cell.style().add_modifier.contains(ratatui::style::Modifier::REVERSED),
-        "Row 2 should be selected (REVERSED style) after 2 Down presses"
+        cell.style().add_modifier.contains(ratatui::style::Modifier::BOLD),
+        "Row 2 should be selected (BOLD style) after 2 Down presses"
     );
 }
 
@@ -1486,8 +1486,8 @@ async fn list_view_scrolls_when_past_viewport() {
     // The last row of the viewport (row 4) should be selected (Item 6)
     let cell = &buf[(0, 4)];
     assert!(
-        cell.style().add_modifier.contains(ratatui::style::Modifier::REVERSED),
-        "Last viewport row should be selected (REVERSED) after scrolling past viewport"
+        cell.style().add_modifier.contains(ratatui::style::Modifier::BOLD),
+        "Last viewport row should be selected (BOLD) after scrolling past viewport"
     );
 }
 
