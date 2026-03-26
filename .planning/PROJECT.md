@@ -27,8 +27,8 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 - [ ] CSS-like styling system (TCSS-equivalent) for widget appearance and layout
 - [ ] Widget tree with App > Screen > Widget hierarchy
 - [ ] Layout engine: vertical, horizontal, grid, dock layouts
-- [ ] Built-in widget library: Button, Input, Label, Checkbox, Select, DataTable, TextArea, ListView, Tree, Tabs, ProgressBar, Sparkline, Log, Markdown, Switch, RadioButton, Collapsible, TabbedContent, ContentSwitcher, Footer, Header
-- [ ] Scrollable containers with scrollbar widgets
+- [x] Built-in widget library: 22 widgets implemented — Validated in Phase 4: Built-in Widget Library
+- [x] Scrollable containers (ScrollView, ListView, DataTable, Tree) — Validated in Phase 4: Built-in Widget Library
 - [ ] Screen stack for modal dialogs and navigation
 - [ ] Border styles, padding, margin (box model)
 - [ ] Color themes and dark/light mode support
@@ -92,6 +92,6 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 ## Current State
 
-Phase 3 (Reactive System, Events, and Testing) complete — Reactive<T>/ComputedReactive<T> with reactive_graph signals, typed message dispatch with parent-chain bubbling, keyboard/mouse event routing, key binding action dispatch, TestApp/Pilot harness with settle(), insta snapshot testing, proptest CSS fuzzing. 121 tests pass. Ready for Phase 4: Built-in Widget Library.
+Phase 4 (Built-in Widget Library) complete — all 22 v1 widgets implemented with keyboard interaction, snapshot tests, message emission, and scrolling. Input validation added via gap closure. 218 tests pass. Ready for Phase 5: Developer Experience and Polish.
 
-*Last updated: 2026-03-25 after Phase 3: Reactive System, Events, and Testing*
+*Last updated: 2026-03-26 after Phase 4: Built-in Widget Library*
