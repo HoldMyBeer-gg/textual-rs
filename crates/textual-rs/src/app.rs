@@ -19,8 +19,27 @@ use crate::widget::context::AppContext;
 use crate::widget::tree::{advance_focus, advance_focus_backward, clear_dirty_subtree, pop_screen, push_screen};
 use crate::widget::{Widget, WidgetId};
 
-/// Root application entry point.
-/// Owns AppContext, TaffyBridge, and stylesheets — the three Phase 2 subsystems.
+/// Root application entry point for a textual-rs TUI application.
+///
+/// `App` owns the widget arena, layout engine, stylesheets, and event loop.
+/// Create with [`App::new`], optionally add CSS with [`App::with_css`],
+/// then call [`App::run`] to start the terminal UI.
+///
+/// # Example
+///
+/// ```no_run
+/// # use textual_rs::{App, Widget};
+/// # use textual_rs::widget::context::AppContext;
+/// # use ratatui::{buffer::Buffer, layout::Rect};
+/// # struct MyScreen;
+/// # impl Widget for MyScreen {
+/// #     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
+/// #     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+/// # }
+/// let mut app = App::new(|| Box::new(MyScreen))
+///     .with_css("MyScreen { background: #0a0a0f; }");
+/// // app.run().unwrap();
+/// ```
 pub struct App {
     ctx: AppContext,
     bridge: TaffyBridge,

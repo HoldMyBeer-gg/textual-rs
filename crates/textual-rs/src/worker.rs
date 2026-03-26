@@ -9,7 +9,7 @@ use crate::widget::WidgetId;
 /// }
 /// ```
 ///
-/// WorkerResult<T> is dispatched via the message_queue (Box<dyn Any>) path.
+/// `WorkerResult<T>` is dispatched via the message queue (`Box<dyn Any>`) path.
 pub struct WorkerResult<T> {
     /// The WidgetId of the widget that spawned this worker.
     pub source_id: WidgetId,

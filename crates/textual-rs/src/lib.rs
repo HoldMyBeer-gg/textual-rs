@@ -1,3 +1,33 @@
+//! textual-rs — a Rust port of the Textual Python TUI framework.
+//!
+//! Build beautiful terminal UIs in Rust: declare widgets, style with CSS,
+//! react to events, and get a polished result on any terminal.
+//!
+//! # Quick start
+//!
+//! ```no_run
+//! use textual_rs::{App, Widget, Label, Header, Footer};
+//! use textual_rs::widget::context::AppContext;
+//! use ratatui::{buffer::Buffer, layout::Rect};
+//!
+//! struct MyScreen;
+//! impl Widget for MyScreen {
+//!     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+//!     fn compose(&self) -> Vec<Box<dyn Widget>> {
+//!         vec![
+//!             Box::new(Header::new("My App")),
+//!             Box::new(Label::new("Hello, world!")),
+//!             Box::new(Footer),
+//!         ]
+//!     }
+//!     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
+//! }
+//!
+//! fn main() -> anyhow::Result<()> {
+//!     App::new(|| Box::new(MyScreen)).run()
+//! }
+//! ```
+
 pub mod app;
 pub mod command;
 pub mod css;

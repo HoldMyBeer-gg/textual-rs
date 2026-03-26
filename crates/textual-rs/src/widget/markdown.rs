@@ -24,7 +24,7 @@ struct RenderedLine {
 /// - Code blocks (fenced): rendered with indent=2, dim style
 /// - Unordered lists (- item): bullet `  * ` prefix
 /// - Ordered lists (1. item): numbered `  N. ` prefix
-/// - Links ([text](url)): rendered as "text [url]"
+/// - Links (`[text](url)`): rendered as "text \[url\]"
 /// - Horizontal rules: "────────" line
 /// - Paragraphs and line breaks
 ///

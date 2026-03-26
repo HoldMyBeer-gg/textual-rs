@@ -97,7 +97,7 @@ impl AppContext {
     }
 
     /// Spawn an async worker tied to a widget. The worker runs on the Tokio LocalSet.
-    /// On completion, the result is delivered as a WorkerResult<T> message to the
+    /// On completion, the result is delivered as a `WorkerResult<T>` message to the
     /// source widget via the message queue. T must be Send + 'static.
     ///
     /// Returns an AbortHandle for manual cancellation. Workers are also automatically

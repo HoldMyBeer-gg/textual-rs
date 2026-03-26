@@ -3,7 +3,26 @@ use reactive_graph::computed::ArcMemo;
 use reactive_graph::prelude::*;
 
 /// Reactive property wrapper around `ArcRwSignal<T>`.
-/// Triggers reactive graph tracking on reads, notifies dependents on writes.
+///
+/// Holds a value that triggers re-renders when changed. Use this for any
+/// widget state that should cause the UI to update automatically.
+///
+/// # Panics
+///
+/// `get()` (tracked read) panics if called outside a reactive Owner context.
+/// Always use `get_untracked()` inside `Widget::render()` to avoid this.
+///
+/// # Example
+///
+/// ```
+/// # use textual_rs::reactive::Reactive;
+/// let count = Reactive::new(0i32);
+/// assert_eq!(count.get_untracked(), 0);
+/// count.set(42);
+/// assert_eq!(count.get_untracked(), 42);
+/// count.update(|v| *v += 1);
+/// assert_eq!(count.get_untracked(), 43);
+/// ```
 pub struct Reactive<T: Clone + PartialEq + Send + Sync + 'static> {
     inner: ArcRwSignal<T>,
 }
