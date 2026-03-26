@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: "Visual Parity with Python Textual"
 status: In progress
-stopped_at: "Completed 01-01-PLAN.md (Theme struct, shade generation, default dark theme)"
-last_updated: "2026-03-26T20:53:34Z"
+stopped_at: "Completed 01-02-PLAN.md (CSS variable resolution wired into cascade pipeline)"
+last_updated: "2026-03-26T20:59:39Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -23,12 +23,12 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 1 of 3 (Semantic Theme Engine)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-03-26 -- Completed 01-01 (Theme struct, shade generation, default dark theme)
+Phase: 1 of 3 (Semantic Theme Engine) -- COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 1 complete
+Last activity: 2026-03-26 -- Completed 01-02 (CSS variable resolution wired into cascade pipeline)
 
-Progress: [█████░░░░░] 50% (1/2 plans)
+Progress: [██████████] 100% (2/2 plans)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [█████░░░░░] 50% (1/2 plans)
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 01 | 01 | 188s | 1 | 2 |
+| 01 | 02 | 204s | 1 | 4 |
 
 ## Accumulated Context
 
@@ -50,6 +51,8 @@ Progress: [█████░░░░░] 50% (1/2 plans)
 - [v1.1-pre]: Mouse click support added to all interactive widgets via click_action() and on_event()
 - [v1.1-01-01]: Pure-math HSL conversion (no external crate) for shade generation
 - [v1.1-01-01]: Panel color = blend(surface, primary, 0.1) matching Python Textual
+- [v1.1-01-02]: Two-phase variable resolution (parse as Variable, resolve at cascade time) -- keeps parse signature stable
+- [v1.1-01-02]: Border color variables ($primary in border shorthand) deferred to future plan
 
 ### Pending Todos
 
@@ -58,11 +61,11 @@ None yet.
 ### Blockers/Concerns
 
 - U+1FB87 (Right One Quarter Block) requires Unicode 13 font support -- may not render on all terminals
-- CSS variables ($primary, $surface, etc.) not implemented -- widget defaults using them are silently ignored
+- CSS variables ($primary, $surface, etc.) now resolve during cascade -- border shorthand variables not yet supported
 - Sparkline braille rendering not visually verified on real terminal
 
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 01-01-PLAN.md (Theme struct, shade generation, default dark theme)
+Stopped at: Completed 01-02-PLAN.md (CSS variable resolution wired into cascade pipeline)
 Resume file: None
