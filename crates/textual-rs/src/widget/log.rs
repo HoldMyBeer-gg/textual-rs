@@ -128,7 +128,8 @@ impl Widget for Log {
                 self.auto_scroll.set(false);
             }
             "scroll_down" => {
-                let new_offset = offset + 1;
+                let max_offset = line_count.saturating_sub(viewport_h);
+                let new_offset = (offset + 1).min(max_offset);
                 self.scroll_offset.set(new_offset);
                 // If we scrolled to the bottom, re-enable auto-scroll
                 if viewport_h > 0 && new_offset + viewport_h >= line_count {

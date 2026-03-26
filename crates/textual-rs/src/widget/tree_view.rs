@@ -210,6 +210,20 @@ static TREE_BINDINGS: &[KeyBinding] = &[
         description: "Collapse",
         show: false,
     },
+    KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_up",
+        description: "Scroll up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_down",
+        description: "Scroll down",
+        show: false,
+    },
 ];
 
 impl Widget for Tree {
@@ -363,6 +377,8 @@ impl Widget for Tree {
                     }
                 }
             }
+            "scroll_up" => return self.on_action("cursor_up", ctx),
+            "scroll_down" => return self.on_action("cursor_down", ctx),
             _ => {}
         }
     }

@@ -191,6 +191,20 @@ static DATA_TABLE_BINDINGS: &[KeyBinding] = &[
         show: false,
     },
     KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_up",
+        description: "Scroll up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_down",
+        description: "Scroll down",
+        show: false,
+    },
+    KeyBinding {
         key: KeyCode::Left,
         modifiers: KeyModifiers::NONE,
         action: "cursor_left",
@@ -324,6 +338,8 @@ impl Widget for DataTable {
                     self.adjust_scroll_row();
                 }
             }
+            "scroll_up" => return self.on_action("cursor_up", ctx),
+            "scroll_down" => return self.on_action("cursor_down", ctx),
             _ => {}
         }
     }

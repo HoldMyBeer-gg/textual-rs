@@ -67,6 +67,21 @@ static LIST_VIEW_BINDINGS: &[KeyBinding] = &[
         description: "Move down",
         show: false,
     },
+    // Mouse wheel aliases — dispatch_scroll_action looks for these
+    KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_up",
+        description: "Scroll up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Null,
+        modifiers: KeyModifiers::NONE,
+        action: "scroll_down",
+        description: "Scroll down",
+        show: false,
+    },
     KeyBinding {
         key: KeyCode::Enter,
         modifiers: KeyModifiers::NONE,
@@ -171,6 +186,8 @@ impl Widget for ListView {
                     ctx.post_message(id, messages::Highlighted { index: last });
                 }
             }
+            "scroll_up" => return self.on_action("cursor_up", ctx),
+            "scroll_down" => return self.on_action("cursor_down", ctx),
             _ => {}
         }
     }
