@@ -112,12 +112,12 @@ Plans:
   3. DataTable shows zebra-striped rows, bold colored headers, and a smooth scrollbar
   4. Tabs show a colored underline/bar on the active tab clearly distinguishing it from inactive tabs
   5. Running the widget gallery demo produces output visually comparable to Python Textual's gallery screenshots
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- Button 3D depth borders, DataTable zebra-striped rows
+- [ ] 03-02-PLAN.md -- Demo and IRC demo visual polish pass with human verification
 
 ## Progress
 
@@ -133,4 +133,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 5. Developer Experience and Polish | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 1. Semantic Theme Engine | v1.1 | 1/2 | In progress | - |
 | 2. Interactive States & Rendering Integration | v1.1 | 2/2 | Complete | 2026-03-26 |
-| 3. Widget Visual Polish & Demos | v1.1 | 0/0 | Not started | - |
+| 3. Widget Visual Polish & Demos | v1.1 | 0/2 | Not started | - |
