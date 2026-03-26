@@ -119,8 +119,8 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [x] 05-01-PLAN.md — Proc-macro crate: #[derive(Widget)] + #[widget_impl] with #[on] and #[keybinding] support
-- [ ] 05-02-PLAN.md — Worker API (run_worker, WorkerResult, auto-cancel) + notify() convenience wrapper
+- [ ] 05-01-PLAN.md — Proc-macro crate: #[derive(Widget)] + #[widget_impl] with #[on] and #[keybinding] support
+- [x] 05-02-PLAN.md — Worker API (run_worker, WorkerResult, auto-cancel) + notify() convenience wrapper
 - [ ] 05-03-PLAN.md — Command Palette: CommandRegistry, CommandPalette widget, Ctrl+P integration, fuzzy search
 - [ ] 05-04-PLAN.md — Demos (widget showcase + IRC client) + tutorial examples + rustdoc
 
