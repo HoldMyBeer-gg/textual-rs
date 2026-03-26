@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
 status: Ready to plan
-stopped_at: Completed 05-03-PLAN.md — Command Palette
-last_updated: "2026-03-26T06:18:54.943Z"
+stopped_at: "Completed 05-04-PLAN.md tasks 1-3 (task 4 is checkpoint:human-verify)"
+last_updated: "2026-03-26T06:38:11.519Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -59,6 +59,7 @@ Plan: Not started
 | Phase 04-built-in-widget-library P09 | 2 | 1 tasks | 1 files |
 | Phase 05-developer-experience-and-polish P02 | 8 | 2 tasks | 6 files |
 | Phase 05-developer-experience-and-polish P03 | 8 | 2 tasks | 8 files |
+| Phase 05-developer-experience-and-polish P04 | 15 | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase 05-developer-experience-and-polish]: WorkerResult<T> includes source_id field for multi-worker disambiguation in on_event handlers
 - [Phase 05-developer-experience-and-polish]: advance_focus() called after palette push so Esc/Enter keys reach CommandPalette (focused_widget must point to overlay)
 - [Phase 05-developer-experience-and-polish]: fuzzy_score returns 1.0 for exact substring matches, Jaro-Winkler for approximate matches, threshold 0.3 for palette filtering
+- [Phase 05-developer-experience-and-polish]: Tutorial examples registered in [[example]] sections of Cargo.toml (not auto-discovered)
+- [Phase 05-developer-experience-and-polish]: External .tcss files via include_str!() preferred over inline const CSS in demo examples
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T06:18:54.939Z
-Stopped at: Completed 05-03-PLAN.md — Command Palette
+Last session: 2026-03-26T06:38:11.515Z
+Stopped at: Completed 05-04-PLAN.md tasks 1-3 (task 4 is checkpoint:human-verify)
 Resume file: None
