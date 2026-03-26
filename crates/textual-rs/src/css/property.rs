@@ -2,7 +2,7 @@ use cssparser::{ParseError, Parser, Token};
 use cssparser_color::Color as ParsedColor;
 
 use crate::css::types::{
-    BorderStyle, Declaration, DockEdge, LayoutDirection, Overflow, Sides, TcssColor,
+    BorderStyle, Declaration, DockEdge, HatchStyle, LayoutDirection, Overflow, Sides, TcssColor,
     TcssDimension, TcssDisplay, TcssValue, TextAlign, Visibility,
 };
 
@@ -451,6 +451,31 @@ fn parse_property_value<'i>(
             };
             Ok(Some(TcssValue::LayoutDirection(d)))
         }
+        "hatch" => {
+            let name = input
+                .expect_ident_cloned()
+                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let style = match name.as_ref() {
+                "cross" => HatchStyle::Cross,
+                "horizontal" => HatchStyle::Horizontal,
+                "vertical" => HatchStyle::Vertical,
+                "left" => HatchStyle::Left,
+                "right" => HatchStyle::Right,
+                other => {
+                    return Err(location.new_custom_error(PropertyParseError::InvalidValue(
+                        format!("unknown hatch style: {}", other),
+                    )));
+                }
+            };
+            Ok(Some(TcssValue::Hatch(style)))
+        }
+        "keyline" => {
+            if let Some(var_name) = try_parse_variable(input) {
+                Ok(Some(TcssValue::KeylineVariable(var_name)))
+            } else {
+                Ok(Some(TcssValue::Keyline(parse_color(input)?)))
+            }
+        }
         // Unknown property — skip
         _other => Ok(None),
     }
@@ -644,5 +669,51 @@ mod tests {
         // Unknown variables are stored as Variable; resolution happens at cascade time
         let val = parse_decl_value("color: $nonexistent");
         assert_eq!(val, TcssValue::Variable("nonexistent".to_string()));
+    }
+
+    // --- Hatch property tests ---
+
+    #[test]
+    fn parse_hatch_cross() {
+        let val = parse_decl_value("hatch: cross");
+        assert_eq!(val, TcssValue::Hatch(HatchStyle::Cross));
+    }
+
+    #[test]
+    fn parse_hatch_horizontal() {
+        let val = parse_decl_value("hatch: horizontal");
+        assert_eq!(val, TcssValue::Hatch(HatchStyle::Horizontal));
+    }
+
+    #[test]
+    fn parse_hatch_vertical() {
+        let val = parse_decl_value("hatch: vertical");
+        assert_eq!(val, TcssValue::Hatch(HatchStyle::Vertical));
+    }
+
+    #[test]
+    fn parse_hatch_left() {
+        let val = parse_decl_value("hatch: left");
+        assert_eq!(val, TcssValue::Hatch(HatchStyle::Left));
+    }
+
+    #[test]
+    fn parse_hatch_right() {
+        let val = parse_decl_value("hatch: right");
+        assert_eq!(val, TcssValue::Hatch(HatchStyle::Right));
+    }
+
+    // --- Keyline property tests ---
+
+    #[test]
+    fn parse_keyline_color() {
+        let val = parse_decl_value("keyline: #ff0000");
+        assert_eq!(val, TcssValue::Keyline(TcssColor::Rgb(255, 0, 0)));
+    }
+
+    #[test]
+    fn parse_keyline_variable() {
+        let val = parse_decl_value("keyline: $primary");
+        assert_eq!(val, TcssValue::KeylineVariable("primary".to_string()));
     }
 }

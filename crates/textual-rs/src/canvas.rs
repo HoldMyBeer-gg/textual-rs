@@ -403,6 +403,104 @@ pub fn braille_dot_index(dx: u8, dy: u8) -> u8 {
     (row * 2 + col) as u8
 }
 
+// ---------------------------------------------------------------------------
+// Hatch pattern rendering
+// ---------------------------------------------------------------------------
+
+use crate::css::types::HatchStyle;
+
+/// Characters used for hatch patterns.
+const HATCH_CROSS: &str = "\u{2573}";      // Box Drawings Light Diagonal Cross
+const HATCH_HORIZONTAL: &str = "\u{2500}";  // Box Drawings Light Horizontal
+const HATCH_VERTICAL: &str = "\u{2502}";    // Box Drawings Light Vertical
+const HATCH_LEFT: &str = "\u{2571}";        // Box Drawings Light Diagonal Upper Right to Lower Left
+const HATCH_RIGHT: &str = "\u{2572}";       // Box Drawings Light Diagonal Upper Left to Lower Right
+
+/// Render a hatch pattern fill over a rectangular area.
+pub fn render_hatch(
+    buf: &mut Buffer,
+    x: u16,
+    y: u16,
+    width: u16,
+    height: u16,
+    hatch: HatchStyle,
+    fg: Color,
+    bg: Color,
+) {
+    let ch = match hatch {
+        HatchStyle::Cross => HATCH_CROSS,
+        HatchStyle::Horizontal => HATCH_HORIZONTAL,
+        HatchStyle::Vertical => HATCH_VERTICAL,
+        HatchStyle::Left => HATCH_LEFT,
+        HatchStyle::Right => HATCH_RIGHT,
+    };
+    let style = Style::default().fg(fg).bg(bg);
+    for row in 0..height {
+        for col in 0..width {
+            buf.set_string(x + col, y + row, ch, style);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Image rendering using half-block technique
+// ---------------------------------------------------------------------------
+
+/// Render an image from raw RGB pixel data using the half-block technique.
+///
+/// Each terminal cell represents 2 vertical pixels: the upper half-block character
+/// with fg = top pixel color and bg = bottom pixel color.
+///
+/// `pixels` is a row-major array of (R, G, B) tuples. The pixel grid dimensions
+/// are `pixel_width` x `pixel_height`. The image is rendered starting at terminal
+/// position (x, y), occupying `pixel_width` columns and `ceil(pixel_height / 2)` rows.
+///
+/// If `pixel_height` is odd, the last row of pixels uses the background color as the
+/// bottom half.
+pub fn render_image_halfblock(
+    buf: &mut Buffer,
+    x: u16,
+    y: u16,
+    pixel_width: u16,
+    pixel_height: u16,
+    pixels: &[(u8, u8, u8)],
+) {
+    if pixel_width == 0 || pixel_height == 0 || pixels.is_empty() {
+        return;
+    }
+
+    let cell_rows = (pixel_height as usize + 1) / 2;
+
+    for cell_row in 0..cell_rows {
+        let top_pixel_y = cell_row * 2;
+        let bot_pixel_y = top_pixel_y + 1;
+
+        for col in 0..(pixel_width as usize) {
+            let top_idx = top_pixel_y * (pixel_width as usize) + col;
+            let top_color = if top_idx < pixels.len() {
+                let (r, g, b) = pixels[top_idx];
+                Color::Rgb(r, g, b)
+            } else {
+                Color::Black
+            };
+
+            let bot_color = if bot_pixel_y < pixel_height as usize {
+                let bot_idx = bot_pixel_y * (pixel_width as usize) + col;
+                if bot_idx < pixels.len() {
+                    let (r, g, b) = pixels[bot_idx];
+                    Color::Rgb(r, g, b)
+                } else {
+                    Color::Black
+                }
+            } else {
+                Color::Black
+            };
+
+            half_block_cell(buf, x + col as u16, y + cell_row as u16, top_color, bot_color);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -564,5 +662,98 @@ mod tests {
         // bottom-left = 6, bottom-right = 7
         assert_eq!(braille_dot_index(0, 3), 6);
         assert_eq!(braille_dot_index(1, 3), 7);
+    }
+
+    // --- Hatch rendering tests ---
+
+    #[test]
+    fn render_hatch_cross_fills_area() {
+        let area = Rect::new(0, 0, 3, 2);
+        let mut buf = Buffer::empty(area);
+        render_hatch(&mut buf, 0, 0, 3, 2, HatchStyle::Cross, Color::White, Color::Black);
+        for y in 0..2u16 {
+            for x in 0..3u16 {
+                assert_eq!(buf.cell((x, y)).unwrap().symbol(), HATCH_CROSS);
+                assert_eq!(buf.cell((x, y)).unwrap().fg, Color::White);
+                assert_eq!(buf.cell((x, y)).unwrap().bg, Color::Black);
+            }
+        }
+    }
+
+    #[test]
+    fn render_hatch_all_styles() {
+        let styles = [
+            (HatchStyle::Cross, HATCH_CROSS),
+            (HatchStyle::Horizontal, HATCH_HORIZONTAL),
+            (HatchStyle::Vertical, HATCH_VERTICAL),
+            (HatchStyle::Left, HATCH_LEFT),
+            (HatchStyle::Right, HATCH_RIGHT),
+        ];
+        for (style, expected_char) in styles {
+            let area = Rect::new(0, 0, 1, 1);
+            let mut buf = Buffer::empty(area);
+            render_hatch(&mut buf, 0, 0, 1, 1, style, Color::Red, Color::Blue);
+            assert_eq!(
+                buf.cell((0, 0)).unwrap().symbol(),
+                expected_char,
+                "hatch style {:?} should use char {}",
+                style,
+                expected_char,
+            );
+        }
+    }
+
+    // --- Image rendering tests ---
+
+    #[test]
+    fn render_image_halfblock_2x2() {
+        // 2x2 pixel image -> 2 columns, 1 row
+        let pixels = vec![
+            (255, 0, 0), (0, 255, 0),  // row 0: red, green
+            (0, 0, 255), (255, 255, 0), // row 1: blue, yellow
+        ];
+        let area = Rect::new(0, 0, 2, 1);
+        let mut buf = Buffer::empty(area);
+        render_image_halfblock(&mut buf, 0, 0, 2, 2, &pixels);
+
+        // Cell (0,0): top=red, bottom=blue
+        assert_eq!(buf.cell((0, 0)).unwrap().symbol(), UPPER_HALF);
+        assert_eq!(buf.cell((0, 0)).unwrap().fg, Color::Rgb(255, 0, 0));
+        assert_eq!(buf.cell((0, 0)).unwrap().bg, Color::Rgb(0, 0, 255));
+
+        // Cell (1,0): top=green, bottom=yellow
+        assert_eq!(buf.cell((1, 0)).unwrap().symbol(), UPPER_HALF);
+        assert_eq!(buf.cell((1, 0)).unwrap().fg, Color::Rgb(0, 255, 0));
+        assert_eq!(buf.cell((1, 0)).unwrap().bg, Color::Rgb(255, 255, 0));
+    }
+
+    #[test]
+    fn render_image_halfblock_odd_height() {
+        // 1x3 pixel image -> 1 column, 2 rows (last row bottom half = black)
+        let pixels = vec![
+            (255, 0, 0),   // row 0
+            (0, 255, 0),   // row 1
+            (0, 0, 255),   // row 2
+        ];
+        let area = Rect::new(0, 0, 1, 2);
+        let mut buf = Buffer::empty(area);
+        render_image_halfblock(&mut buf, 0, 0, 1, 3, &pixels);
+
+        // Cell (0,0): top=red, bottom=green
+        assert_eq!(buf.cell((0, 0)).unwrap().fg, Color::Rgb(255, 0, 0));
+        assert_eq!(buf.cell((0, 0)).unwrap().bg, Color::Rgb(0, 255, 0));
+
+        // Cell (0,1): top=blue, bottom=black (no pixel)
+        assert_eq!(buf.cell((0, 1)).unwrap().fg, Color::Rgb(0, 0, 255));
+        assert_eq!(buf.cell((0, 1)).unwrap().bg, Color::Black);
+    }
+
+    #[test]
+    fn render_image_halfblock_empty() {
+        let area = Rect::new(0, 0, 1, 1);
+        let mut buf = Buffer::empty(area);
+        // Should not panic with empty data
+        render_image_halfblock(&mut buf, 0, 0, 0, 0, &[]);
+        render_image_halfblock(&mut buf, 0, 0, 1, 1, &[]);
     }
 }

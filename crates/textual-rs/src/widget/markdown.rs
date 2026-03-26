@@ -7,11 +7,21 @@ use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd, CodeBloc
 use super::context::AppContext;
 use super::Widget;
 
+/// A styled text span within a rendered line.
+#[derive(Clone)]
+struct StyledSpan {
+    text: String,
+    style: Style,
+}
+
 /// A single rendered line from parsed Markdown content.
 struct RenderedLine {
     text: String,
     style: Style,
     indent: u16,
+    /// Optional multi-span rendering for syntax-highlighted code lines.
+    /// When present, `text` and `style` are ignored in favor of these spans.
+    spans: Option<Vec<StyledSpan>>,
 }
 
 /// Parser state extracted into a struct to work around rustc 1.94 ICE
@@ -25,6 +35,7 @@ struct MdParseState {
     list_stack: Vec<Option<u64>>,
     list_item_counter: Vec<u64>,
     in_code_block: bool,
+    code_block_lang: String,
     link_url: String,
 }
 
@@ -39,6 +50,7 @@ impl MdParseState {
             list_stack: Vec::new(),
             list_item_counter: Vec::new(),
             in_code_block: false,
+            code_block_lang: String::new(),
             link_url: String::new(),
         }
     }
@@ -49,6 +61,7 @@ impl MdParseState {
                 text: self.current_text.clone(),
                 style: self.current_style,
                 indent: self.current_indent,
+                spans: None,
             });
             self.current_text.clear();
         }
@@ -59,6 +72,7 @@ impl MdParseState {
             text: String::new(),
             style: Style::default(),
             indent: 0,
+            spans: None,
         });
     }
 
@@ -94,8 +108,12 @@ impl MdParseState {
                 self.push_blank();
             }
 
-            Event::Start(Tag::CodeBlock(_)) => {
+            Event::Start(Tag::CodeBlock(kind)) => {
                 self.in_code_block = true;
+                self.code_block_lang = match kind {
+                    CodeBlockKind::Fenced(lang) => lang.to_string(),
+                    CodeBlockKind::Indented => String::new(),
+                };
                 self.current_style = Style::default()
                     .fg(Color::Rgb(180, 180, 200))
                     .bg(Color::Rgb(20, 20, 30));
@@ -104,6 +122,7 @@ impl MdParseState {
             Event::End(TagEnd::CodeBlock) => {
                 self.flush_current();
                 self.in_code_block = false;
+                self.code_block_lang.clear();
                 self.current_indent = 0;
                 self.restore_style();
                 self.push_blank();
@@ -188,11 +207,14 @@ impl MdParseState {
 
             Event::Text(text) => {
                 if self.in_code_block {
+                    let bg = Color::Rgb(20, 20, 30);
                     for line in text.lines() {
+                        let spans = highlight_code(line, &self.code_block_lang, bg);
                         self.lines.push(RenderedLine {
                             text: line.to_string(),
                             style: self.current_style,
                             indent: self.current_indent,
+                            spans: if spans.is_empty() { None } else { Some(spans) },
                         });
                     }
                 } else {
@@ -218,6 +240,7 @@ impl MdParseState {
                     text: "────────────────────────────────────────".to_string(),
                     style: Style::default().fg(Color::Rgb(74, 74, 90)),
                     indent: 0,
+                    spans: None,
                 });
             }
 
@@ -226,6 +249,158 @@ impl MdParseState {
             _ => {}
         }
     }
+}
+
+/// Simple syntax highlighting for code blocks.
+///
+/// Tokenizes a line of code and returns styled spans for keywords, strings,
+/// comments, and plain text. No external dependency (avoids syntect at 5MB+).
+fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
+    let keywords: &[&str] = match language {
+        "rust" | "rs" => &[
+            "fn", "let", "mut", "pub", "struct", "enum", "impl", "use", "mod",
+            "match", "if", "else", "for", "while", "return", "self", "Self",
+            "async", "await", "trait", "where", "type", "const", "static",
+            "crate", "super", "true", "false", "loop", "break", "continue",
+            "as", "in", "ref", "move",
+        ],
+        "python" | "py" => &[
+            "def", "class", "import", "from", "return", "if", "else", "elif",
+            "for", "while", "with", "as", "try", "except", "raise", "yield",
+            "async", "await", "True", "False", "None", "and", "or", "not",
+            "in", "is", "lambda", "pass", "break", "continue",
+        ],
+        "javascript" | "js" | "typescript" | "ts" => &[
+            "function", "const", "let", "var", "return", "if", "else", "for",
+            "while", "class", "import", "export", "from", "async", "await",
+            "new", "this", "true", "false", "null", "undefined", "typeof",
+            "instanceof", "switch", "case", "default", "break", "continue",
+            "throw", "try", "catch", "finally",
+        ],
+        _ => &[],
+    };
+
+    let comment_prefix = match language {
+        "python" | "py" => "#",
+        _ => "//",
+    };
+
+    let keyword_style = Style::default()
+        .fg(Color::Rgb(255, 166, 43))
+        .bg(bg)
+        .add_modifier(Modifier::BOLD);
+    let string_style = Style::default()
+        .fg(Color::Rgb(78, 191, 113))
+        .bg(bg);
+    let comment_style = Style::default()
+        .fg(Color::Rgb(100, 100, 120))
+        .bg(bg);
+    let default_style = Style::default()
+        .fg(Color::Rgb(180, 180, 200))
+        .bg(bg);
+
+    // If the line (trimmed) starts with a comment prefix, highlight the whole line as comment
+    let trimmed = line.trim_start();
+    if trimmed.starts_with(comment_prefix) {
+        return vec![StyledSpan { text: line.to_string(), style: comment_style }];
+    }
+
+    if keywords.is_empty() {
+        return vec![StyledSpan { text: line.to_string(), style: default_style }];
+    }
+
+    let mut spans = Vec::new();
+    let mut chars: Vec<char> = line.chars().collect();
+    let mut i = 0;
+    let mut current = String::new();
+
+    while i < chars.len() {
+        let ch = chars[i];
+
+        // String literals (single or double quote)
+        if ch == '"' || ch == '\'' {
+            // Flush current buffer
+            if !current.is_empty() {
+                flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
+                current.clear();
+            }
+            let quote = ch;
+            let mut s = String::new();
+            s.push(ch);
+            i += 1;
+            while i < chars.len() {
+                let c = chars[i];
+                s.push(c);
+                i += 1;
+                if c == quote {
+                    break;
+                }
+                if c == '\\' && i < chars.len() {
+                    s.push(chars[i]);
+                    i += 1;
+                }
+            }
+            spans.push(StyledSpan { text: s, style: string_style });
+            continue;
+        }
+
+        // Inline comment
+        if ch == '/' && i + 1 < chars.len() && chars[i + 1] == '/' {
+            if !current.is_empty() {
+                flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
+                current.clear();
+            }
+            let rest: String = chars[i..].iter().collect();
+            spans.push(StyledSpan { text: rest, style: comment_style });
+            return spans;
+        }
+
+        // Python comment
+        if ch == '#' && (language == "python" || language == "py") {
+            if !current.is_empty() {
+                flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
+                current.clear();
+            }
+            let rest: String = chars[i..].iter().collect();
+            spans.push(StyledSpan { text: rest, style: comment_style });
+            return spans;
+        }
+
+        // Word boundary — check if we have a keyword
+        if !ch.is_alphanumeric() && ch != '_' {
+            if !current.is_empty() {
+                flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
+                current.clear();
+            }
+            spans.push(StyledSpan { text: ch.to_string(), style: default_style });
+        } else {
+            current.push(ch);
+        }
+
+        i += 1;
+    }
+
+    if !current.is_empty() {
+        flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
+    }
+
+    spans
+}
+
+/// Helper: flush a word buffer, checking if it's a keyword.
+fn flush_word_buffer(
+    word: &str,
+    keywords: &[&str],
+    keyword_style: Style,
+    default_style: Style,
+    spans: &mut Vec<StyledSpan>,
+) {
+    let style = if keywords.contains(&word) {
+        keyword_style
+    } else {
+        default_style
+    };
+    spans.push(StyledSpan { text: word.to_string(), style });
 }
 
 /// A widget that renders CommonMark Markdown content using pulldown-cmark.
@@ -271,6 +446,7 @@ impl Markdown {
                 text: state.current_text,
                 style: state.current_style,
                 indent: state.current_indent,
+                spans: None,
             });
         }
 
@@ -311,8 +487,29 @@ impl Widget for Markdown {
                 continue;
             }
 
-            let display: String = line.text.chars().take(available_width).collect();
-            buf.set_string(x_start, y, &display, line.style);
+            if let Some(ref spans) = line.spans {
+                // Render multi-span (syntax-highlighted) line
+                let mut col = x_start;
+                let mut chars_written = 0usize;
+                for span in spans {
+                    for ch in span.text.chars() {
+                        if chars_written >= available_width {
+                            break;
+                        }
+                        if col < area.x + area.width {
+                            buf.set_string(col, y, &ch.to_string(), span.style);
+                            col += 1;
+                            chars_written += 1;
+                        }
+                    }
+                    if chars_written >= available_width {
+                        break;
+                    }
+                }
+            } else {
+                let display: String = line.text.chars().take(available_width).collect();
+                buf.set_string(x_start, y, &display, line.style);
+            }
         }
     }
 }

@@ -146,6 +146,10 @@ pub struct ComputedStyle {
     pub flex_grow: f32,
     pub grid_columns: Option<Vec<TcssDimension>>,
     pub grid_rows: Option<Vec<TcssDimension>>,
+    /// Hatch pattern background fill.
+    pub hatch: Option<HatchStyle>,
+    /// Keyline color for grid separators.
+    pub keyline: Option<TcssColor>,
 }
 
 impl Default for ComputedStyle {
@@ -174,8 +178,25 @@ impl Default for ComputedStyle {
             flex_grow: 0.0,
             grid_columns: None,
             grid_rows: None,
+            hatch: None,
+            keyline: None,
         }
     }
+}
+
+/// Hatch pattern style for background fills using Unicode characters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HatchStyle {
+    /// Cross-hatch pattern (using braille dots)
+    Cross,
+    /// Horizontal lines
+    Horizontal,
+    /// Vertical lines
+    Vertical,
+    /// Diagonal lines going left (top-right to bottom-left)
+    Left,
+    /// Diagonal lines going right (top-left to bottom-right)
+    Right,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -204,6 +225,12 @@ pub enum TcssValue {
     /// Unresolved theme variable reference (e.g., "primary", "accent-darken-1").
     /// Stored during parsing, resolved to Color during cascade via Theme::resolve().
     Variable(String),
+    /// Hatch pattern fill (e.g., "hatch: cross")
+    Hatch(HatchStyle),
+    /// Keyline separator color between grid children (e.g., "keyline: $primary")
+    Keyline(TcssColor),
+    /// Keyline with unresolved theme variable
+    KeylineVariable(String),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -334,6 +361,18 @@ impl ComputedStyle {
                 "layout-direction" => {
                     if let TcssValue::LayoutDirection(d) = decl.value {
                         self.layout_direction = d;
+                    }
+                }
+                "hatch" => {
+                    if let TcssValue::Hatch(h) = decl.value {
+                        self.hatch = Some(h);
+                    }
+                }
+                "keyline" => {
+                    match &decl.value {
+                        TcssValue::Keyline(c) => self.keyline = Some(*c),
+                        TcssValue::Color(c) => self.keyline = Some(*c),
+                        _ => {}
                     }
                 }
                 _ => {}
