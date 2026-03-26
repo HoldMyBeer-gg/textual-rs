@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "## Phases"
-status: Ready to plan
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-26T00:01:28.061Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md (Label, Button, Checkbox, Switch widgets)
+last_updated: "2026-03-26T00:39:27.442Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 16
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust — declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** Phase 03 — reactive-system-events-and-testing
+**Current focus:** Phase 04 — built-in-widget-library
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (built-in-widget-library) — EXECUTING
+Plan: 2 of 7
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 03-reactive-system-events-and-testing P01 | 4 | 2 tasks | 7 files |
 | Phase 03-reactive-system-events-and-testing P02 | 4 | 2 tasks | 9 files |
 | Phase 03-reactive-system-events-and-testing P03 | 5 | 2 tasks | 13 files |
+| Phase 04-built-in-widget-library P01 | 5 | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 03-reactive-system-events-and-testing]: drain_message_queue bounded at 100 iterations to prevent infinite message loops while supporting recursive dispatch
 - [Phase 03-reactive-system-events-and-testing]: TestApp processes events synchronously via process_event — no async event loop in tests, precise timing control
 - [Phase 03-reactive-system-events-and-testing]: settle() uses yield_now loop (max 100 iterations) to drain reactive effects, checks empty rx+message_queue for quiescence
+- [Phase 04-built-in-widget-library]: Use get_untracked() in all widget render() methods — avoids reactive tracking loops outside reactive owner context
+- [Phase 04-built-in-widget-library]: Cell<Option<WidgetId>> set in on_mount enables post_message from on_action(&self) without &mut; static &[KeyBinding] slices for zero-allocation key bindings
+- [Phase 04-built-in-widget-library]: pending_screen_pushes RefCell on AppContext with push_screen_deferred() — deferred screen push from on_action(&self) for Select widget overlay pattern
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T00:01:28.057Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-built-in-widget-library/04-CONTEXT.md
+Last session: 2026-03-26T00:39:27.439Z
+Stopped at: Completed 04-01-PLAN.md (Label, Button, Checkbox, Switch widgets)
+Resume file: None
