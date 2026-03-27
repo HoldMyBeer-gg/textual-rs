@@ -99,6 +99,14 @@ pub struct App {
     /// Tracks the last mouse-capture state sent to the terminal.
     /// Initialized to `true` because TerminalGuard enables mouse capture on creation.
     mouse_capture_active: bool,
+    /// Key binding for cycling themes. Default: Ctrl+T.
+    /// Override with [`App::with_theme_cycle_key`] if your terminal intercepts Ctrl+T
+    /// (e.g. Windows Terminal opens a new tab on Ctrl+T by default).
+    theme_cycle_key: (KeyCode, KeyModifiers),
+    /// Optional callback invoked whenever the active theme changes.
+    /// Receives the new theme name (e.g. `"tokyo-night"`).
+    /// Use this to persist the user's theme choice across sessions.
+    theme_changed_cb: Option<Box<dyn Fn(&str)>>,
 }
 
 /// A CSS file being watched for changes (hot-reload support).
@@ -149,6 +157,8 @@ impl App {
             theme_index: 0,
             watched_css: Vec::new(),
             mouse_capture_active: true,
+            theme_cycle_key: (KeyCode::Char('t'), KeyModifiers::CONTROL),
+            theme_changed_cb: None,
         }
     }
 
@@ -178,6 +188,8 @@ impl App {
             theme_index: 0,
             watched_css: Vec::new(),
             mouse_capture_active: true,
+            theme_cycle_key: (KeyCode::Char('t'), KeyModifiers::CONTROL),
+            theme_changed_cb: None,
         }
     }
 
@@ -244,12 +256,62 @@ impl App {
         self.needs_full_sync = true;
     }
 
-    /// Cycle to the next built-in theme (wraps around). Used by Ctrl+T.
+    /// Override the key binding used to cycle through built-in themes.
+    ///
+    /// The default is **Ctrl+T**, but some terminal emulators intercept this key
+    /// before the application sees it. For example, **Windows Terminal** binds
+    /// Ctrl+T to "Open new tab" by default — if you use Windows Terminal, rebind
+    /// this to a key your terminal doesn't intercept:
+    ///
+    /// ```no_run
+    /// # use textual_rs::App;
+    /// # use crossterm::event::{KeyCode, KeyModifiers};
+    /// # struct MyScreen;
+    /// # impl textual_rs::Widget for MyScreen {
+    /// #     fn render(&self, _: &textual_rs::widget::context::AppContext, _: ratatui::layout::Rect, _: &mut ratatui::buffer::Buffer) {}
+    /// #     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+    /// # }
+    /// let app = App::new(|| Box::new(MyScreen))
+    ///     .with_theme_cycle_key(KeyCode::F(5), KeyModifiers::NONE);
+    /// ```
+    pub fn with_theme_cycle_key(mut self, code: KeyCode, modifiers: KeyModifiers) -> Self {
+        self.theme_cycle_key = (code, modifiers);
+        self
+    }
+
+    /// Register a callback invoked whenever the active theme changes.
+    ///
+    /// The callback receives the new theme name (e.g. `"tokyo-night"`).
+    /// Use this to persist the user's theme choice across sessions.
+    ///
+    /// ```no_run
+    /// # use textual_rs::App;
+    /// # struct MyScreen;
+    /// # impl textual_rs::Widget for MyScreen {
+    /// #     fn render(&self, _: &textual_rs::widget::context::AppContext, _: ratatui::layout::Rect, _: &mut ratatui::buffer::Buffer) {}
+    /// #     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+    /// # }
+    /// let app = App::new(|| Box::new(MyScreen))
+    ///     .on_theme_changed(|name| {
+    ///         // e.g. write name to a config file
+    ///         eprintln!("theme changed to: {name}");
+    ///     });
+    /// ```
+    pub fn on_theme_changed<F: Fn(&str) + 'static>(mut self, f: F) -> Self {
+        self.theme_changed_cb = Some(Box::new(f));
+        self
+    }
+
+    /// Cycle to the next built-in theme (wraps around). Used by the theme cycle key.
     fn cycle_theme(&mut self) {
         let themes = crate::css::theme::builtin_themes();
         self.theme_index = (self.theme_index + 1) % themes.len();
         let theme = themes.into_iter().nth(self.theme_index).unwrap();
+        let name = theme.name.clone();
         self.set_theme(theme);
+        if let Some(ref cb) = self.theme_changed_cb {
+            cb(&name);
+        }
     }
 
     /// Run the application. Blocks the calling thread until the user quits.
@@ -378,9 +440,9 @@ impl App {
                                 continue;
                             }
 
-                            // 0b. Ctrl+T: cycle through built-in themes
-                            if k.code == KeyCode::Char('t')
-                                && k.modifiers.contains(KeyModifiers::CONTROL)
+                            // 0b. theme cycle key (default Ctrl+T, configurable via with_theme_cycle_key)
+                            if k.code == self.theme_cycle_key.0
+                                && k.modifiers.contains(self.theme_cycle_key.1)
                             {
                                 self.cycle_theme();
                                 self.full_render_pass(&mut terminal)?;
@@ -866,8 +928,8 @@ impl App {
             return true;
         }
 
-        // 0b. Ctrl+T: cycle through built-in themes
-        if k.code == KeyCode::Char('t') && k.modifiers.contains(KeyModifiers::CONTROL) {
+        // 0b. theme cycle key (default Ctrl+T, configurable via with_theme_cycle_key)
+        if k.code == self.theme_cycle_key.0 && k.modifiers.contains(self.theme_cycle_key.1) {
             self.cycle_theme();
             return true;
         }

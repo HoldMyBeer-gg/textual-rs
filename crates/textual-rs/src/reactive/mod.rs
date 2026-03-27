@@ -7,6 +7,13 @@ use reactive_graph::signal::ArcRwSignal;
 /// Holds a value that triggers re-renders when changed. Use this for any
 /// widget state that should cause the UI to update automatically.
 ///
+/// # Required bounds
+///
+/// `T` must implement `Clone + PartialEq + Send + Sync + 'static`. The
+/// `PartialEq` bound is required so the signal can skip notifications when
+/// the value hasn't actually changed. If your type does not derive
+/// `PartialEq`, add `#[derive(PartialEq)]` or implement it manually.
+///
 /// # Panics
 ///
 /// `get()` (tracked read) panics if called outside a reactive Owner context.
