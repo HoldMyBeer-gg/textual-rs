@@ -134,7 +134,7 @@ pub fn recompose_widget(id: WidgetId, ctx: &mut AppContext) {
     // Re-focus the first focusable child (e.g. TabBar after tab switch)
     let new_children: Vec<WidgetId> = ctx.children.get(id).cloned().unwrap_or_default();
     for child_id in new_children {
-        if ctx.arena.get(child_id).map_or(false, |w| w.can_focus()) {
+        if ctx.arena.get(child_id).is_some_and(|w| w.can_focus()) {
             ctx.focused_widget = Some(child_id);
             break;
         }

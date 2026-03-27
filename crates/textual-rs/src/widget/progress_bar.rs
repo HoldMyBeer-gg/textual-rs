@@ -6,7 +6,6 @@ use ratatui::style::Color;
 use super::context::AppContext;
 use super::Widget;
 use crate::canvas;
-use crate::css::render_style::to_ratatui_color;
 use crate::reactive::Reactive;
 
 /// A progress bar widget that fills proportionally to a progress value (0.0–1.0).

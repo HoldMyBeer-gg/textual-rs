@@ -258,7 +258,7 @@ impl ComputedStyle {
                         TcssValue::Border(b) => self.border = *b,
                         TcssValue::BorderWithColor(b, c) => {
                             self.border = *b;
-                            self.color = c.clone();
+                            self.color = *c;
                         }
                         _ => {}
                     }

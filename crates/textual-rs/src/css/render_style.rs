@@ -189,7 +189,7 @@ pub fn draw_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
                 }
                 s.add_modifier(ratatui::style::Modifier::BOLD)
             };
-            buf.set_string(x1 + 2, y1, &format!(" {} ", display), title_style);
+            buf.set_string(x1 + 2, y1, format!(" {} ", display), title_style);
         }
     }
 
@@ -250,7 +250,7 @@ fn draw_tall_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
         if !display.is_empty() {
             let title_style = Style::default().fg(fg).bg(bg)
                 .add_modifier(ratatui::style::Modifier::BOLD);
-            buf.set_string(x1 + 2, y1, &format!(" {} ", display), title_style);
+            buf.set_string(x1 + 2, y1, format!(" {} ", display), title_style);
         }
     }
 
@@ -303,7 +303,7 @@ fn draw_mcgugan_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect
                 .fg(border_color)
                 .bg(outside_color)
                 .add_modifier(ratatui::style::Modifier::BOLD);
-            buf.set_string(area.x + 2, area.y, &format!(" {} ", display), title_style);
+            buf.set_string(area.x + 2, area.y, format!(" {} ", display), title_style);
         }
     }
 

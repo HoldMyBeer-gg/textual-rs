@@ -135,7 +135,7 @@ fn detect_color_depth() -> ColorDepth {
             return ColorDepth::TrueColor;
         }
         // Modern Windows 10+ conhost supports 256 colors
-        return ColorDepth::EightBit;
+        ColorDepth::EightBit
     }
 
     // 4. Fallback: 16 standard colors
@@ -157,7 +157,7 @@ fn detect_unicode() -> bool {
     // 2. Windows: modern terminals handle Unicode
     #[cfg(target_os = "windows")]
     {
-        return true;
+        true
     }
 
     // 3. xterm family usually supports Unicode

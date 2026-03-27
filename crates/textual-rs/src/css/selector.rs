@@ -75,16 +75,16 @@ pub fn selector_matches(sel: &Selector, id: WidgetId, ctx: &AppContext) -> bool 
     match sel {
         Selector::Universal => true,
         Selector::Type(name) => {
-            ctx.arena.get(id).map_or(false, |w| w.widget_type_name() == name.as_str())
+            ctx.arena.get(id).is_some_and(|w| w.widget_type_name() == name.as_str())
         }
         Selector::Class(cls) => {
-            ctx.arena.get(id).map_or(false, |w| w.classes().contains(&cls.as_str()))
+            ctx.arena.get(id).is_some_and(|w| w.classes().contains(&cls.as_str()))
         }
         Selector::Id(expected_id) => {
-            ctx.arena.get(id).map_or(false, |w| w.id() == Some(expected_id.as_str()))
+            ctx.arena.get(id).is_some_and(|w| w.id() == Some(expected_id.as_str()))
         }
         Selector::PseudoClass(pc) => {
-            ctx.pseudo_classes.get(id).map_or(false, |set| set.contains(pc))
+            ctx.pseudo_classes.get(id).is_some_and(|set| set.contains(pc))
         }
         Selector::Compound(parts) => parts.iter().all(|s| selector_matches(s, id, ctx)),
         Selector::Descendant(ancestor_sel, subject_sel) => {
@@ -101,7 +101,7 @@ pub fn selector_matches(sel: &Selector, id: WidgetId, ctx: &AppContext) -> bool 
             ctx.parent
                 .get(id)
                 .and_then(|p| *p)
-                .map_or(false, |parent_id| selector_matches(parent_sel, parent_id, ctx))
+                .is_some_and(|parent_id| selector_matches(parent_sel, parent_id, ctx))
         }
     }
 }

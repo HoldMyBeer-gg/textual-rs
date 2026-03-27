@@ -918,7 +918,7 @@ impl Widget for TextArea {
                 } else {
                     style
                 };
-                buf.set_string(cx, y, &ch.to_string(), char_style);
+                buf.set_string(cx, y, ch.to_string(), char_style);
             }
 
             // Render cursor at end of line if cursor is past content

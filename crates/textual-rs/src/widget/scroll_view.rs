@@ -4,7 +4,7 @@ use ratatui::layout::Rect;
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use super::context::AppContext;
-use super::{Widget, WidgetId};
+use super::Widget;
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 

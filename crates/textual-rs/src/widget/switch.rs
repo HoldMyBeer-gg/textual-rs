@@ -147,7 +147,7 @@ impl Widget for Switch {
 
         // Clean up completed tweens
         {
-            let should_clear = self.knob_tween.borrow().as_ref().map_or(false, |tw| tw.is_complete());
+            let should_clear = self.knob_tween.borrow().as_ref().is_some_and(|tw| tw.is_complete());
             if should_clear {
                 *self.knob_tween.borrow_mut() = None;
             }

@@ -72,7 +72,7 @@ impl Widget for Footer {
 
             // Description
             let desc_text = format!(" {} ", desc);
-            let desc_len = desc_text.chars().count() as u16;
+            let _desc_len = desc_text.chars().count() as u16;
             let remaining = (area.x + area.width).saturating_sub(x);
             let display: String = desc_text.chars().take(remaining as usize).collect();
             buf.set_string(x, area.y, &display, desc_style);

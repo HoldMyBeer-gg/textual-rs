@@ -112,7 +112,7 @@ impl Widget for Button {
     }
 
     fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        use ratatui::style::{Color, Modifier};
+        use ratatui::style::Modifier;
 
         if area.height == 0 || area.width == 0 {
             return;
