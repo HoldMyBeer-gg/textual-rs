@@ -17,8 +17,8 @@ use textual_rs::widget::tree_view::messages::{NodeCollapsed, NodeExpanded, NodeS
 use textual_rs::widget::{EventPropagation, Widget};
 use textual_rs::{
     Button, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header, Input, Label, ListView,
-    Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, ScrollView, Select, Sparkline,
-    Switch, TabbedContent, Tabs, TextArea, Tree, TreeNode,
+    Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, RichLog, ScrollView, Select,
+    Sparkline, Switch, TabbedContent, Tabs, TextArea, Tree, TreeNode,
 };
 
 #[test]
@@ -2352,5 +2352,173 @@ fn markdown_link_renders_url() {
         trimmed.contains("click here") && trimmed.contains("https://example.com"),
         "Markdown link should render as 'click here [https://example.com]', got: {:?}",
         trimmed
+    );
+}
+
+// ---------------------------------------------------------------------------
+// RichLog tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rich_log_new_creates_empty_log_with_auto_scroll() {
+    use ratatui::text::Line;
+    let log = RichLog::new();
+    assert_eq!(
+        log.lines.get_untracked().len(),
+        0,
+        "new RichLog should have no lines"
+    );
+    assert_eq!(
+        log.scroll_offset.get_untracked(),
+        0,
+        "new RichLog should have scroll_offset=0"
+    );
+}
+
+#[test]
+fn rich_log_write_line_appends() {
+    use ratatui::text::Line;
+    let log = RichLog::new();
+    log.write_line(Line::raw("hello"));
+    log.write_line(Line::raw("world"));
+    assert_eq!(log.lines.get_untracked().len(), 2);
+}
+
+#[test]
+fn rich_log_auto_scrolls_when_content_exceeds_viewport() {
+    use ratatui::text::Line;
+    let log = RichLog::new();
+    log.viewport_height.set(3);
+    for i in 0..10 {
+        log.write_line(Line::raw(format!("Line {}", i)));
+    }
+    let offset = log.scroll_offset.get_untracked();
+    assert!(offset > 0, "scroll_offset should be > 0, got {}", offset);
+    assert_eq!(offset, 7, "scroll_offset should be line_count - viewport_h = 7");
+}
+
+#[test]
+fn rich_log_max_lines_evicts_oldest() {
+    use ratatui::text::Line;
+    let log = RichLog::with_max_lines(3);
+    log.write_line(Line::raw("A"));
+    log.write_line(Line::raw("B"));
+    log.write_line(Line::raw("C"));
+    log.write_line(Line::raw("D")); // should evict "A"
+    let lines = log.lines.get_untracked();
+    assert_eq!(lines.len(), 3, "should have exactly 3 lines after eviction");
+    // First line should now be "B"
+    let first = lines[0].spans.first().map(|s| s.content.as_ref()).unwrap_or("");
+    assert_eq!(first, "B", "oldest line should have been evicted");
+}
+
+#[test]
+fn rich_log_eviction_decrements_scroll_offset() {
+    use ratatui::text::Line;
+    let log = RichLog::with_max_lines(3);
+    log.viewport_height.set(3);
+    log.write_line(Line::raw("A"));
+    log.write_line(Line::raw("B"));
+    log.write_line(Line::raw("C"));
+    // Manually set scroll_offset > 0 to simulate mid-scroll
+    log.scroll_offset.set(2);
+    log.write_line(Line::raw("D")); // evicts "A", should decrement offset
+    let offset = log.scroll_offset.get_untracked();
+    assert_eq!(offset, 1, "eviction should decrement scroll_offset, got {}", offset);
+}
+
+#[test]
+fn rich_log_scroll_up_disables_auto_scroll() {
+    use ratatui::text::Line;
+    let log = RichLog::new();
+    log.viewport_height.set(3);
+    for i in 0..10 {
+        log.write_line(Line::raw(format!("Line {}", i)));
+    }
+    let initial_offset = log.scroll_offset.get_untracked();
+    assert_eq!(initial_offset, 7, "initial offset should be 7");
+
+    let ctx = AppContext::new();
+    log.on_action("scroll_up", &ctx);
+    assert_eq!(log.scroll_offset.get_untracked(), 6, "scroll_up should decrement offset");
+
+    // write_line should NOT change offset when auto_scroll=false
+    log.write_line(Line::raw("New Line"));
+    assert_eq!(
+        log.scroll_offset.get_untracked(),
+        6,
+        "offset should not change with auto_scroll disabled"
+    );
+}
+
+#[test]
+fn rich_log_scroll_bottom_reenables_auto_scroll() {
+    use ratatui::text::Line;
+    let log = RichLog::new();
+    log.viewport_height.set(3);
+    for i in 0..10 {
+        log.write_line(Line::raw(format!("Line {}", i)));
+    }
+    let ctx = AppContext::new();
+    // Disable auto_scroll first
+    log.on_action("scroll_up", &ctx);
+    // Scroll to bottom re-enables
+    log.on_action("scroll_bottom", &ctx);
+    assert_eq!(
+        log.scroll_offset.get_untracked(),
+        7,
+        "scroll_bottom should set offset to bottom"
+    );
+    // Auto scroll should be re-enabled now — writing a new line should scroll
+    log.write_line(Line::raw("Extra"));
+    let offset = log.scroll_offset.get_untracked();
+    assert!(offset >= 7, "auto_scroll re-enabled after scroll_bottom");
+}
+
+#[test]
+fn snapshot_rich_log_styled_lines() {
+    use ratatui::style::{Color, Modifier, Style};
+    use ratatui::text::{Line, Span};
+
+    let log = RichLog::new();
+    log.viewport_height.set(10);
+    log.write_line(Line::from(vec![
+        Span::styled("INFO", Style::default().fg(Color::Green)),
+        Span::styled(" Server started", Style::default()),
+    ]));
+    log.write_line(Line::from(vec![
+        Span::styled("WARN", Style::default().fg(Color::Yellow)),
+        Span::styled(" Low memory", Style::default()),
+    ]));
+    log.write_line(Line::from(vec![
+        Span::styled("ERROR", Style::default().fg(Color::Red)),
+        Span::styled(" Disk full", Style::default()),
+    ]));
+
+    let test_app = TestApp::new(40, 10, move || Box::new(log));
+    let buf = test_app.buffer();
+
+    // Verify "INFO" is at col 0, row 0 with green foreground
+    let info_cell = &buf[(0, 0)];
+    assert_eq!(
+        info_cell.fg,
+        Color::Green,
+        "INFO span should have green foreground"
+    );
+
+    // Verify "WARN" is on second row with yellow foreground
+    let warn_cell = &buf[(0, 1)];
+    assert_eq!(
+        warn_cell.fg,
+        Color::Yellow,
+        "WARN span should have yellow foreground"
+    );
+
+    // Verify "ERROR" is on third row with red foreground
+    let error_cell = &buf[(0, 2)];
+    assert_eq!(
+        error_cell.fg,
+        Color::Red,
+        "ERROR span should have red foreground"
     );
 }
