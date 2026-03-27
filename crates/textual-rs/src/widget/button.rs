@@ -23,7 +23,10 @@ pub mod messages {
     use crate::event::message::Message;
 
     /// Emitted when the button is pressed (Enter or Space key).
-    pub struct Pressed;
+    /// `label` carries the button's label so handlers can identify which button fired.
+    pub struct Pressed {
+        pub label: String,
+    }
 
     impl Message for Pressed {}
 }
@@ -106,7 +109,7 @@ impl Widget for Button {
         if action == "press" {
             self.pressed.set(true);
             if let Some(id) = self.own_id.get() {
-                ctx.post_message(id, messages::Pressed);
+                ctx.post_message(id, messages::Pressed { label: self.label.clone() });
             }
         }
     }

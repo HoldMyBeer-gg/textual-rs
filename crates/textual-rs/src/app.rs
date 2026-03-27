@@ -949,10 +949,31 @@ impl App {
             }
         }
 
-        // 2. If not handled by binding, dispatch as key event to focused widget, then bubble
+        // 1b. Check active screen's key bindings (screens can't be focused directly,
+        //     so their bindings are never reached via step 1 — check them explicitly).
+        if !handled {
+            if let Some(&screen_id) = self.ctx.screen_stack.last() {
+                if let Some(screen) = self.ctx.arena.get(screen_id) {
+                    for binding in screen.key_bindings() {
+                        if binding.matches(k.code, k.modifiers) {
+                            screen.on_action(binding.action, &self.ctx);
+                            handled = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. If not handled by binding, dispatch as key event to focused widget, then bubble.
+        //    If no widget is focused (e.g. screen has only non-focusable children), fall back
+        //    to dispatching directly to the screen root so it still receives key events.
         if !handled {
             if let Some(focused_id) = self.ctx.focused_widget {
                 dispatch_message(focused_id, &k, &self.ctx);
+                handled = true;
+            } else if let Some(&screen_id) = self.ctx.screen_stack.last() {
+                dispatch_message(screen_id, &k, &self.ctx);
                 handled = true;
             }
         }
