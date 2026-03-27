@@ -86,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:24:38Z
-Stopped at: Completed 04-02-PLAN.md (Select/CommandPalette overlays, CSS border+variable, McGugan Box fallback)
+Last session: 2026-03-26T23:30:00Z
+Stopped at: Completed quick/260326-uwc (MouseCaptureStack push/pop, Shift bypass, resize guard)
 Resume file: None
