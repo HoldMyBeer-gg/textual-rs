@@ -1,22 +1,31 @@
-use textual_rs::{App, Widget, Header, Footer, ListView, Log, Input};
-use textual_rs::widget::context::AppContext;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use textual_rs::widget::context::AppContext;
+use textual_rs::{App, Footer, Header, Input, ListView, Log, Widget};
 
 struct ChannelPane;
 impl Widget for ChannelPane {
-    fn widget_type_name(&self) -> &'static str { "ChannelPane" }
+    fn widget_type_name(&self) -> &'static str {
+        "ChannelPane"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(ListView::new(vec![
-            "#general".into(), "#rust".into(), "#tui-dev".into(),
-            "#help".into(), "#off-topic".into(), "#announcements".into(), "#code-review".into(),
+            "#general".into(),
+            "#rust".into(),
+            "#tui-dev".into(),
+            "#help".into(),
+            "#off-topic".into(),
+            "#announcements".into(),
+            "#code-review".into(),
         ]))]
     }
     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
 }
 struct ChatLog;
 impl Widget for ChatLog {
-    fn widget_type_name(&self) -> &'static str { "ChatLog" }
+    fn widget_type_name(&self) -> &'static str {
+        "ChatLog"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         let log = Log::new();
         log.push_line("[12:01] <alice>  hey everyone, just pushed the new layout engine".into());
@@ -32,18 +41,27 @@ impl Widget for ChatLog {
 }
 struct UserPane;
 impl Widget for UserPane {
-    fn widget_type_name(&self) -> &'static str { "UserPane" }
+    fn widget_type_name(&self) -> &'static str {
+        "UserPane"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(ListView::new(vec![
-            "@alice [op]".into(), "@bob".into(), "@carol".into(), "@dave".into(),
-            "erin".into(), "frank".into(), "grace".into(),
+            "@alice [op]".into(),
+            "@bob".into(),
+            "@carol".into(),
+            "@dave".into(),
+            "erin".into(),
+            "frank".into(),
+            "grace".into(),
         ]))]
     }
     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
 }
 struct MainRegion;
 impl Widget for MainRegion {
-    fn widget_type_name(&self) -> &'static str { "MainRegion" }
+    fn widget_type_name(&self) -> &'static str {
+        "MainRegion"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(ChannelPane), Box::new(ChatLog), Box::new(UserPane)]
     }
@@ -51,13 +69,19 @@ impl Widget for MainRegion {
 }
 struct InputRegion;
 impl Widget for InputRegion {
-    fn widget_type_name(&self) -> &'static str { "InputRegion" }
-    fn compose(&self) -> Vec<Box<dyn Widget>> { vec![Box::new(Input::new("Type a message..."))] }
+    fn widget_type_name(&self) -> &'static str {
+        "InputRegion"
+    }
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        vec![Box::new(Input::new("Type a message..."))]
+    }
     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
 }
 struct IrcScreen;
 impl Widget for IrcScreen {
-    fn widget_type_name(&self) -> &'static str { "IrcScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "IrcScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Header::new("textual-rs IRC").with_subtitle("#general -- 7 users")),
@@ -87,7 +111,9 @@ ListView { flex-grow: 1; } Log { flex-grow: 1; }
     let buf = app.render_to_test_backend(100, 24);
     for y in 0..24u16 {
         let mut line = String::new();
-        for x in 0..100u16 { line.push_str(buf.cell((x, y)).unwrap().symbol()); }
+        for x in 0..100u16 {
+            line.push_str(buf.cell((x, y)).unwrap().symbol());
+        }
         println!("{:2}|{}", y, line.trim_end());
     }
 }

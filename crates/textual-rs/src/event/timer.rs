@@ -1,5 +1,5 @@
-use std::time::Duration;
 use crate::event::AppEvent;
+use std::time::Duration;
 
 /// Spawn a periodic tick timer on the Tokio LocalSet.
 /// Posts AppEvent::Tick to the event bus at the given interval.

@@ -1,8 +1,8 @@
-use std::cell::{Cell, RefCell};
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::{Cell, RefCell};
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -257,7 +257,7 @@ impl Widget for Tree {
     }
 
     fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
-        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
         if let Some(m) = event.downcast_ref::<MouseEvent>() {
             if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
                 let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
@@ -359,7 +359,12 @@ impl Widget for Tree {
                 let (path, has_children, currently_expanded, depth) = {
                     let flat = self.flat_entries.borrow();
                     if let Some(entry) = flat.get(cursor) {
-                        (entry.path.clone(), entry.has_children, entry.expanded, entry.depth)
+                        (
+                            entry.path.clone(),
+                            entry.has_children,
+                            entry.expanded,
+                            entry.depth,
+                        )
                     } else {
                         return;
                     }
@@ -380,7 +385,9 @@ impl Widget for Tree {
                     let flat = self.flat_entries.borrow();
                     // Find the parent by path (depth - 1)
                     let parent_path = &path[..path.len() - 1];
-                    if let Some(parent_idx) = flat.iter().position(|e| e.path.as_slice() == parent_path) {
+                    if let Some(parent_idx) =
+                        flat.iter().position(|e| e.path.as_slice() == parent_path)
+                    {
                         drop(flat);
                         self.cursor.set(parent_idx);
                         self.adjust_scroll();
@@ -423,7 +430,9 @@ impl Widget for Tree {
         }
         self.last_area_y.set(area.y);
 
-        let base_style = self.own_id.get()
+        let base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -489,7 +498,11 @@ impl Widget for Tree {
             // Split guide chars from label for separate styling
             let guide_len = guide.len() - entry.label.len();
             let guide_part: String = guide.chars().take(guide_len.min(content_width)).collect();
-            let label_part: String = entry.label.chars().take(content_width.saturating_sub(guide_part.chars().count())).collect();
+            let label_part: String = entry
+                .label
+                .chars()
+                .take(content_width.saturating_sub(guide_part.chars().count()))
+                .collect();
 
             let guide_style = if is_cursor {
                 base_style.fg(ratatui::style::Color::Rgb(0, 255, 163))

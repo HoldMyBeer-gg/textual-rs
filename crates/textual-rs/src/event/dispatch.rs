@@ -1,6 +1,6 @@
-use std::any::Any;
 use crate::widget::context::AppContext;
 use crate::widget::{EventPropagation, WidgetId};
+use std::any::Any;
 
 /// Collect the parent chain from `start` up to the screen root.
 /// Returns [start, parent, grandparent, ...] in bottom-up order.
@@ -17,11 +17,7 @@ pub fn collect_parent_chain(start: WidgetId, ctx: &AppContext) -> Vec<WidgetId> 
 /// Dispatch a message through the widget tree via bubbling.
 /// Calls on_event on each widget in the parent chain from `target` upward.
 /// Stops when a handler returns EventPropagation::Stop.
-pub fn dispatch_message(
-    target: WidgetId,
-    message: &dyn Any,
-    ctx: &AppContext,
-) -> EventPropagation {
+pub fn dispatch_message(target: WidgetId, message: &dyn Any, ctx: &AppContext) -> EventPropagation {
     let chain = collect_parent_chain(target, ctx);
     for &id in &chain {
         if let Some(widget) = ctx.arena.get(id) {
@@ -36,11 +32,11 @@ pub fn dispatch_message(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ratatui::buffer::Buffer;
-    use ratatui::layout::Rect;
-    use crate::widget::{Widget, EventPropagation};
     use crate::widget::context::AppContext;
     use crate::widget::tree::mount_widget;
+    use crate::widget::{EventPropagation, Widget};
+    use ratatui::buffer::Buffer;
+    use ratatui::layout::Rect;
     use std::any::Any;
     use std::cell::Cell;
 
@@ -51,7 +47,9 @@ mod tests {
     struct PassthroughWidget;
     impl Widget for PassthroughWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "PassthroughWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "PassthroughWidget"
+        }
         fn on_event(&self, _event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
             EventPropagation::Continue
         }
@@ -61,7 +59,9 @@ mod tests {
     struct StopWidget;
     impl Widget for StopWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "StopWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "StopWidget"
+        }
         fn on_event(&self, _event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
             EventPropagation::Stop
         }
@@ -79,7 +79,9 @@ mod tests {
     }
     impl Widget for CountingWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "CountingWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "CountingWidget"
+        }
         fn on_event(&self, _event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
             self.count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
             EventPropagation::Continue
@@ -121,17 +123,29 @@ mod tests {
 
     #[test]
     fn dispatch_message_bubbles_through_chain() {
-        use std::sync::Arc;
         use std::sync::atomic::AtomicU32;
+        use std::sync::Arc;
 
         let count_root = Arc::new(AtomicU32::new(0));
         let count_child = Arc::new(AtomicU32::new(0));
         let count_leaf = Arc::new(AtomicU32::new(0));
 
         let mut ctx = AppContext::new();
-        let root = mount_widget(Box::new(CountingWidget::new(count_root.clone())), None, &mut ctx);
-        let child = mount_widget(Box::new(CountingWidget::new(count_child.clone())), Some(root), &mut ctx);
-        let leaf = mount_widget(Box::new(CountingWidget::new(count_leaf.clone())), Some(child), &mut ctx);
+        let root = mount_widget(
+            Box::new(CountingWidget::new(count_root.clone())),
+            None,
+            &mut ctx,
+        );
+        let child = mount_widget(
+            Box::new(CountingWidget::new(count_child.clone())),
+            Some(root),
+            &mut ctx,
+        );
+        let leaf = mount_widget(
+            Box::new(CountingWidget::new(count_leaf.clone())),
+            Some(child),
+            &mut ctx,
+        );
 
         let msg = PingMsg;
         let result = dispatch_message(leaf, &msg, &ctx);
@@ -145,17 +159,25 @@ mod tests {
 
     #[test]
     fn dispatch_message_stops_at_middle_widget() {
-        use std::sync::Arc;
         use std::sync::atomic::AtomicU32;
+        use std::sync::Arc;
 
         let count_root = Arc::new(AtomicU32::new(0));
         let count_leaf = Arc::new(AtomicU32::new(0));
 
         let mut ctx = AppContext::new();
-        let root = mount_widget(Box::new(CountingWidget::new(count_root.clone())), None, &mut ctx);
+        let root = mount_widget(
+            Box::new(CountingWidget::new(count_root.clone())),
+            None,
+            &mut ctx,
+        );
         // Middle widget stops the message
         let child = mount_widget(Box::new(StopWidget), Some(root), &mut ctx);
-        let leaf = mount_widget(Box::new(CountingWidget::new(count_leaf.clone())), Some(child), &mut ctx);
+        let leaf = mount_widget(
+            Box::new(CountingWidget::new(count_leaf.clone())),
+            Some(child),
+            &mut ctx,
+        );
 
         let msg = PingMsg;
         let result = dispatch_message(leaf, &msg, &ctx);

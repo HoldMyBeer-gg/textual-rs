@@ -1,24 +1,25 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 use insta::assert_snapshot;
 use ratatui::{buffer::Buffer, layout::Rect};
-use textual_rs::testing::TestApp;
 use textual_rs::testing::assertions::assert_buffer_lines;
+use textual_rs::testing::TestApp;
+use textual_rs::widget::button::messages::Pressed as ButtonPressed;
+use textual_rs::widget::collapsible::messages::{
+    Collapsed as CollapsibleCollapsed, Expanded as CollapsibleExpanded,
+};
 use textual_rs::widget::context::AppContext;
+use textual_rs::widget::data_table::messages::{RowSelected, SortChanged};
+use textual_rs::widget::input::messages::Submitted as InputSubmitted;
+use textual_rs::widget::list_view::messages::Selected as ListViewSelected;
+use textual_rs::widget::radio::messages::RadioSetChanged;
+use textual_rs::widget::tabs::messages::TabChanged;
+use textual_rs::widget::tree_view::messages::{NodeCollapsed, NodeExpanded, NodeSelected};
 use textual_rs::widget::{EventPropagation, Widget};
 use textual_rs::{
-    Button, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header, Input, Label,
-    ListView, Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, ScrollView,
-    Select, Sparkline, Switch, Tabs, TabbedContent, TextArea, Tree, TreeNode,
+    Button, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header, Input, Label, ListView,
+    Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, ScrollView, Select, Sparkline,
+    Switch, TabbedContent, Tabs, TextArea, Tree, TreeNode,
 };
-use textual_rs::widget::button::messages::Pressed as ButtonPressed;
-use textual_rs::widget::input::messages::Submitted as InputSubmitted;
-use textual_rs::widget::radio::messages::RadioSetChanged;
-use textual_rs::widget::list_view::messages::Selected as ListViewSelected;
-use textual_rs::widget::data_table::messages::{RowSelected, SortChanged};
-use textual_rs::widget::tree_view::messages::{NodeSelected, NodeExpanded, NodeCollapsed};
-use textual_rs::widget::tabs::messages::TabChanged;
-use textual_rs::widget::collapsible::messages::{Expanded as CollapsibleExpanded, Collapsed as CollapsibleCollapsed};
-
 
 #[test]
 fn snapshot_label_default() {
@@ -196,7 +197,10 @@ async fn checkbox_toggle_space_changes_state() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Checkbox should have focus");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Checkbox should have focus"
+    );
 
     // Verify initial render shows unchecked
     assert_buffer_lines(test_app.buffer(), &["☐ Opt"]);
@@ -242,7 +246,10 @@ async fn switch_toggle_enter_changes_state() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Switch should have focus");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Switch should have focus"
+    );
 
     // Verify initial render shows OFF indicator (knob on left)
     {
@@ -314,7 +321,10 @@ async fn input_type_text() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Input should have focus");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Input should have focus"
+    );
 
     // Type "hello"
     {
@@ -327,7 +337,11 @@ async fn input_type_text() {
     let row: String = (0..5u16)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    assert_eq!(row, "hello", "Input should display typed text, got: {:?}", row);
+    assert_eq!(
+        row, "hello",
+        "Input should display typed text, got: {:?}",
+        row
+    );
 }
 
 #[tokio::test]
@@ -388,7 +402,11 @@ async fn input_backspace() {
     let row: String = (0..4u16)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    assert_eq!(row, "hell", "After Backspace, value should be 'hell', got: {:?}", row);
+    assert_eq!(
+        row, "hell",
+        "After Backspace, value should be 'hell', got: {:?}",
+        row
+    );
 }
 
 #[tokio::test]
@@ -417,7 +435,10 @@ async fn input_submit_emits_message() {
         .borrow()
         .iter()
         .any(|(_, msg)| msg.downcast_ref::<InputSubmitted>().is_some());
-    assert!(has_submitted, "Expected Submitted message in queue after Enter on Input");
+    assert!(
+        has_submitted,
+        "Expected Submitted message in queue after Enter on Input"
+    );
 }
 
 #[test]
@@ -428,7 +449,11 @@ fn input_placeholder_renders() {
     let row: String = (0..9u16)
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
-    assert_eq!(row, "Type here", "Placeholder should render when input is empty and unfocused, got: {:?}", row);
+    assert_eq!(
+        row, "Type here",
+        "Placeholder should render when input is empty and unfocused, got: {:?}",
+        row
+    );
 }
 
 #[tokio::test]
@@ -507,7 +532,10 @@ async fn input_validation_valid_input() {
                 .map(|m| m.valid)
                 .unwrap_or(false)
         });
-    assert!(has_valid, "Changed message should have valid: true for input within limit");
+    assert!(
+        has_valid,
+        "Changed message should have valid: true for input within limit"
+    );
 }
 
 #[tokio::test]
@@ -539,14 +567,15 @@ async fn input_validation_invalid_input() {
                 .map(|m| !m.valid)
                 .unwrap_or(false)
         });
-    assert!(has_invalid, "Changed message should have valid: false for input over limit");
+    assert!(
+        has_invalid,
+        "Changed message should have valid: false for input over limit"
+    );
 }
 
 #[tokio::test]
 async fn input_no_validator_always_valid() {
-    let mut test_app = TestApp::new(40, 3, || {
-        Box::new(Input::new(""))
-    });
+    let mut test_app = TestApp::new(40, 3, || Box::new(Input::new("")));
 
     // Focus first via pilot
     {
@@ -568,8 +597,15 @@ async fn input_no_validator_always_valid() {
                 .map(|m| m.valid)
         })
         .collect();
-    assert!(!changed_msgs.is_empty(), "Should have at least one Changed message");
-    assert!(changed_msgs.iter().all(|&v| v), "Input with no validator should always produce valid: true, got: {:?}", changed_msgs);
+    assert!(
+        !changed_msgs.is_empty(),
+        "Should have at least one Changed message"
+    );
+    assert!(
+        changed_msgs.iter().all(|&v| v),
+        "Input with no validator should always produce valid: true, got: {:?}",
+        changed_msgs
+    );
 }
 
 #[tokio::test]
@@ -597,7 +633,10 @@ async fn input_changed_message_includes_valid() {
                 .map(|m| m.valid && m.value == "a")
                 .unwrap_or(false)
         });
-    assert!(has_valid_true, "Changed message for 'a' should have valid: true");
+    assert!(
+        has_valid_true,
+        "Changed message for 'a' should have valid: true"
+    );
 
     // Backspace to clear (value becomes empty -> valid: false)
     test_app.inject_key_event(crossterm::event::KeyEvent {
@@ -617,7 +656,10 @@ async fn input_changed_message_includes_valid() {
                 .map(|m| !m.valid && m.value.is_empty())
                 .unwrap_or(false)
         });
-    assert!(has_valid_false, "Changed message for empty string should have valid: false");
+    assert!(
+        has_valid_false,
+        "Changed message for empty string should have valid: false"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -710,7 +752,10 @@ async fn radio_set_mutual_exclusion() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "RadioButton should have focus after Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "RadioButton should have focus after Tab"
+    );
 
     // Tab to second RadioButton
     {
@@ -753,7 +798,8 @@ async fn radio_set_emits_changed() {
     let changed_index = Arc::new(AtomicUsize::new(999));
     let idx_clone = changed_index.clone();
 
-    let changed_value: Arc<std::sync::Mutex<String>> = Arc::new(std::sync::Mutex::new(String::new()));
+    let changed_value: Arc<std::sync::Mutex<String>> =
+        Arc::new(std::sync::Mutex::new(String::new()));
     let val_clone = changed_value.clone();
 
     struct RadioCaptureScreen {
@@ -762,7 +808,9 @@ async fn radio_set_emits_changed() {
     }
     impl Widget for RadioCaptureScreen {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "RadioCaptureScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "RadioCaptureScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![Box::new(RadioSet::new(vec![
                 "Alpha".to_string(),
@@ -801,8 +849,16 @@ async fn radio_set_emits_changed() {
 
     let captured_idx = changed_index.load(Ordering::SeqCst);
     let captured_val = changed_value.lock().unwrap().clone();
-    assert_eq!(captured_idx, 1, "RadioSetChanged should report index=1, got: {}", captured_idx);
-    assert_eq!(captured_val, "Beta", "RadioSetChanged should report value='Beta', got: {:?}", captured_val);
+    assert_eq!(
+        captured_idx, 1,
+        "RadioSetChanged should report index=1, got: {}",
+        captured_idx
+    );
+    assert_eq!(
+        captured_val, "Beta",
+        "RadioSetChanged should report value='Beta', got: {:?}",
+        captured_val
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1017,7 +1073,10 @@ async fn select_open_pushes_overlay() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Select should have focus");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Select should have focus"
+    );
 
     // Press Enter to open — this should push to pending_screen_pushes
     test_app.inject_key_event(KeyEvent {
@@ -1029,9 +1088,16 @@ async fn select_open_pushes_overlay() {
 
     // Verify overlay was set as active_overlay
     let overlay = test_app.ctx().active_overlay.borrow();
-    assert!(overlay.is_some(), "Opening Select should set active_overlay");
+    assert!(
+        overlay.is_some(),
+        "Opening Select should set active_overlay"
+    );
     let overlay_name = overlay.as_ref().map(|w| w.widget_type_name()).unwrap_or("");
-    assert_eq!(overlay_name, "SelectOverlay", "Overlay should be SelectOverlay, got: {:?}", overlay_name);
+    assert_eq!(
+        overlay_name, "SelectOverlay",
+        "Overlay should be SelectOverlay, got: {:?}",
+        overlay_name
+    );
 }
 
 #[tokio::test]
@@ -1059,7 +1125,10 @@ async fn select_choose_option_queues_overlay() {
     // Verify overlay is active and focusable
     {
         let overlay = test_app.ctx().active_overlay.borrow();
-        assert!(overlay.is_some(), "Opening Select should set active_overlay");
+        assert!(
+            overlay.is_some(),
+            "Opening Select should set active_overlay"
+        );
         let focusable = overlay.as_ref().map(|w| w.can_focus()).unwrap_or(false);
         assert!(focusable, "SelectOverlay should be focusable");
     }
@@ -1073,7 +1142,6 @@ async fn snapshot_select_initial() {
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 
-
 // ---------------------------------------------------------------------------
 // Header tests
 // ---------------------------------------------------------------------------
@@ -1086,7 +1154,9 @@ fn snapshot_header_title_only() {
 
 #[test]
 fn snapshot_header_title_subtitle() {
-    let test_app = TestApp::new(40, 1, || Box::new(Header::new("My App").with_subtitle("v1.0")));
+    let test_app = TestApp::new(40, 1, || {
+        Box::new(Header::new("My App").with_subtitle("v1.0"))
+    });
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 
@@ -1133,10 +1203,7 @@ impl Widget for FooterWithCheckboxScreen {
         "FooterWithCheckboxScreen"
     }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        vec![
-            Box::new(Checkbox::new("Option", false)),
-            Box::new(Footer),
-        ]
+        vec![Box::new(Checkbox::new("Option", false)), Box::new(Footer)]
     }
 }
 
@@ -1199,7 +1266,10 @@ fn placeholder_renders_dimensions() {
             .collect();
         line.contains("20×5") || line.contains("20x5")
     });
-    assert!(has_dimensions, "Placeholder should render dimensions '20×5'");
+    assert!(
+        has_dimensions,
+        "Placeholder should render dimensions '20×5'"
+    );
 }
 
 #[test]
@@ -1306,9 +1376,7 @@ fn snapshot_sparkline_ascending() {
 
 #[test]
 fn snapshot_sparkline_flat() {
-    let test_app = TestApp::new(20, 1, || {
-        Box::new(Sparkline::new(vec![5.0, 5.0, 5.0]))
-    });
+    let test_app = TestApp::new(20, 1, || Box::new(Sparkline::new(vec![5.0, 5.0, 5.0])));
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 
@@ -1338,9 +1406,7 @@ fn sparkline_ascending_uses_block_chars() {
 
 #[test]
 fn sparkline_flat_renders_same_char_for_all_points() {
-    let test_app = TestApp::new(20, 1, || {
-        Box::new(Sparkline::new(vec![5.0, 5.0, 5.0]))
-    });
+    let test_app = TestApp::new(20, 1, || Box::new(Sparkline::new(vec![5.0, 5.0, 5.0])));
     let buf = test_app.buffer();
     let row: String = (0..buf.area.width)
         .map(|col| buf[(col, 0)].symbol().to_string())
@@ -1384,7 +1450,9 @@ async fn list_view_navigate_down() {
     // Row 2 (index 2) should have reversed style
     let cell = &buf[(0, 2)];
     assert!(
-        cell.style().add_modifier.contains(ratatui::style::Modifier::BOLD),
+        cell.style()
+            .add_modifier
+            .contains(ratatui::style::Modifier::BOLD),
         "Row 2 should be selected (BOLD style) after 2 Down presses"
     );
 }
@@ -1419,7 +1487,10 @@ async fn list_view_select_emits_message() {
         .borrow()
         .iter()
         .any(|(_, msg)| msg.downcast_ref::<ListViewSelected>().is_some());
-    assert!(has_selected, "Expected ListViewSelected in message queue after Enter");
+    assert!(
+        has_selected,
+        "Expected ListViewSelected in message queue after Enter"
+    );
 }
 
 #[tokio::test]
@@ -1448,7 +1519,9 @@ async fn list_view_scrolls_when_past_viewport() {
     // The last row of the viewport (row 4) should be selected (Item 6)
     let cell = &buf[(0, 4)];
     assert!(
-        cell.style().add_modifier.contains(ratatui::style::Modifier::BOLD),
+        cell.style()
+            .add_modifier
+            .contains(ratatui::style::Modifier::BOLD),
         "Last viewport row should be selected (BOLD) after scrolling past viewport"
     );
 }
@@ -1474,7 +1547,11 @@ fn log_push_line_auto_scrolls() {
     }
     let offset = log.scroll_offset.get_untracked();
     // 10 lines - 3 viewport = offset 7
-    assert!(offset > 0, "scroll_offset should be > 0 after pushing 10 lines with auto_scroll=true, got {}", offset);
+    assert!(
+        offset > 0,
+        "scroll_offset should be > 0 after pushing 10 lines with auto_scroll=true, got {}",
+        offset
+    );
     assert_eq!(offset, 7, "scroll_offset should be line_count - viewport_h");
 }
 
@@ -1493,12 +1570,18 @@ fn log_scroll_up_disables_auto_scroll() {
     log.on_action("scroll_up", &ctx);
 
     let offset_after_scroll_up = log.scroll_offset.get_untracked();
-    assert_eq!(offset_after_scroll_up, 6, "scroll up should decrement offset");
+    assert_eq!(
+        offset_after_scroll_up, 6,
+        "scroll up should decrement offset"
+    );
 
     // Now push another line — with auto_scroll=false, offset should NOT change
     log.push_line("New Line".to_string());
     let offset_after_push = log.scroll_offset.get_untracked();
-    assert_eq!(offset_after_push, offset_after_scroll_up, "push_line should NOT change offset when auto_scroll is disabled");
+    assert_eq!(
+        offset_after_push, offset_after_scroll_up,
+        "push_line should NOT change offset when auto_scroll is disabled"
+    );
 }
 
 #[test]
@@ -1531,7 +1614,10 @@ fn scroll_view_scrolls_down() {
     // With viewport_h=0, max_scroll_y = 20-0 = 20; scroll_down increments by 1.
     sv.on_action("scroll_down", &ctx);
     let offset_y = sv.scroll_offset_y.get_untracked();
-    assert_eq!(offset_y, 1, "scroll_offset_y should be 1 after one scroll_down");
+    assert_eq!(
+        offset_y, 1,
+        "scroll_offset_y should be 1 after one scroll_down"
+    );
 }
 
 #[test]
@@ -1541,7 +1627,10 @@ fn scroll_view_scrolls_right() {
     let ctx = AppContext::new();
     sv.on_action("scroll_right", &ctx);
     let offset_x = sv.scroll_offset_x.get_untracked();
-    assert_eq!(offset_x, 1, "scroll_offset_x should be 1 after one scroll_right");
+    assert_eq!(
+        offset_x, 1,
+        "scroll_offset_x should be 1 after one scroll_right"
+    );
 }
 
 #[test]
@@ -1561,12 +1650,20 @@ fn scroll_view_page_down() {
     // Create ScrollView, render to a buffer (sets viewport_height), then call page_down.
     let sv2 = ScrollView::new(make_label_children(50)).with_content_height(50);
     let ctx = AppContext::new();
-    let area = Rect { x: 0, y: 0, width: 20, height: 5 };
+    let area = Rect {
+        x: 0,
+        y: 0,
+        width: 20,
+        height: 5,
+    };
     let mut buf = Buffer::empty(area);
     sv2.render(&ctx, area, &mut buf); // sets viewport_height = 5
     sv2.on_action("page_down", &ctx);
     let offset_y = sv2.scroll_offset_y.get_untracked();
-    assert_eq!(offset_y, 5, "page_down should jump scroll_offset_y by viewport_height (5)");
+    assert_eq!(
+        offset_y, 5,
+        "page_down should jump scroll_offset_y by viewport_height (5)"
+    );
 }
 
 #[test]
@@ -1640,7 +1737,10 @@ async fn data_table_cursor_navigation() {
                 .map(|r| r.row == 1)
                 .unwrap_or(false)
         });
-    assert!(has_row1, "Expected RowSelected {{ row: 1 }} after navigating Down once and Enter");
+    assert!(
+        has_row1,
+        "Expected RowSelected {{ row: 1 }} after navigating Down once and Enter"
+    );
 }
 
 #[tokio::test]
@@ -1678,7 +1778,10 @@ async fn data_table_select_row() {
                 .map(|r| r.row == 2)
                 .unwrap_or(false)
         });
-    assert!(has_row2, "Expected RowSelected {{ row: 2 }} after pressing Enter on row 2");
+    assert!(
+        has_row2,
+        "Expected RowSelected {{ row: 2 }} after pressing Enter on row 2"
+    );
 }
 
 #[tokio::test]
@@ -1759,16 +1862,17 @@ async fn data_table_scroll_on_overflow() {
 // ---------------------------------------------------------------------------
 
 fn make_tree_3levels() -> Tree {
-    let root = TreeNode::with_children("Root", vec![
-        TreeNode::with_children("Branch A", vec![
-            TreeNode::new("Leaf A1"),
-            TreeNode::new("Leaf A2"),
-        ]),
-        TreeNode::with_children("Branch B", vec![
-            TreeNode::new("Leaf B1"),
-        ]),
-        TreeNode::new("Leaf C"),
-    ]);
+    let root = TreeNode::with_children(
+        "Root",
+        vec![
+            TreeNode::with_children(
+                "Branch A",
+                vec![TreeNode::new("Leaf A1"), TreeNode::new("Leaf A2")],
+            ),
+            TreeNode::with_children("Branch B", vec![TreeNode::new("Leaf B1")]),
+            TreeNode::new("Leaf C"),
+        ],
+    );
     Tree::new(root)
 }
 
@@ -1782,16 +1886,17 @@ fn snapshot_tree_collapsed() {
 #[test]
 fn snapshot_tree_expanded() {
     // Manually expand all nodes
-    let mut root = TreeNode::with_children("Root", vec![
-        TreeNode::with_children("Branch A", vec![
-            TreeNode::new("Leaf A1"),
-            TreeNode::new("Leaf A2"),
-        ]),
-        TreeNode::with_children("Branch B", vec![
-            TreeNode::new("Leaf B1"),
-        ]),
-        TreeNode::new("Leaf C"),
-    ]);
+    let mut root = TreeNode::with_children(
+        "Root",
+        vec![
+            TreeNode::with_children(
+                "Branch A",
+                vec![TreeNode::new("Leaf A1"), TreeNode::new("Leaf A2")],
+            ),
+            TreeNode::with_children("Branch B", vec![TreeNode::new("Leaf B1")]),
+            TreeNode::new("Leaf C"),
+        ],
+    );
     root.children[0].expanded = true;
     root.children[1].expanded = true;
     let test_app = TestApp::new(40, 15, || Box::new(Tree::new(root)));
@@ -1824,16 +1929,21 @@ async fn tree_navigate_and_expand() {
         .borrow()
         .iter()
         .any(|(_, msg)| msg.downcast_ref::<NodeExpanded>().is_some());
-    assert!(expanded, "Expected NodeExpanded message after Space on collapsed node");
+    assert!(
+        expanded,
+        "Expected NodeExpanded message after Space on collapsed node"
+    );
 }
 
 #[tokio::test]
 async fn tree_collapse_node() {
-    let mut root = TreeNode::with_children("Root", vec![
-        TreeNode::with_children("Branch A", vec![
-            TreeNode::new("Leaf A1"),
-        ]),
-    ]);
+    let mut root = TreeNode::with_children(
+        "Root",
+        vec![TreeNode::with_children(
+            "Branch A",
+            vec![TreeNode::new("Leaf A1")],
+        )],
+    );
     // Pre-expand Branch A
     root.children[0].expanded = true;
 
@@ -1860,7 +1970,10 @@ async fn tree_collapse_node() {
         .borrow()
         .iter()
         .any(|(_, msg)| msg.downcast_ref::<NodeCollapsed>().is_some());
-    assert!(collapsed, "Expected NodeCollapsed message after Space on expanded node");
+    assert!(
+        collapsed,
+        "Expected NodeCollapsed message after Space on expanded node"
+    );
 }
 
 #[tokio::test]
@@ -1891,7 +2004,10 @@ async fn tree_select_emits_message() {
                 .map(|n| n.path == vec![0])
                 .unwrap_or(false)
         });
-    assert!(selected, "Expected NodeSelected {{ path: [0] }} after pressing Enter on first tree node");
+    assert!(
+        selected,
+        "Expected NodeSelected {{ path: [0] }} after pressing Enter on first tree node"
+    );
 }
 
 #[tokio::test]
@@ -1972,7 +2088,10 @@ async fn tabs_switch_right() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Tabs should have focus after Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Tabs should have focus after Tab"
+    );
 
     // Inject Right key without draining message queue so we can inspect it
     test_app.inject_key_event(KeyEvent {
@@ -2017,7 +2136,10 @@ async fn tabs_switch_left() {
         let mut pilot = test_app.pilot();
         pilot.press(KeyCode::Tab).await;
     }
-    assert!(test_app.ctx().focused_widget.is_some(), "Tabs should have focus after Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Tabs should have focus after Tab"
+    );
 
     // Inject Left key without draining
     test_app.inject_key_event(KeyEvent {
@@ -2075,10 +2197,7 @@ fn snapshot_collapsible_expanded() {
 #[test]
 fn snapshot_collapsible_collapsed() {
     let test_app = TestApp::new(40, 5, || {
-        let col = Collapsible::new(
-            "Details",
-            vec![Box::new(Label::new("Child content here"))],
-        );
+        let col = Collapsible::new("Details", vec![Box::new(Label::new("Child content here"))]);
         col.expanded.set(false);
         Box::new(col)
     });
@@ -2159,25 +2278,19 @@ async fn collapsible_toggle() {
 
 #[test]
 fn snapshot_markdown_headings() {
-    let test_app = TestApp::new(40, 10, || {
-        Box::new(Markdown::new("# H1\n## H2\n### H3"))
-    });
+    let test_app = TestApp::new(40, 10, || Box::new(Markdown::new("# H1\n## H2\n### H3")));
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 
 #[test]
 fn snapshot_markdown_bold_italic() {
-    let test_app = TestApp::new(40, 5, || {
-        Box::new(Markdown::new("**bold** and *italic*"))
-    });
+    let test_app = TestApp::new(40, 5, || Box::new(Markdown::new("**bold** and *italic*")));
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 
 #[test]
 fn snapshot_markdown_code_block() {
-    let test_app = TestApp::new(40, 8, || {
-        Box::new(Markdown::new("```\ncode here\n```"))
-    });
+    let test_app = TestApp::new(40, 8, || Box::new(Markdown::new("```\ncode here\n```")));
     assert_snapshot!(format!("{}", test_app.backend()));
 }
 

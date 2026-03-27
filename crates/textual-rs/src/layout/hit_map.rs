@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use ratatui::layout::Rect;
 use crate::widget::WidgetId;
+use ratatui::layout::Rect;
+use std::collections::HashMap;
 
 /// Sparse cell-to-widget map for mouse hit testing.
 ///
@@ -18,10 +18,7 @@ impl MouseHitMap {
     /// `widgets_dfs` is the DFS order of widget IDs from the screen root.
     /// Later entries in `widgets_dfs` overwrite earlier ones for the same cell,
     /// providing correct z-ordering (later in DFS order = on top).
-    pub fn build(
-        widgets_dfs: &[WidgetId],
-        layout_cache: &HashMap<WidgetId, Rect>,
-    ) -> Self {
+    pub fn build(widgets_dfs: &[WidgetId], layout_cache: &HashMap<WidgetId, Rect>) -> Self {
         let mut cells = HashMap::new();
         for &wid in widgets_dfs {
             if let Some(&rect) = layout_cache.get(&wid) {

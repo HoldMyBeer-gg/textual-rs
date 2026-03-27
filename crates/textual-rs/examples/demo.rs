@@ -14,25 +14,12 @@
 /// └────────────────────────────────────────────────────────────┘
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use textual_rs::{
-    App, Widget,
-    Button, ButtonVariant,
-    Checkbox, Switch,
-    RadioSet,
-    Input,
-    Label,
-    DataTable, ColumnDef,
-    ProgressBar, Sparkline,
-    ListView,
-    TabbedContent,
-    Header, Footer,
-    Collapsible, Placeholder,
-    Markdown,
-    Tree, TreeNode,
-    Select,
-    Horizontal, Vertical,
-};
 use textual_rs::widget::context::AppContext;
+use textual_rs::{
+    App, Button, ButtonVariant, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header,
+    Horizontal, Input, Label, ListView, Markdown, Placeholder, ProgressBar, RadioSet, Select,
+    Sparkline, Switch, TabbedContent, Tree, TreeNode, Vertical, Widget,
+};
 
 // ---- Inputs tab ----
 
@@ -107,34 +94,48 @@ impl Widget for LayoutPane {
         vec![
             // Three side-by-side panels showing Horizontal layout
             Box::new(Horizontal::with_children(vec![
-                Box::new(LayoutPanel::new("Status", vec![
-                    "CPU: 42%",
-                    "Memory: 1.2 GB",
-                    "Disk: 78%",
-                    "Network: 12 Mbps",
-                ])),
-                Box::new(LayoutPanel::new("Events", vec![
-                    "08:31 Deploy started",
-                    "08:32 Build complete",
-                    "08:33 Tests passed",
-                    "08:34 Deploy live",
-                ])),
-                Box::new(LayoutPanel::new("Config", vec![
-                    "Region: us-east-1",
-                    "Env: production",
-                    "Version: v1.1.0",
-                    "Replicas: 3",
-                ])),
+                Box::new(LayoutPanel::new(
+                    "Status",
+                    vec![
+                        "CPU: 42%",
+                        "Memory: 1.2 GB",
+                        "Disk: 78%",
+                        "Network: 12 Mbps",
+                    ],
+                )),
+                Box::new(LayoutPanel::new(
+                    "Events",
+                    vec![
+                        "08:31 Deploy started",
+                        "08:32 Build complete",
+                        "08:33 Tests passed",
+                        "08:34 Deploy live",
+                    ],
+                )),
+                Box::new(LayoutPanel::new(
+                    "Config",
+                    vec![
+                        "Region: us-east-1",
+                        "Env: production",
+                        "Version: v1.1.0",
+                        "Replicas: 3",
+                    ],
+                )),
             ])),
             Box::new(Label::new("Progress + Sparkline:")),
             Box::new(ProgressBar::new(0.82)),
-            Box::new(Sparkline::new(vec![4.0, 7.0, 2.0, 9.0, 5.0, 8.0, 3.0, 6.0, 4.0, 7.0, 2.0, 9.0, 5.0, 8.0])),
-            // Collapsible with interactive widgets
-            Box::new(Collapsible::new("Advanced Options", vec![
-                Box::new(Checkbox::new("Enable debug logging", false)),
-                Box::new(Checkbox::new("Verbose output", false)),
-                Box::new(Switch::new(true)),
+            Box::new(Sparkline::new(vec![
+                4.0, 7.0, 2.0, 9.0, 5.0, 8.0, 3.0, 6.0, 4.0, 7.0, 2.0, 9.0, 5.0, 8.0,
             ])),
+            // Collapsible with interactive widgets
+            Box::new(Collapsible::new(
+                "Advanced Options",
+                vec![
+                    Box::new(Checkbox::new("Enable debug logging", false)),
+                    Box::new(Checkbox::new("Verbose output", false)),
+                    Box::new(Switch::new(true)),
+                ],
+            )),
         ]
     }
 
@@ -162,9 +163,7 @@ impl Widget for LayoutPanel {
     }
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        let mut children: Vec<Box<dyn Widget>> = vec![
-            Box::new(Label::new(&self.title)),
-        ];
+        let mut children: Vec<Box<dyn Widget>> = vec![Box::new(Label::new(&self.title))];
         for row in &self.rows {
             children.push(Box::new(Label::new(row)));
         }
@@ -201,16 +200,18 @@ impl Widget for InteractivePane {
         table.add_row(vec!["Select".into(), "Dropdown".into(), "Stable".into()]);
 
         // Tree with a sample directory hierarchy
-        let widget_dir = TreeNode::with_children("widget/", vec![
-            TreeNode::new("mod.rs"),
-            TreeNode::new("button.rs"),
-            TreeNode::new("input.rs"),
-        ]);
-        let root = TreeNode::with_children("src/", vec![
-            TreeNode::new("app.rs"),
-            TreeNode::new("lib.rs"),
-            widget_dir,
-        ]);
+        let widget_dir = TreeNode::with_children(
+            "widget/",
+            vec![
+                TreeNode::new("mod.rs"),
+                TreeNode::new("button.rs"),
+                TreeNode::new("input.rs"),
+            ],
+        );
+        let root = TreeNode::with_children(
+            "src/",
+            vec![TreeNode::new("app.rs"), TreeNode::new("lib.rs"), widget_dir],
+        );
         let tree = Tree::new(root);
 
         let select = Select::new(vec![
@@ -271,7 +272,9 @@ impl Widget for DemoScreen {
         );
 
         vec![
-            Box::new(Header::new("textual-rs demo").with_subtitle("A showcase of built-in widgets")),
+            Box::new(
+                Header::new("textual-rs demo").with_subtitle("A showcase of built-in widgets"),
+            ),
             Box::new(tabbed),
             Box::new(Footer),
         ]
@@ -281,7 +284,6 @@ impl Widget for DemoScreen {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut app = App::new(|| Box::new(DemoScreen))
-        .with_css(include_str!("demo.tcss"));
+    let mut app = App::new(|| Box::new(DemoScreen)).with_css(include_str!("demo.tcss"));
     app.run()
 }

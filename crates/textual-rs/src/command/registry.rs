@@ -29,7 +29,9 @@ pub struct CommandRegistry {
 impl CommandRegistry {
     /// Create a new empty CommandRegistry.
     pub fn new() -> Self {
-        Self { app_commands: Vec::new() }
+        Self {
+            app_commands: Vec::new(),
+        }
     }
 
     /// Register an app-level command (beyond widget key bindings).

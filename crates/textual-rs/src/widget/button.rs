@@ -1,7 +1,7 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -117,14 +117,18 @@ impl Widget for Button {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        let base_style = self.own_id.get()
+        let base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
         let is_pressed = self.pressed.get();
 
         // Align label according to text-align CSS property (default: center)
-        let text_align = self.own_id.get()
+        let text_align = self
+            .own_id
+            .get()
             .and_then(|id| ctx.computed_styles.get(id))
             .map(|cs| cs.text_align)
             .unwrap_or(crate::css::types::TextAlign::Center);
@@ -166,11 +170,11 @@ impl Widget for Button {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::widget::context::AppContext;
+    use crate::widget::Widget;
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use ratatui::style::Color;
-    use crate::widget::context::AppContext;
-    use crate::widget::Widget;
 
     /// Helper: create a buffer pre-filled with a given background color.
     fn buf_with_bg(area: Rect, bg: Color) -> Buffer {
@@ -195,7 +199,13 @@ mod tests {
         button.render(&ctx, area, &mut buf);
 
         // Middle row should contain "OK" somewhere
-        let row: String = (0..16u16).map(|x| buf[(x, 1)].symbol().to_string()).collect();
-        assert!(row.contains("OK"), "Button label should be rendered, got: {:?}", row.trim());
+        let row: String = (0..16u16)
+            .map(|x| buf[(x, 1)].symbol().to_string())
+            .collect();
+        assert!(
+            row.contains("OK"),
+            "Button label should be rendered, got: {:?}",
+            row.trim()
+        );
     }
 }

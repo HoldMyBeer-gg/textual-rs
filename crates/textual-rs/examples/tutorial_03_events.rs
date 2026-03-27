@@ -16,13 +16,13 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 
-use textual_rs::{App, Widget, Button, ButtonVariant, Label, Header, Footer};
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::{EventPropagation, WidgetId};
+use textual_rs::{App, Button, ButtonVariant, Footer, Header, Label, Widget};
 // KeyBinding declares a key → action mapping.
-use textual_rs::widget::button::messages::Pressed;
 use crossterm::event::{KeyCode, KeyModifiers};
 use textual_rs::event::keybinding::KeyBinding;
+use textual_rs::widget::button::messages::Pressed;
 
 const CSS: &str = r#"
 EventScreen {
@@ -143,7 +143,7 @@ impl Widget for CounterWidget {
         match action {
             "increment" => self.count.set(self.count.get() + 1),
             "decrement" => self.count.set(self.count.get() - 1),
-            "reset"     => self.count.set(0),
+            "reset" => self.count.set(0),
             _ => {}
         }
     }
@@ -183,7 +183,9 @@ impl Widget for CounterWidget {
         let count = self.count.get();
         let msg = format!("Count: {}", count);
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default()
             .add_modifier(Modifier::BOLD);

@@ -1,8 +1,8 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{EventPropagation, Widget, WidgetId};
@@ -155,7 +155,8 @@ impl TextArea {
     /// Ensure the selection anchor is set to current cursor position if not already set.
     fn ensure_anchor(&self) {
         if self.selection_anchor.get().is_none() {
-            self.selection_anchor.set(Some((self.cursor_row.get(), self.cursor_col.get())));
+            self.selection_anchor
+                .set(Some((self.cursor_row.get(), self.cursor_col.get())));
         }
     }
 
@@ -197,7 +198,11 @@ impl TextArea {
         }
         // Last line: from start to ec
         let last_chars: Vec<char> = lines[er].chars().collect();
-        result.push(last_chars[..ec.min(last_chars.len())].iter().collect::<String>());
+        result.push(
+            last_chars[..ec.min(last_chars.len())]
+                .iter()
+                .collect::<String>(),
+        );
         Some(result.join("\n"))
     }
 
@@ -470,7 +475,8 @@ impl Widget for TextArea {
             super::context_menu::ContextMenuItem::new("Cut", "cut").with_shortcut("Ctrl+X"),
             super::context_menu::ContextMenuItem::new("Copy", "copy").with_shortcut("Ctrl+C"),
             super::context_menu::ContextMenuItem::new("Paste", "paste").with_shortcut("Ctrl+V"),
-            super::context_menu::ContextMenuItem::new("Select All", "select_all").with_shortcut("Ctrl+A"),
+            super::context_menu::ContextMenuItem::new("Select All", "select_all")
+                .with_shortcut("Ctrl+A"),
         ]
     }
 
@@ -713,11 +719,8 @@ impl Widget for TextArea {
                         drop(lines_snap);
                         self.lines.update(|lines| {
                             if let Some(line) = lines.get_mut(row) {
-                                let byte_pos = line
-                                    .char_indices()
-                                    .nth(col)
-                                    .map(|(i, _)| i)
-                                    .unwrap_or(0);
+                                let byte_pos =
+                                    line.char_indices().nth(col).map(|(i, _)| i).unwrap_or(0);
                                 let end_pos = line
                                     .char_indices()
                                     .nth(col + 1)
@@ -862,7 +865,9 @@ impl Widget for TextArea {
             return;
         }
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 

@@ -64,28 +64,31 @@ impl Selector {
 
 /// Iterate over ancestors of a widget, from immediate parent upwards.
 fn ancestors(id: WidgetId, ctx: &AppContext) -> impl Iterator<Item = WidgetId> + '_ {
-    iter::successors(
-        ctx.parent.get(id).and_then(|p| *p),
-        move |&cur| ctx.parent.get(cur).and_then(|p| *p),
-    )
+    iter::successors(ctx.parent.get(id).and_then(|p| *p), move |&cur| {
+        ctx.parent.get(cur).and_then(|p| *p)
+    })
 }
 
 /// Test if a selector matches a specific widget in the given context.
 pub fn selector_matches(sel: &Selector, id: WidgetId, ctx: &AppContext) -> bool {
     match sel {
         Selector::Universal => true,
-        Selector::Type(name) => {
-            ctx.arena.get(id).is_some_and(|w| w.widget_type_name() == name.as_str())
-        }
-        Selector::Class(cls) => {
-            ctx.arena.get(id).is_some_and(|w| w.classes().contains(&cls.as_str()))
-        }
-        Selector::Id(expected_id) => {
-            ctx.arena.get(id).is_some_and(|w| w.id() == Some(expected_id.as_str()))
-        }
-        Selector::PseudoClass(pc) => {
-            ctx.pseudo_classes.get(id).is_some_and(|set| set.contains(pc))
-        }
+        Selector::Type(name) => ctx
+            .arena
+            .get(id)
+            .is_some_and(|w| w.widget_type_name() == name.as_str()),
+        Selector::Class(cls) => ctx
+            .arena
+            .get(id)
+            .is_some_and(|w| w.classes().contains(&cls.as_str())),
+        Selector::Id(expected_id) => ctx
+            .arena
+            .get(id)
+            .is_some_and(|w| w.id() == Some(expected_id.as_str())),
+        Selector::PseudoClass(pc) => ctx
+            .pseudo_classes
+            .get(id)
+            .is_some_and(|set| set.contains(pc)),
         Selector::Compound(parts) => parts.iter().all(|s| selector_matches(s, id, ctx)),
         Selector::Descendant(ancestor_sel, subject_sel) => {
             if !selector_matches(subject_sel, id, ctx) {
@@ -138,7 +141,9 @@ fn parse_compound_selector_tokens<'i>(
             }
             Ok(Token::Delim('.')) => {
                 let class_name = input.expect_ident_cloned().map_err(|_| {
-                    location.new_custom_error(SelectorParseError("expected class name after '.'".to_string()))
+                    location.new_custom_error(SelectorParseError(
+                        "expected class name after '.'".to_string(),
+                    ))
                 })?;
                 simples.push(Selector::Class(class_name.to_string()));
             }
@@ -147,14 +152,17 @@ fn parse_compound_selector_tokens<'i>(
             }
             Ok(Token::Colon) => {
                 let pc_name = input.expect_ident_cloned().map_err(|_| {
-                    location.new_custom_error(SelectorParseError("expected pseudo-class name after ':'".to_string()))
+                    location.new_custom_error(SelectorParseError(
+                        "expected pseudo-class name after ':'".to_string(),
+                    ))
                 })?;
                 match parse_pseudo_class_name(pc_name.as_ref()) {
                     Some(pc) => simples.push(Selector::PseudoClass(pc)),
                     None => {
-                        return Err(location.new_custom_error(SelectorParseError(
-                            format!("unknown pseudo-class: {}", pc_name),
-                        )));
+                        return Err(location.new_custom_error(SelectorParseError(format!(
+                            "unknown pseudo-class: {}",
+                            pc_name
+                        ))));
                     }
                 }
             }
@@ -314,7 +322,9 @@ mod tests {
     struct TypeWidget(&'static str);
     impl crate::widget::Widget for TypeWidget {
         fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { self.0 }
+        fn widget_type_name(&self) -> &'static str {
+            self.0
+        }
     }
 
     fn make_single_widget_ctx(w: Box<dyn crate::widget::Widget>) -> (AppContext, WidgetId) {
@@ -402,20 +412,32 @@ mod tests {
     #[test]
     fn selector_matches_type_correct() {
         let (ctx, id) = make_single_widget_ctx(Box::new(TypeWidget("Button")));
-        assert!(selector_matches(&Selector::Type("Button".to_string()), id, &ctx));
+        assert!(selector_matches(
+            &Selector::Type("Button".to_string()),
+            id,
+            &ctx
+        ));
     }
 
     #[test]
     fn selector_matches_type_wrong() {
         let (ctx, id) = make_single_widget_ctx(Box::new(TypeWidget("Label")));
-        assert!(!selector_matches(&Selector::Type("Button".to_string()), id, &ctx));
+        assert!(!selector_matches(
+            &Selector::Type("Button".to_string()),
+            id,
+            &ctx
+        ));
     }
 
     #[test]
     fn selector_matches_descendant() {
         let mut ctx = AppContext::new();
-        let screen = ctx.arena.insert(Box::new(TypeWidget("Screen")) as Box<dyn crate::widget::Widget>);
-        let button = ctx.arena.insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
+        let screen = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Screen")) as Box<dyn crate::widget::Widget>);
+        let button = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
         ctx.parent.insert(screen, None);
         ctx.parent.insert(button, Some(screen));
         ctx.pseudo_classes.insert(screen, PseudoClassSet::default());
@@ -433,14 +455,21 @@ mod tests {
     fn selector_matches_child_non_parent_returns_false() {
         // Screen -> Container -> Button; test "Screen > Button" against Button (should be false)
         let mut ctx = AppContext::new();
-        let screen = ctx.arena.insert(Box::new(TypeWidget("Screen")) as Box<dyn crate::widget::Widget>);
-        let container = ctx.arena.insert(Box::new(TypeWidget("Container")) as Box<dyn crate::widget::Widget>);
-        let button = ctx.arena.insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
+        let screen = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Screen")) as Box<dyn crate::widget::Widget>);
+        let container = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Container")) as Box<dyn crate::widget::Widget>);
+        let button = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
         ctx.parent.insert(screen, None);
         ctx.parent.insert(container, Some(screen));
         ctx.parent.insert(button, Some(container));
         ctx.pseudo_classes.insert(screen, PseudoClassSet::default());
-        ctx.pseudo_classes.insert(container, PseudoClassSet::default());
+        ctx.pseudo_classes
+            .insert(container, PseudoClassSet::default());
         ctx.pseudo_classes.insert(button, PseudoClassSet::default());
 
         let sel = Selector::Child(
@@ -454,13 +483,19 @@ mod tests {
     #[test]
     fn selector_matches_pseudo_class_focus() {
         let mut ctx = AppContext::new();
-        let btn = ctx.arena.insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
+        let btn = ctx
+            .arena
+            .insert(Box::new(TypeWidget("Button")) as Box<dyn crate::widget::Widget>);
         ctx.parent.insert(btn, None);
         let mut pcs = PseudoClassSet::default();
         pcs.insert(PseudoClass::Focus);
         ctx.pseudo_classes.insert(btn, pcs);
 
-        assert!(selector_matches(&Selector::PseudoClass(PseudoClass::Focus), btn, &ctx));
+        assert!(selector_matches(
+            &Selector::PseudoClass(PseudoClass::Focus),
+            btn,
+            &ctx
+        ));
     }
 
     #[test]
@@ -469,8 +504,14 @@ mod tests {
         let class_spec = Selector::Class("active".to_string()).specificity();
         let id_spec = Selector::Id("main".to_string()).specificity();
 
-        assert!(type_spec < class_spec, "type should have lower specificity than class");
-        assert!(class_spec < id_spec, "class should have lower specificity than id");
+        assert!(
+            type_spec < class_spec,
+            "type should have lower specificity than class"
+        );
+        assert!(
+            class_spec < id_spec,
+            "class should have lower specificity than id"
+        );
         assert_eq!(type_spec, Specificity(0, 0, 1));
         assert_eq!(class_spec, Specificity(0, 1, 0));
         assert_eq!(id_spec, Specificity(1, 0, 0));

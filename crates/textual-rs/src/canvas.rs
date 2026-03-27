@@ -68,11 +68,7 @@ pub fn blend_color(from: Color, to: Color, t: f64) -> Color {
     let (r1, g1, b1) = color_to_rgb(from);
     let (r2, g2, b2) = color_to_rgb(to);
     let t = t.clamp(0.0, 1.0);
-    Color::Rgb(
-        lerp_u8(r1, r2, t),
-        lerp_u8(g1, g2, t),
-        lerp_u8(b1, b2, t),
-    )
+    Color::Rgb(lerp_u8(r1, r2, t), lerp_u8(g1, g2, t), lerp_u8(b1, b2, t))
 }
 
 fn lerp_u8(a: u8, b: u8, t: f64) -> u8 {
@@ -313,7 +309,12 @@ pub fn mcgugan_box(
     }
 
     // Inner content area (shrunk by 1 on each side)
-    (x + 1, y + 1, width.saturating_sub(2), height.saturating_sub(2))
+    (
+        x + 1,
+        y + 1,
+        width.saturating_sub(2),
+        height.saturating_sub(2),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -323,22 +324,22 @@ pub fn mcgugan_box(
 /// Quadrant block characters indexed by bitmask.
 /// Bit 0 = top-left, bit 1 = top-right, bit 2 = bottom-left, bit 3 = bottom-right.
 pub const QUADRANT_CHARS: [&str; 16] = [
-    " ",         // 0b0000
-    "\u{2598}",  // 0b0001 ▘ top-left
-    "\u{259D}",  // 0b0010 ▝ top-right
-    "\u{2580}",  // 0b0011 ▀ upper half
-    "\u{2596}",  // 0b0100 ▖ bottom-left
-    "\u{258C}",  // 0b0101 ▌ left half
-    "\u{259E}",  // 0b0110 ▞ diagonal
-    "\u{259B}",  // 0b0111 ▛ top-left + top-right + bottom-left
-    "\u{2597}",  // 0b1000 ▗ bottom-right
-    "\u{259A}",  // 0b1001 ▚ anti-diagonal
-    "\u{2590}",  // 0b1010 ▐ right half
-    "\u{259C}",  // 0b1011 ▜ top-left + top-right + bottom-right
-    "\u{2584}",  // 0b1100 ▄ lower half
-    "\u{2599}",  // 0b1101 ▙ top-left + bottom-left + bottom-right
-    "\u{259F}",  // 0b1110 ▟ top-right + bottom-left + bottom-right
-    "\u{2588}",  // 0b1111 █ full block
+    " ",        // 0b0000
+    "\u{2598}", // 0b0001 ▘ top-left
+    "\u{259D}", // 0b0010 ▝ top-right
+    "\u{2580}", // 0b0011 ▀ upper half
+    "\u{2596}", // 0b0100 ▖ bottom-left
+    "\u{258C}", // 0b0101 ▌ left half
+    "\u{259E}", // 0b0110 ▞ diagonal
+    "\u{259B}", // 0b0111 ▛ top-left + top-right + bottom-left
+    "\u{2597}", // 0b1000 ▗ bottom-right
+    "\u{259A}", // 0b1001 ▚ anti-diagonal
+    "\u{2590}", // 0b1010 ▐ right half
+    "\u{259C}", // 0b1011 ▜ top-left + top-right + bottom-right
+    "\u{2584}", // 0b1100 ▄ lower half
+    "\u{2599}", // 0b1101 ▙ top-left + bottom-left + bottom-right
+    "\u{259F}", // 0b1110 ▟ top-right + bottom-left + bottom-right
+    "\u{2588}", // 0b1111 █ full block
 ];
 
 /// Set a single quadrant cell. `mask` is a 4-bit value where:
@@ -410,11 +411,11 @@ pub fn braille_dot_index(dx: u8, dy: u8) -> u8 {
 use crate::css::types::HatchStyle;
 
 /// Characters used for hatch patterns.
-const HATCH_CROSS: &str = "\u{2573}";      // Box Drawings Light Diagonal Cross
-const HATCH_HORIZONTAL: &str = "\u{2500}";  // Box Drawings Light Horizontal
-const HATCH_VERTICAL: &str = "\u{2502}";    // Box Drawings Light Vertical
-const HATCH_LEFT: &str = "\u{2571}";        // Box Drawings Light Diagonal Upper Right to Lower Left
-const HATCH_RIGHT: &str = "\u{2572}";       // Box Drawings Light Diagonal Upper Left to Lower Right
+const HATCH_CROSS: &str = "\u{2573}"; // Box Drawings Light Diagonal Cross
+const HATCH_HORIZONTAL: &str = "\u{2500}"; // Box Drawings Light Horizontal
+const HATCH_VERTICAL: &str = "\u{2502}"; // Box Drawings Light Vertical
+const HATCH_LEFT: &str = "\u{2571}"; // Box Drawings Light Diagonal Upper Right to Lower Left
+const HATCH_RIGHT: &str = "\u{2572}"; // Box Drawings Light Diagonal Upper Left to Lower Right
 
 /// Render a hatch pattern fill over a rectangular area.
 pub fn render_hatch(
@@ -496,7 +497,13 @@ pub fn render_image_halfblock(
                 Color::Black
             };
 
-            half_block_cell(buf, x + col as u16, y + cell_row as u16, top_color, bot_color);
+            half_block_cell(
+                buf,
+                x + col as u16,
+                y + cell_row as u16,
+                top_color,
+                bot_color,
+            );
         }
     }
 }
@@ -670,7 +677,16 @@ mod tests {
     fn render_hatch_cross_fills_area() {
         let area = Rect::new(0, 0, 3, 2);
         let mut buf = Buffer::empty(area);
-        render_hatch(&mut buf, 0, 0, 3, 2, HatchStyle::Cross, Color::White, Color::Black);
+        render_hatch(
+            &mut buf,
+            0,
+            0,
+            3,
+            2,
+            HatchStyle::Cross,
+            Color::White,
+            Color::Black,
+        );
         for y in 0..2u16 {
             for x in 0..3u16 {
                 assert_eq!(buf.cell((x, y)).unwrap().symbol(), HATCH_CROSS);
@@ -709,8 +725,10 @@ mod tests {
     fn render_image_halfblock_2x2() {
         // 2x2 pixel image -> 2 columns, 1 row
         let pixels = vec![
-            (255, 0, 0), (0, 255, 0),  // row 0: red, green
-            (0, 0, 255), (255, 255, 0), // row 1: blue, yellow
+            (255, 0, 0),
+            (0, 255, 0), // row 0: red, green
+            (0, 0, 255),
+            (255, 255, 0), // row 1: blue, yellow
         ];
         let area = Rect::new(0, 0, 2, 1);
         let mut buf = Buffer::empty(area);
@@ -731,9 +749,9 @@ mod tests {
     fn render_image_halfblock_odd_height() {
         // 1x3 pixel image -> 1 column, 2 rows (last row bottom half = black)
         let pixels = vec![
-            (255, 0, 0),   // row 0
-            (0, 255, 0),   // row 1
-            (0, 0, 255),   // row 2
+            (255, 0, 0), // row 0
+            (0, 255, 0), // row 1
+            (0, 0, 255), // row 2
         ];
         let area = Rect::new(0, 0, 1, 2);
         let mut buf = Buffer::empty(area);

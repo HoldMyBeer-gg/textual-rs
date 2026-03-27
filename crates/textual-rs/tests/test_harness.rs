@@ -56,7 +56,12 @@ struct HelloScreen;
 
 impl Widget for HelloScreen {
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        buf.set_string(area.x, area.y, "Hello Test", ratatui::style::Style::default());
+        buf.set_string(
+            area.x,
+            area.y,
+            "Hello Test",
+            ratatui::style::Style::default(),
+        );
     }
     fn widget_type_name(&self) -> &'static str {
         "HelloScreen"
@@ -72,7 +77,10 @@ async fn test_app_creates_headless_app() {
     // TestApp should mount the screen without a real terminal.
     let test_app = TestApp::new(40, 10, || Box::new(TwoLabelScreen));
     // Screen is mounted — screen_stack should have one entry.
-    assert!(!test_app.ctx().screen_stack.is_empty(), "screen_stack should not be empty after mount");
+    assert!(
+        !test_app.ctx().screen_stack.is_empty(),
+        "screen_stack should not be empty after mount"
+    );
 }
 
 #[tokio::test]
@@ -88,7 +96,10 @@ async fn pilot_press_tab_advances_focus() {
     let mut test_app = TestApp::new(40, 10, || Box::new(TwoLabelScreen));
 
     // No focus initially.
-    assert!(test_app.ctx().focused_widget.is_none(), "No focus before first Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_none(),
+        "No focus before first Tab"
+    );
 
     let mut pilot = test_app.pilot();
     pilot.press(KeyCode::Tab).await;

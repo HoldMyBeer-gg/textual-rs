@@ -1,9 +1,9 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use reactive_graph::signal::ArcRwSignal;
 use reactive_graph::prelude::*;
-use crossterm::event::{KeyCode, KeyModifiers};
+use reactive_graph::signal::ArcRwSignal;
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{EventPropagation, Widget, WidgetId};
@@ -144,7 +144,9 @@ impl Widget for RadioButton {
             return;
         }
 
-        let base_style = self.own_id.get()
+        let base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -184,9 +186,7 @@ impl RadioSet {
     /// The first button is selected by default.
     pub fn new(labels: Vec<String>) -> Self {
         let n = labels.len();
-        let signals: Vec<ArcRwSignal<bool>> = (0..n)
-            .map(|i| ArcRwSignal::new(i == 0))
-            .collect();
+        let signals: Vec<ArcRwSignal<bool>> = (0..n).map(|i| ArcRwSignal::new(i == 0)).collect();
         Self {
             signals,
             labels,

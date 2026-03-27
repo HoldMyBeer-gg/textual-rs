@@ -3,8 +3,8 @@
 /// Worker tests require a Tokio LocalSet (spawn_local) so they use #[tokio::test]
 /// with an explicit LocalSet. Notify/post_message tests are synchronous.
 use std::any::Any;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use ratatui::buffer::Buffer;
@@ -21,7 +21,9 @@ struct NoopWidget;
 
 impl Widget for NoopWidget {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "NoopWidget" }
+    fn widget_type_name(&self) -> &'static str {
+        "NoopWidget"
+    }
 }
 
 /// Widget that sets a flag when it receives WorkerResult<u32>
@@ -32,13 +34,18 @@ struct WorkerResultWidget {
 
 impl WorkerResultWidget {
     fn new(flag: Arc<AtomicBool>, value: Arc<std::sync::Mutex<Option<u32>>>) -> Self {
-        WorkerResultWidget { got_result: flag, result_value: value }
+        WorkerResultWidget {
+            got_result: flag,
+            result_value: value,
+        }
     }
 }
 
 impl Widget for WorkerResultWidget {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "WorkerResultWidget" }
+    fn widget_type_name(&self) -> &'static str {
+        "WorkerResultWidget"
+    }
 
     fn on_event(&self, event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
         if let Some(result) = event.downcast_ref::<WorkerResult<u32>>() {
@@ -57,33 +64,39 @@ impl Widget for WorkerResultWidget {
 #[tokio::test]
 async fn worker_result_delivered() {
     let local = tokio::task::LocalSet::new();
-    local.run_until(async {
-        let mut ctx = AppContext::new();
+    local
+        .run_until(async {
+            let mut ctx = AppContext::new();
 
-        // Set up a dedicated worker channel (normally done by App::run_async)
-        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
-        ctx.worker_tx = Some(worker_tx);
+            // Set up a dedicated worker channel (normally done by App::run_async)
+            let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+            ctx.worker_tx = Some(worker_tx);
 
-        // Mount a widget
-        let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+            // Mount a widget
+            let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
 
-        // Spawn worker that returns 42u32
-        let _handle = ctx.run_worker(id, async { 42u32 });
+            // Spawn worker that returns 42u32
+            let _handle = ctx.run_worker(id, async { 42u32 });
 
-        // Yield to allow the LocalSet task to run
-        for _ in 0..10 {
-            tokio::task::yield_now().await;
-        }
+            // Yield to allow the LocalSet task to run
+            for _ in 0..10 {
+                tokio::task::yield_now().await;
+            }
 
-        // Worker result should have arrived on the channel
-        let (source_id, payload) = worker_rx.try_recv().expect("worker result not delivered");
-        assert_eq!(source_id, id, "result source_id should match the worker's widget id");
+            // Worker result should have arrived on the channel
+            let (source_id, payload) = worker_rx.try_recv().expect("worker result not delivered");
+            assert_eq!(
+                source_id, id,
+                "result source_id should match the worker's widget id"
+            );
 
-        // Payload should be WorkerResult<u32>
-        let result = payload.downcast_ref::<WorkerResult<u32>>()
-            .expect("payload should be WorkerResult<u32>");
-        assert_eq!(result.value, 42u32);
-    }).await;
+            // Payload should be WorkerResult<u32>
+            let result = payload
+                .downcast_ref::<WorkerResult<u32>>()
+                .expect("payload should be WorkerResult<u32>");
+            assert_eq!(result.value, 42u32);
+        })
+        .await;
 }
 
 // ---- Worker result goes through message queue ----
@@ -95,42 +108,50 @@ async fn worker_result_dispatched_via_message_queue() {
     use textual_rs::event::dispatch::dispatch_message;
 
     let local = tokio::task::LocalSet::new();
-    local.run_until(async {
-        let got_result = Arc::new(AtomicBool::new(false));
-        let result_value = Arc::new(std::sync::Mutex::new(None::<u32>));
+    local
+        .run_until(async {
+            let got_result = Arc::new(AtomicBool::new(false));
+            let result_value = Arc::new(std::sync::Mutex::new(None::<u32>));
 
-        let mut ctx = AppContext::new();
-        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
-        ctx.worker_tx = Some(worker_tx);
+            let mut ctx = AppContext::new();
+            let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+            ctx.worker_tx = Some(worker_tx);
 
-        let id = mount_widget(
-            Box::new(WorkerResultWidget::new(got_result.clone(), result_value.clone())),
-            None,
-            &mut ctx,
-        );
+            let id = mount_widget(
+                Box::new(WorkerResultWidget::new(
+                    got_result.clone(),
+                    result_value.clone(),
+                )),
+                None,
+                &mut ctx,
+            );
 
-        // Spawn worker
-        let _handle = ctx.run_worker(id, async { 99u32 });
+            // Spawn worker
+            let _handle = ctx.run_worker(id, async { 99u32 });
 
-        // Yield to let worker task complete
-        for _ in 0..10 {
-            tokio::task::yield_now().await;
-        }
+            // Yield to let worker task complete
+            for _ in 0..10 {
+                tokio::task::yield_now().await;
+            }
 
-        // Simulate what the App event loop does: move result to message_queue
-        while let Ok((source_id, payload)) = worker_rx.try_recv() {
-            ctx.message_queue.borrow_mut().push((source_id, payload));
-        }
+            // Simulate what the App event loop does: move result to message_queue
+            while let Ok((source_id, payload)) = worker_rx.try_recv() {
+                ctx.message_queue.borrow_mut().push((source_id, payload));
+            }
 
-        // Drain message queue manually (same as App::drain_message_queue but inline for test)
-        let messages: Vec<_> = ctx.message_queue.borrow_mut().drain(..).collect();
-        for (source, message) in messages {
-            dispatch_message(source, message.as_ref(), &ctx);
-        }
+            // Drain message queue manually (same as App::drain_message_queue but inline for test)
+            let messages: Vec<_> = ctx.message_queue.borrow_mut().drain(..).collect();
+            for (source, message) in messages {
+                dispatch_message(source, message.as_ref(), &ctx);
+            }
 
-        assert!(got_result.load(Ordering::SeqCst), "widget should have received WorkerResult");
-        assert_eq!(*result_value.lock().unwrap(), Some(99u32));
-    }).await;
+            assert!(
+                got_result.load(Ordering::SeqCst),
+                "widget should have received WorkerResult"
+            );
+            assert_eq!(*result_value.lock().unwrap(), Some(99u32));
+        })
+        .await;
 }
 
 // ---- Worker cancelled on unmount ----
@@ -139,40 +160,45 @@ async fn worker_result_dispatched_via_message_queue() {
 #[tokio::test]
 async fn worker_cancelled_on_unmount() {
     let local = tokio::task::LocalSet::new();
-    local.run_until(async {
-        let mut ctx = AppContext::new();
-        let (worker_tx, _worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
-        ctx.worker_tx = Some(worker_tx);
+    local
+        .run_until(async {
+            let mut ctx = AppContext::new();
+            let (worker_tx, _worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+            ctx.worker_tx = Some(worker_tx);
 
-        // Mount widget
-        let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+            // Mount widget
+            let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
 
-        // Spawn a long-running worker (60 second sleep — will never complete naturally)
-        let abort = ctx.run_worker(id, async {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            0u32
-        });
+            // Spawn a long-running worker (60 second sleep — will never complete naturally)
+            let abort = ctx.run_worker(id, async {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                0u32
+            });
 
-        // Verify the worker handle is tracked
-        assert!(
-            ctx.worker_handles.borrow().contains_key(id),
-            "worker handle should be tracked for widget"
-        );
+            // Verify the worker handle is tracked
+            assert!(
+                ctx.worker_handles.borrow().contains_key(id),
+                "worker handle should be tracked for widget"
+            );
 
-        // Unmount the widget — should cancel workers
-        unmount_widget(id, &mut ctx);
+            // Unmount the widget — should cancel workers
+            unmount_widget(id, &mut ctx);
 
-        // Abort handle should now be finished (aborted)
-        // Yield to allow the abort to propagate
-        tokio::task::yield_now().await;
-        assert!(abort.is_finished(), "worker task should be aborted after widget unmount");
+            // Abort handle should now be finished (aborted)
+            // Yield to allow the abort to propagate
+            tokio::task::yield_now().await;
+            assert!(
+                abort.is_finished(),
+                "worker task should be aborted after widget unmount"
+            );
 
-        // Worker handles entry should have been removed
-        assert!(
-            !ctx.worker_handles.borrow().contains_key(id),
-            "worker handles should be removed after unmount"
-        );
-    }).await;
+            // Worker handles entry should have been removed
+            assert!(
+                !ctx.worker_handles.borrow().contains_key(id),
+                "worker handles should be removed after unmount"
+            );
+        })
+        .await;
 }
 
 // ---- notify() bubbles to parent ----
@@ -192,7 +218,9 @@ impl FlagWidget {
 
 impl Widget for FlagWidget {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "FlagWidget" }
+    fn widget_type_name(&self) -> &'static str {
+        "FlagWidget"
+    }
 
     fn on_event(&self, event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
         if event.downcast_ref::<TestMessage>().is_some() {
@@ -211,7 +239,11 @@ fn notify_bubbles_to_parent() {
     let parent_received = Arc::new(AtomicBool::new(false));
 
     let mut ctx = AppContext::new();
-    let parent_id = mount_widget(Box::new(FlagWidget::new(parent_received.clone())), None, &mut ctx);
+    let parent_id = mount_widget(
+        Box::new(FlagWidget::new(parent_received.clone())),
+        None,
+        &mut ctx,
+    );
     let child_id = mount_widget(Box::new(NoopWidget), Some(parent_id), &mut ctx);
 
     // child notifies with TestMessage — should bubble up to parent
@@ -244,7 +276,9 @@ impl CounterWidget {
 
 impl Widget for CounterWidget {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "CounterWidget" }
+    fn widget_type_name(&self) -> &'static str {
+        "CounterWidget"
+    }
 
     fn on_event(&self, event: &dyn Any, _ctx: &AppContext) -> EventPropagation {
         if event.downcast_ref::<TestMessage>().is_some() {
@@ -262,8 +296,16 @@ fn post_message_to_target() {
     let count_b = Arc::new(std::sync::atomic::AtomicU32::new(0));
 
     let mut ctx = AppContext::new();
-    let _id_a = mount_widget(Box::new(CounterWidget::new(count_a.clone())), None, &mut ctx);
-    let id_b = mount_widget(Box::new(CounterWidget::new(count_b.clone())), None, &mut ctx);
+    let _id_a = mount_widget(
+        Box::new(CounterWidget::new(count_a.clone())),
+        None,
+        &mut ctx,
+    );
+    let id_b = mount_widget(
+        Box::new(CounterWidget::new(count_b.clone())),
+        None,
+        &mut ctx,
+    );
 
     // Post message targeting widget B
     ctx.post_message(id_b, TestMessage);
@@ -275,8 +317,16 @@ fn post_message_to_target() {
     }
 
     // Only widget B should have received the message
-    assert_eq!(count_b.load(Ordering::SeqCst), 1, "widget B should receive message");
-    assert_eq!(count_a.load(Ordering::SeqCst), 0, "widget A should not receive message");
+    assert_eq!(
+        count_b.load(Ordering::SeqCst),
+        1,
+        "widget B should receive message"
+    );
+    assert_eq!(
+        count_a.load(Ordering::SeqCst),
+        0,
+        "widget A should not receive message"
+    );
 }
 
 // ---- Worker progress delivery test ----
@@ -288,45 +338,51 @@ async fn worker_progress_delivered() {
     use textual_rs::WorkerProgress;
 
     let local = tokio::task::LocalSet::new();
-    local.run_until(async {
-        let mut ctx = AppContext::new();
-        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
-        ctx.worker_tx = Some(worker_tx);
+    local
+        .run_until(async {
+            let mut ctx = AppContext::new();
+            let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+            ctx.worker_tx = Some(worker_tx);
 
-        let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+            let id = mount_widget(Box::new(NoopWidget), None, &mut ctx);
 
-        // Spawn worker with progress reporting
-        let _handle = ctx.run_worker_with_progress(id, |progress_tx| {
-            Box::pin(async move {
-                for i in 0..3 {
-                    let _ = progress_tx.send(i as f32);
-                    tokio::task::yield_now().await;
-                }
-                "done"
-            })
-        });
+            // Spawn worker with progress reporting
+            let _handle = ctx.run_worker_with_progress(id, |progress_tx| {
+                Box::pin(async move {
+                    for i in 0..3 {
+                        let _ = progress_tx.send(i as f32);
+                        tokio::task::yield_now().await;
+                    }
+                    "done"
+                })
+            });
 
-        // Yield generously to let all tasks complete
-        for _ in 0..50 {
-            tokio::task::yield_now().await;
-        }
-
-        // Collect all messages from the channel
-        let mut progress_values: Vec<f32> = Vec::new();
-        let mut got_result = false;
-        while let Ok((source_id, payload)) = worker_rx.try_recv() {
-            assert_eq!(source_id, id);
-            if let Some(p) = payload.downcast_ref::<WorkerProgress<f32>>() {
-                progress_values.push(p.progress);
-            } else if let Some(r) = payload.downcast_ref::<WorkerResult<&str>>() {
-                assert_eq!(r.value, "done");
-                got_result = true;
+            // Yield generously to let all tasks complete
+            for _ in 0..50 {
+                tokio::task::yield_now().await;
             }
-        }
 
-        assert_eq!(progress_values, vec![0.0, 1.0, 2.0], "should receive 3 progress updates");
-        assert!(got_result, "should receive final result");
-    }).await;
+            // Collect all messages from the channel
+            let mut progress_values: Vec<f32> = Vec::new();
+            let mut got_result = false;
+            while let Ok((source_id, payload)) = worker_rx.try_recv() {
+                assert_eq!(source_id, id);
+                if let Some(p) = payload.downcast_ref::<WorkerProgress<f32>>() {
+                    progress_values.push(p.progress);
+                } else if let Some(r) = payload.downcast_ref::<WorkerResult<&str>>() {
+                    assert_eq!(r.value, "done");
+                    got_result = true;
+                }
+            }
+
+            assert_eq!(
+                progress_values,
+                vec![0.0, 1.0, 2.0],
+                "should receive 3 progress updates"
+            );
+            assert!(got_result, "should receive final result");
+        })
+        .await;
 }
 
 // ---- cancel_workers only cancels for the given widget ----
@@ -335,34 +391,45 @@ async fn worker_progress_delivered() {
 #[tokio::test]
 async fn cancel_workers_targets_correct_widget() {
     let local = tokio::task::LocalSet::new();
-    local.run_until(async {
-        let mut ctx = AppContext::new();
-        let (worker_tx, _worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
-        ctx.worker_tx = Some(worker_tx);
+    local
+        .run_until(async {
+            let mut ctx = AppContext::new();
+            let (worker_tx, _worker_rx) = flume::unbounded::<(WidgetId, Box<dyn Any + Send>)>();
+            ctx.worker_tx = Some(worker_tx);
 
-        let id_a = mount_widget(Box::new(NoopWidget), None, &mut ctx);
-        let id_b = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+            let id_a = mount_widget(Box::new(NoopWidget), None, &mut ctx);
+            let id_b = mount_widget(Box::new(NoopWidget), None, &mut ctx);
 
-        // Spawn a worker for each widget
-        let abort_a = ctx.run_worker(id_a, async {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            0u32
-        });
-        let abort_b = ctx.run_worker(id_b, async {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            0u32
-        });
+            // Spawn a worker for each widget
+            let abort_a = ctx.run_worker(id_a, async {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                0u32
+            });
+            let abort_b = ctx.run_worker(id_b, async {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                0u32
+            });
 
-        // Cancel only widget A's workers
-        ctx.cancel_workers(id_a);
-        tokio::task::yield_now().await;
+            // Cancel only widget A's workers
+            ctx.cancel_workers(id_a);
+            tokio::task::yield_now().await;
 
-        assert!(abort_a.is_finished(), "widget A's worker should be aborted");
-        assert!(!abort_b.is_finished(), "widget B's worker should still be running");
-        assert!(!ctx.worker_handles.borrow().contains_key(id_a), "widget A's handles removed");
-        assert!(ctx.worker_handles.borrow().contains_key(id_b), "widget B's handles remain");
+            assert!(abort_a.is_finished(), "widget A's worker should be aborted");
+            assert!(
+                !abort_b.is_finished(),
+                "widget B's worker should still be running"
+            );
+            assert!(
+                !ctx.worker_handles.borrow().contains_key(id_a),
+                "widget A's handles removed"
+            );
+            assert!(
+                ctx.worker_handles.borrow().contains_key(id_b),
+                "widget B's handles remain"
+            );
 
-        // Clean up: cancel B too
-        ctx.cancel_workers(id_b);
-    }).await;
+            // Clean up: cancel B too
+            ctx.cancel_workers(id_b);
+        })
+        .await;
 }

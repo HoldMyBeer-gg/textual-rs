@@ -1,11 +1,11 @@
+use super::style_map::taffy_style_from_computed;
+use crate::widget::context::AppContext;
+use crate::widget::WidgetId;
+use ratatui::layout::Rect;
 use std::collections::HashMap;
-use taffy::{TaffyTree, NodeId};
 use taffy::geometry::Size;
 use taffy::style::AvailableSpace;
-use ratatui::layout::Rect;
-use crate::widget::WidgetId;
-use crate::widget::context::AppContext;
-use super::style_map::taffy_style_from_computed;
+use taffy::{NodeId, TaffyTree};
 
 /// TaffyBridge synchronizes the widget tree into Taffy's node tree,
 /// computes layout, and exposes the resulting ratatui `Rect` for each widget.
@@ -132,7 +132,13 @@ impl TaffyBridge {
     }
 
     /// Walk the widget tree DFS, accumulating absolute x/y offsets from parent positions.
-    fn collect_absolute_rects(&mut self, wid: WidgetId, offset_x: f32, offset_y: f32, ctx: &AppContext) {
+    fn collect_absolute_rects(
+        &mut self,
+        wid: WidgetId,
+        offset_x: f32,
+        offset_y: f32,
+        ctx: &AppContext,
+    ) {
         let nid = match self.node_map.get(&wid) {
             Some(&n) => n,
             None => return,
@@ -143,12 +149,15 @@ impl TaffyBridge {
         };
         let abs_x = offset_x + layout.location.x;
         let abs_y = offset_y + layout.location.y;
-        self.layout_cache.insert(wid, Rect {
-            x: abs_x.floor() as u16,
-            y: abs_y.floor() as u16,
-            width: layout.size.width.round() as u16,
-            height: layout.size.height.round() as u16,
-        });
+        self.layout_cache.insert(
+            wid,
+            Rect {
+                x: abs_x.floor() as u16,
+                y: abs_y.floor() as u16,
+                width: layout.size.width.round() as u16,
+                height: layout.size.height.round() as u16,
+            },
+        );
         let children = ctx.children.get(wid).cloned().unwrap_or_default();
         for child in children {
             self.collect_absolute_rects(child, abs_x, abs_y, ctx);

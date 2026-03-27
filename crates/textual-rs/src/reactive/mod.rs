@@ -1,6 +1,6 @@
-use reactive_graph::signal::ArcRwSignal;
 use reactive_graph::computed::ArcMemo;
 use reactive_graph::prelude::*;
+use reactive_graph::signal::ArcRwSignal;
 
 /// Reactive property wrapper around `ArcRwSignal<T>`.
 ///
@@ -29,7 +29,9 @@ pub struct Reactive<T: Clone + PartialEq + Send + Sync + 'static> {
 
 impl<T: Clone + PartialEq + Send + Sync + 'static> Reactive<T> {
     pub fn new(value: T) -> Self {
-        Self { inner: ArcRwSignal::new(value) }
+        Self {
+            inner: ArcRwSignal::new(value),
+        }
     }
 
     /// Read the current value (tracked — creates dependency in Effects/Memos).
@@ -66,7 +68,9 @@ pub struct ComputedReactive<T: Clone + PartialEq + Send + Sync + 'static> {
 
 impl<T: Clone + PartialEq + Send + Sync + 'static> ComputedReactive<T> {
     pub fn new(f: impl Fn(Option<&T>) -> T + Send + Sync + 'static) -> Self {
-        Self { inner: ArcMemo::new(f) }
+        Self {
+            inner: ArcMemo::new(f),
+        }
     }
 
     pub fn get(&self) -> T {
@@ -83,8 +87,8 @@ impl<T: Clone + PartialEq + Send + Sync + 'static> ComputedReactive<T> {
 /// The Effect watches tracked reactive reads in its closure and posts RenderRequest
 /// to the provided flume sender whenever any tracked reactive changes.
 pub fn spawn_render_effect(tx: flume::Sender<crate::event::AppEvent>) {
-    use reactive_graph::effect::Effect;
     use crate::event::AppEvent;
+    use reactive_graph::effect::Effect;
     Effect::new(move |_| {
         let _ = tx.try_send(AppEvent::RenderRequest);
     });

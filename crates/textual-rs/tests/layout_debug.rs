@@ -1,19 +1,27 @@
-use textual_rs::{App, Widget, Header, Footer, ListView, Log, Input};
-use textual_rs::widget::context::AppContext;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use textual_rs::widget::context::AppContext;
+use textual_rs::{App, Footer, Header, Input, ListView, Log, Widget};
 
 struct ChannelPane;
 impl Widget for ChannelPane {
-    fn widget_type_name(&self) -> &'static str { "ChannelPane" }
+    fn widget_type_name(&self) -> &'static str {
+        "ChannelPane"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        vec![Box::new(ListView::new(vec!["#general".into(), "#rust".into(), "#help".into()]))]
+        vec![Box::new(ListView::new(vec![
+            "#general".into(),
+            "#rust".into(),
+            "#help".into(),
+        ]))]
     }
     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
 }
 struct ChatLog;
 impl Widget for ChatLog {
-    fn widget_type_name(&self) -> &'static str { "ChatLog" }
+    fn widget_type_name(&self) -> &'static str {
+        "ChatLog"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         let log = Log::new();
         log.push_line("[12:01] <alice> hello".into());
@@ -24,15 +32,22 @@ impl Widget for ChatLog {
 }
 struct UserPane;
 impl Widget for UserPane {
-    fn widget_type_name(&self) -> &'static str { "UserPane" }
+    fn widget_type_name(&self) -> &'static str {
+        "UserPane"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        vec![Box::new(ListView::new(vec!["@alice".into(), "@bob".into()]))]
+        vec![Box::new(ListView::new(vec![
+            "@alice".into(),
+            "@bob".into(),
+        ]))]
     }
     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
 }
 struct MainRegion;
 impl Widget for MainRegion {
-    fn widget_type_name(&self) -> &'static str { "MainRegion" }
+    fn widget_type_name(&self) -> &'static str {
+        "MainRegion"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(ChannelPane), Box::new(ChatLog), Box::new(UserPane)]
     }
@@ -40,7 +55,9 @@ impl Widget for MainRegion {
 }
 struct IrcScreen;
 impl Widget for IrcScreen {
-    fn widget_type_name(&self) -> &'static str { "IrcScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "IrcScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(Header::new("IRC")), Box::new(MainRegion)]
     }
@@ -60,8 +77,12 @@ fn debug_layout_rects() {
     }
     for y in 0..20u16 {
         let mut line = String::new();
-        for x in 0..80u16 { line.push_str(buf.cell((x, y)).unwrap().symbol()); }
+        for x in 0..80u16 {
+            line.push_str(buf.cell((x, y)).unwrap().symbol());
+        }
         let t = line.trim_end();
-        if !t.is_empty() { println!("{:2}|{}", y, t); }
+        if !t.is_empty() {
+            println!("{:2}|{}", y, t);
+        }
     }
 }

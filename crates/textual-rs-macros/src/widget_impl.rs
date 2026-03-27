@@ -1,8 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{
-    parse2, punctuated::Punctuated, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Token,
-};
+use syn::{parse2, punctuated::Punctuated, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Token};
 
 /// Parse a key combo string like "ctrl+s", "enter", "shift+tab", "a", "f1" into
 /// (KeyCode tokens, KeyModifiers tokens).
@@ -54,7 +52,10 @@ fn parse_key_combo(combo: &str, span: Span) -> Result<(TokenStream, TokenStream)
             quote! { ::crossterm::event::KeyCode::Char(#ch) }
         }
         _ => {
-            return Err(syn::Error::new(span, format!("Unknown key: {:?}", key_part)));
+            return Err(syn::Error::new(
+                span,
+                format!("Unknown key: {:?}", key_part),
+            ));
         }
     };
 
@@ -71,7 +72,10 @@ fn parse_key_combo(combo: &str, span: Span) -> Result<(TokenStream, TokenStream)
                 mod_tokens.push(quote! { ::crossterm::event::KeyModifiers::ALT });
             }
             other => {
-                return Err(syn::Error::new(span, format!("Unknown modifier: {:?}", other)));
+                return Err(syn::Error::new(
+                    span,
+                    format!("Unknown modifier: {:?}", other),
+                ));
             }
         }
     }
@@ -359,8 +363,7 @@ pub fn widget_impl_transform(mut input: ItemImpl) -> TokenStream {
     // Build the inherent impl block for handler methods (from #[on] and #[keybinding])
     let self_ty = &input.self_ty;
 
-    let on_handler_methods: Vec<&ImplItemFn> =
-        on_annotations.iter().map(|a| &a.method).collect();
+    let on_handler_methods: Vec<&ImplItemFn> = on_annotations.iter().map(|a| &a.method).collect();
     let kb_handler_methods: Vec<&ImplItemFn> =
         keybinding_annotations.iter().map(|a| &a.method).collect();
 

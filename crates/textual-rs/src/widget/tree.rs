@@ -1,5 +1,5 @@
-use super::{Widget, WidgetId};
 use super::context::AppContext;
+use super::{Widget, WidgetId};
 use crate::css::types::{ComputedStyle, PseudoClassSet};
 
 // ---- Helper: DFS traversal ----
@@ -31,7 +31,11 @@ fn collect_focusable_dfs(root: WidgetId, ctx: &AppContext) -> Vec<WidgetId> {
 /// Mount a widget into the arena. Initializes all SecondaryMap entries.
 /// Calls on_mount via shared reference (no borrow conflict).
 /// Returns the new WidgetId.
-pub fn mount_widget(widget: Box<dyn Widget>, parent: Option<WidgetId>, ctx: &mut AppContext) -> WidgetId {
+pub fn mount_widget(
+    widget: Box<dyn Widget>,
+    parent: Option<WidgetId>,
+    ctx: &mut AppContext,
+) -> WidgetId {
     let id = ctx.arena.insert(widget);
 
     // Initialize SecondaryMap entries
@@ -276,8 +280,12 @@ mod tests {
 
     impl Widget for SimpleWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "SimpleWidget" }
-        fn can_focus(&self) -> bool { self.focusable }
+        fn widget_type_name(&self) -> &'static str {
+            "SimpleWidget"
+        }
+        fn can_focus(&self) -> bool {
+            self.focusable
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             // Return pre-set children (they've been moved out, so this only works once)
             // For testing compose_children with a static list, we use a separate test widget
@@ -290,7 +298,9 @@ mod tests {
 
     impl Widget for ParentWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "ParentWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "ParentWidget"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![
                 Box::new(SimpleWidget::new(false)),
@@ -317,7 +327,11 @@ mod tests {
     fn mount_widget_wires_parent_child() {
         let mut ctx = AppContext::new();
         let parent_id = mount_widget(Box::new(SimpleWidget::new(false)), None, &mut ctx);
-        let child_id = mount_widget(Box::new(SimpleWidget::new(false)), Some(parent_id), &mut ctx);
+        let child_id = mount_widget(
+            Box::new(SimpleWidget::new(false)),
+            Some(parent_id),
+            &mut ctx,
+        );
 
         assert_eq!(ctx.parent[child_id], Some(parent_id));
         assert!(ctx.children[parent_id].contains(&child_id));
@@ -343,7 +357,8 @@ mod tests {
         let mut ctx = AppContext::new();
         let root_id = mount_widget(Box::new(SimpleWidget::new(false)), None, &mut ctx);
         let child_id = mount_widget(Box::new(SimpleWidget::new(false)), Some(root_id), &mut ctx);
-        let grandchild_id = mount_widget(Box::new(SimpleWidget::new(false)), Some(child_id), &mut ctx);
+        let grandchild_id =
+            mount_widget(Box::new(SimpleWidget::new(false)), Some(child_id), &mut ctx);
 
         unmount_widget(root_id, &mut ctx);
 
@@ -411,7 +426,9 @@ mod tests {
         struct ScreenWithFocusable;
         impl Widget for ScreenWithFocusable {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![
                     Box::new(SimpleWidget::new(false)), // non-focusable
@@ -454,7 +471,9 @@ mod tests {
         struct TwoFocusable;
         impl Widget for TwoFocusable {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![
                     Box::new(SimpleWidget::new(true)),
@@ -485,7 +504,9 @@ mod tests {
         struct OneFocusable;
         impl Widget for OneFocusable {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![
                     Box::new(SimpleWidget::new(false)),

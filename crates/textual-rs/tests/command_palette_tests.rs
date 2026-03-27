@@ -1,16 +1,16 @@
 //! Integration tests for the command palette: open, search, dispatch, and dismiss flows.
 
-use std::cell::Cell;
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use std::cell::Cell;
 
 use textual_rs::command::registry::fuzzy_score;
+use textual_rs::event::keybinding::KeyBinding;
+use textual_rs::event::AppEvent;
 use textual_rs::testing::TestApp;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::{Widget, WidgetId};
-use textual_rs::event::keybinding::KeyBinding;
-use textual_rs::event::AppEvent;
 
 // ---------------------------------------------------------------------------
 // Helper widgets
@@ -135,7 +135,11 @@ fn command_palette_fuzzy_search() {
 
     // Non-matching query has low score
     let low_score = fuzzy_score("xyz", "Save File");
-    assert!(low_score < 0.5, "Non-matching query should have low score, got {}", low_score);
+    assert!(
+        low_score < 0.5,
+        "Non-matching query should have low score, got {}",
+        low_score
+    );
 
     // Partial match for "open" in "Open File"
     assert_eq!(fuzzy_score("open", "Open File"), 1.0);
@@ -160,7 +164,10 @@ async fn command_palette_esc_dismisses() {
         state: KeyEventState::NONE,
     });
     test_app.process_event(ctrl_p);
-    assert!(test_app.ctx().active_overlay.borrow().is_some(), "Ctrl+P should open overlay");
+    assert!(
+        test_app.ctx().active_overlay.borrow().is_some(),
+        "Ctrl+P should open overlay"
+    );
 
     // Press Esc to dismiss
     let esc = AppEvent::Key(KeyEvent {
@@ -204,7 +211,9 @@ fn command_registry_discovers_bindings() {
     }
 
     impl Widget for SimpleScreen {
-        fn widget_type_name(&self) -> &'static str { "SimpleScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "SimpleScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             let mut guard = self.child.lock().unwrap();
             if let Some(child) = guard.take() {
@@ -225,11 +234,13 @@ fn command_registry_discovers_bindings() {
     let names: Vec<&str> = commands.iter().map(|c| c.name.as_str()).collect();
     assert!(
         names.contains(&"Save File"),
-        "discover_all should include 'Save File' binding, got: {:?}", names
+        "discover_all should include 'Save File' binding, got: {:?}",
+        names
     );
     assert!(
         names.contains(&"Open File"),
-        "discover_all should include 'Open File' binding, got: {:?}", names
+        "discover_all should include 'Open File' binding, got: {:?}",
+        names
     );
     assert!(
         !names.contains(&"internal submit"),

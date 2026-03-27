@@ -31,7 +31,10 @@ fn try_parse_variable<'i>(input: &mut Parser<'i, '_>) -> Option<String> {
                     if modifier == "lighten" || modifier == "darken" {
                         let dash_state = input.state();
                         if let Ok(&Token::Delim('-')) = input.next() {
-                            if let Ok(&Token::Number { int_value: Some(n), .. }) = input.next() {
+                            if let Ok(&Token::Number {
+                                int_value: Some(n), ..
+                            }) = input.next()
+                            {
                                 let mut name = base;
                                 name.push('-');
                                 name.push_str(&modifier);
@@ -110,24 +113,26 @@ fn parse_dimension<'i>(
         Token::Dimension { value, unit, .. } if unit.eq_ignore_ascii_case("fr") => {
             Ok(TcssDimension::Fraction(*value))
         }
-        other => Err(location.new_custom_error(PropertyParseError::InvalidValue(format!(
-            "expected dimension value, got {:?}",
-            other
-        )))),
+        other => Err(
+            location.new_custom_error(PropertyParseError::InvalidValue(format!(
+                "expected dimension value, got {:?}",
+                other
+            ))),
+        ),
     }
 }
 
 /// Parse a non-negative float/number for padding/margin cell values.
-fn parse_cells<'i>(
-    input: &mut Parser<'i, '_>,
-) -> Result<f32, ParseError<'i, PropertyParseError>> {
+fn parse_cells<'i>(input: &mut Parser<'i, '_>) -> Result<f32, ParseError<'i, PropertyParseError>> {
     let location = input.current_source_location();
     match input.next()? {
         Token::Number { value, .. } => Ok(*value),
-        other => Err(location.new_custom_error(PropertyParseError::InvalidValue(format!(
-            "expected number, got {:?}",
-            other
-        )))),
+        other => Err(
+            location.new_custom_error(PropertyParseError::InvalidValue(format!(
+                "expected number, got {:?}",
+                other
+            ))),
+        ),
     }
 }
 
@@ -216,9 +221,9 @@ fn parse_property_value<'i>(
             }
         }
         "border" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let style = match name.as_ref() {
                 "none" => BorderStyle::None,
                 "solid" => BorderStyle::Solid,
@@ -314,9 +319,9 @@ fn parse_property_value<'i>(
             }
         }
         "display" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let d = match name.as_ref() {
                 "flex" => TcssDisplay::Flex,
                 "grid" => TcssDisplay::Grid,
@@ -331,9 +336,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::Display(d)))
         }
         "visibility" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let v = match name.as_ref() {
                 "visible" => Visibility::Visible,
                 "hidden" => Visibility::Hidden,
@@ -352,9 +357,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::Float(v)))
         }
         "text-align" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let a = match name.as_ref() {
                 "left" => TextAlign::Left,
                 "center" => TextAlign::Center,
@@ -368,9 +373,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::TextAlign(a)))
         }
         "overflow" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let o = match name.as_ref() {
                 "visible" => Overflow::Visible,
                 "hidden" => Overflow::Hidden,
@@ -385,9 +390,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::Overflow(o)))
         }
         "scrollbar-gutter" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let b = match name.as_ref() {
                 "stable" => true,
                 "auto" => false,
@@ -400,9 +405,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::Bool(b)))
         }
         "dock" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let d = match name.as_ref() {
                 "top" => DockEdge::Top,
                 "bottom" => DockEdge::Bottom,
@@ -437,9 +442,9 @@ fn parse_property_value<'i>(
             }
         }
         "layout-direction" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let d = match name.as_ref() {
                 "vertical" => LayoutDirection::Vertical,
                 "horizontal" => LayoutDirection::Horizontal,
@@ -452,9 +457,9 @@ fn parse_property_value<'i>(
             Ok(Some(TcssValue::LayoutDirection(d)))
         }
         "hatch" => {
-            let name = input
-                .expect_ident_cloned()
-                .map_err(|e| location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e))))?;
+            let name = input.expect_ident_cloned().map_err(|e| {
+                location.new_custom_error(PropertyParseError::InvalidValue(format!("{:?}", e)))
+            })?;
             let style = match name.as_ref() {
                 "cross" => HatchStyle::Cross,
                 "horizontal" => HatchStyle::Horizontal,
@@ -521,7 +526,10 @@ mod tests {
     fn parse_color_rgba_function() {
         // CSS rgba uses 0-1 alpha; 0.5 = ~50% opacity, stored as alpha_u8 ~128
         let val = parse_decl_value("color: rgba(255, 0, 0, 0.5)");
-        assert!(matches!(val, TcssValue::Color(TcssColor::Rgba(255, 0, 0, _))));
+        assert!(matches!(
+            val,
+            TcssValue::Color(TcssColor::Rgba(255, 0, 0, _))
+        ));
     }
 
     #[test]
@@ -654,7 +662,10 @@ mod tests {
         let val = parse_decl_value("border: solid #ff0000");
         match val {
             TcssValue::BorderWithColor(BorderStyle::Solid, TcssColor::Rgb(255, 0, 0)) => {}
-            other => panic!("expected BorderWithColor(Solid, Rgb(255,0,0)), got {:?}", other),
+            other => panic!(
+                "expected BorderWithColor(Solid, Rgb(255,0,0)), got {:?}",
+                other
+            ),
         }
     }
 

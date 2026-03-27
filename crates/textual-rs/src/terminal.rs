@@ -13,7 +13,12 @@ pub fn init_panic_hook() {
     let original_hook = panic::take_hook();
     panic::set_hook(Box::new(move |panic_info| {
         let _ = disable_raw_mode();
-        let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture, Show);
+        let _ = execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            Show
+        );
         original_hook(panic_info);
     }));
 }
@@ -32,7 +37,12 @@ impl TerminalGuard {
 impl Drop for TerminalGuard {
     fn drop(&mut self) {
         let _ = disable_raw_mode();
-        let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture, Show);
+        let _ = execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            Show
+        );
     }
 }
 
@@ -194,7 +204,10 @@ mod tests {
         assert!(caps.mouse, "mouse should always be true");
         // color_depth should be one of the valid variants
         match caps.color_depth {
-            ColorDepth::NoColor | ColorDepth::Standard | ColorDepth::EightBit | ColorDepth::TrueColor => {}
+            ColorDepth::NoColor
+            | ColorDepth::Standard
+            | ColorDepth::EightBit
+            | ColorDepth::TrueColor => {}
         }
     }
 
@@ -231,7 +244,8 @@ mod tests {
         {
             let caps = TerminalCaps::detect();
             assert!(
-                caps.color_depth == ColorDepth::EightBit || caps.color_depth == ColorDepth::TrueColor,
+                caps.color_depth == ColorDepth::EightBit
+                    || caps.color_depth == ColorDepth::TrueColor,
                 "Windows should detect at least 256 colors, got {:?}",
                 caps.color_depth
             );

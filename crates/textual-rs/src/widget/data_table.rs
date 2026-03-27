@@ -1,8 +1,8 @@
-use std::cell::{Cell, RefCell};
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::{Cell, RefCell};
 use unicode_width::UnicodeWidthStr;
 
 use super::context::AppContext;
@@ -19,7 +19,10 @@ pub struct ColumnDef {
 
 impl ColumnDef {
     pub fn new(label: impl Into<String>) -> Self {
-        Self { label: label.into(), width: None }
+        Self {
+            label: label.into(),
+            width: None,
+        }
     }
 
     pub fn with_width(mut self, width: u16) -> Self {
@@ -281,7 +284,7 @@ impl Widget for DataTable {
     }
 
     fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> super::EventPropagation {
-        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
         if let Some(m) = event.downcast_ref::<MouseEvent>() {
             if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
                 let header_rows = self.last_header_rows.get();
@@ -388,7 +391,9 @@ impl Widget for DataTable {
         }
         self.last_area_y.set(area.y);
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -468,10 +473,12 @@ impl Widget for DataTable {
 
         // --- Render data rows ---
         // Zebra striping: alternate rows get a subtly lighter background
-        let table_bg = buf.cell((area.x, area.y))
+        let table_bg = buf
+            .cell((area.x, area.y))
             .and_then(|c| c.style().bg)
             .unwrap_or(ratatui::style::Color::Rgb(26, 26, 46));
-        let alt_bg = crate::canvas::blend_color(table_bg, ratatui::style::Color::Rgb(255, 255, 255), 0.06);
+        let alt_bg =
+            crate::canvas::blend_color(table_bg, ratatui::style::Color::Rgb(255, 255, 255), 0.06);
 
         let visible_row_count = data_area_height as usize;
         for row_offset in 0..visible_row_count {
@@ -524,9 +531,15 @@ impl Widget for DataTable {
                 x += display.chars().count() as u16;
 
                 // Column separator
-                let sep_col_style = if is_cursor_row { row_style } else {
+                let sep_col_style = if is_cursor_row {
+                    row_style
+                } else {
                     let base_sep = style.fg(ratatui::style::Color::Rgb(74, 74, 90));
-                    if is_alt_row { base_sep.bg(alt_bg) } else { base_sep }
+                    if is_alt_row {
+                        base_sep.bg(alt_bg)
+                    } else {
+                        base_sep
+                    }
                 };
                 if vi + 1 < visible_cols.len() && x + 3 <= area.x + area.width {
                     buf.set_string(x, row_y, " │ ", sep_col_style);
@@ -569,11 +582,11 @@ fn pad_or_truncate(s: &str, width: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::widget::context::AppContext;
+    use crate::widget::Widget;
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use ratatui::style::Color;
-    use crate::widget::context::AppContext;
-    use crate::widget::Widget;
 
     /// Helper: create a buffer pre-filled with a given background color.
     fn buf_with_bg(area: Rect, bg: Color) -> Buffer {
@@ -619,7 +632,10 @@ mod tests {
 
         // Check row 1 (y=3) has alt_bg on a non-text cell at the end
         let row1_bg = buf.cell((19, 3)).unwrap().bg;
-        assert_eq!(row1_bg, alt_bg, "odd row (row_idx=1) should have zebra stripe bg");
+        assert_eq!(
+            row1_bg, alt_bg,
+            "odd row (row_idx=1) should have zebra stripe bg"
+        );
 
         // Check row 2 (y=4) keeps original bg
         let row2_bg = buf.cell((19, 4)).unwrap().bg;
@@ -627,7 +643,10 @@ mod tests {
 
         // Check row 3 (y=5) has alt_bg
         let row3_bg = buf.cell((19, 5)).unwrap().bg;
-        assert_eq!(row3_bg, alt_bg, "odd row (row_idx=3) should have zebra stripe bg");
+        assert_eq!(
+            row3_bg, alt_bg,
+            "odd row (row_idx=3) should have zebra stripe bg"
+        );
     }
 
     #[test]
@@ -646,6 +665,9 @@ mod tests {
         // Cursor row uses accent fg (green) not alt_bg
         let alt_bg = crate::canvas::blend_color(bg, Color::Rgb(255, 255, 255), 0.06);
         let row1_bg = buf.cell((19, 3)).unwrap().bg;
-        assert_ne!(row1_bg, alt_bg, "cursor row should not have zebra stripe bg");
+        assert_ne!(
+            row1_bg, alt_bg,
+            "cursor row should not have zebra stripe bg"
+        );
     }
 }

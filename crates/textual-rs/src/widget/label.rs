@@ -1,6 +1,6 @@
-use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -54,14 +54,19 @@ impl Widget for Label {
         let truncated: String = text.chars().take(max_chars).collect();
 
         // Apply text-align from computed style
-        let text_align = self.own_id.get()
+        let text_align = self
+            .own_id
+            .get()
             .and_then(|id| ctx.computed_styles.get(id))
             .map(|cs| cs.text_align)
             .unwrap_or(crate::css::types::TextAlign::Left);
         let display = align_text(&truncated, max_chars, text_align);
 
         // Inherit style from buffer (set by paint_chrome)
-        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let style = buf
+            .cell((area.x, area.y))
+            .map(|c| c.style())
+            .unwrap_or_default();
         buf.set_string(area.x, area.y, &display, style);
     }
 }

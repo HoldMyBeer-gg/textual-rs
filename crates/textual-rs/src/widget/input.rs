@@ -1,8 +1,8 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier};
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{EventPropagation, Widget, WidgetId};
@@ -234,7 +234,13 @@ impl Input {
         self.run_validation();
         if let Some(id) = self.own_id.get() {
             let val = self.value.get_untracked();
-            ctx.post_message(id, messages::Changed { value: val, valid: self.valid.get() });
+            ctx.post_message(
+                id,
+                messages::Changed {
+                    value: val,
+                    valid: self.valid.get(),
+                },
+            );
         }
     }
 }
@@ -419,7 +425,8 @@ impl Widget for Input {
             super::context_menu::ContextMenuItem::new("Cut", "cut").with_shortcut("Ctrl+X"),
             super::context_menu::ContextMenuItem::new("Copy", "copy").with_shortcut("Ctrl+C"),
             super::context_menu::ContextMenuItem::new("Paste", "paste").with_shortcut("Ctrl+V"),
-            super::context_menu::ContextMenuItem::new("Select All", "select_all").with_shortcut("Ctrl+A"),
+            super::context_menu::ContextMenuItem::new("Select All", "select_all")
+                .with_shortcut("Ctrl+A"),
         ]
     }
 
@@ -598,7 +605,9 @@ impl Widget for Input {
             return;
         }
 
-        let base_style = self.own_id.get()
+        let base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -685,7 +694,8 @@ impl Widget for Input {
 
         // If cursor is at end of string (or string is empty), show cursor indicator
         if focused && cursor_char_idx >= display_chars.len() {
-            let cursor_col = area.x + (cursor_char_idx - view_start).min(area.width as usize - 1) as u16;
+            let cursor_col =
+                area.x + (cursor_char_idx - view_start).min(area.width as usize - 1) as u16;
             if cursor_col < area.x + area.width {
                 let cursor_style = if is_invalid {
                     base_style.fg(Color::Red).add_modifier(Modifier::REVERSED)

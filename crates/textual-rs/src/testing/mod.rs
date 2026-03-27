@@ -35,11 +35,7 @@ impl TestApp {
     ///
     /// Initializes the reactive runtime (safe to call multiple times), mounts the
     /// root screen, and renders the initial frame.
-    pub fn new(
-        cols: u16,
-        rows: u16,
-        factory: impl FnOnce() -> Box<dyn Widget> + 'static,
-    ) -> Self {
+    pub fn new(cols: u16, rows: u16, factory: impl FnOnce() -> Box<dyn Widget> + 'static) -> Self {
         // Init reactive runtime — safe to call multiple times, subsequent calls are no-ops.
         let _ = any_spawner::Executor::init_tokio();
 
@@ -55,9 +51,15 @@ impl TestApp {
 
         // Mount root screen and render initial frame
         app.mount_root_screen();
-        app.render_to_terminal(&mut terminal).expect("failed initial render");
+        app.render_to_terminal(&mut terminal)
+            .expect("failed initial render");
 
-        TestApp { app, terminal, tx, rx }
+        TestApp {
+            app,
+            terminal,
+            tx,
+            rx,
+        }
     }
 
     /// Create a TestApp WITH built-in CSS (for tests that need proper widget layout).
@@ -75,8 +77,14 @@ impl TestApp {
         let backend = TestBackend::new(cols, rows);
         let mut terminal = Terminal::new(backend).expect("failed to create TestBackend terminal");
         app.mount_root_screen();
-        app.render_to_terminal(&mut terminal).expect("failed initial render");
-        TestApp { app, terminal, tx, rx }
+        app.render_to_terminal(&mut terminal)
+            .expect("failed initial render");
+        TestApp {
+            app,
+            terminal,
+            tx,
+            rx,
+        }
     }
 
     /// Get a Pilot for sending simulated input events.
@@ -117,9 +125,7 @@ impl TestApp {
     /// Used by Pilot to inject input. Can also be called directly for precise control.
     pub fn process_event(&mut self, event: AppEvent) {
         match &event {
-            AppEvent::Key(k)
-                if k.kind == crossterm::event::KeyEventKind::Press =>
-            {
+            AppEvent::Key(k) if k.kind == crossterm::event::KeyEventKind::Press => {
                 let k = *k;
                 self.app.handle_key_event(k);
             }

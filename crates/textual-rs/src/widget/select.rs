@@ -1,8 +1,8 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -113,9 +113,12 @@ impl Widget for Select {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        self.last_area.set((area.x, area.y, area.width, area.height));
+        self.last_area
+            .set((area.x, area.y, area.width, area.height));
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -268,7 +271,12 @@ impl Widget for SelectOverlay {
         }
 
         // Calculate dropdown dimensions — at least as wide as the Select widget
-        let max_label = self.options.iter().map(|o| o.chars().count()).max().unwrap_or(10);
+        let max_label = self
+            .options
+            .iter()
+            .map(|o| o.chars().count())
+            .max()
+            .unwrap_or(10);
         let dropdown_width = ((max_label + 4) as u16)
             .max(self.anchor_width)
             .min(area.width);
@@ -299,7 +307,16 @@ impl Widget for SelectOverlay {
         let fg = Color::Rgb(224, 224, 224);
 
         // Draw McGugan box border
-        crate::canvas::mcgugan_box(buf, dx, dy, dropdown_width, dropdown_height, border_color, bg, Color::Reset);
+        crate::canvas::mcgugan_box(
+            buf,
+            dx,
+            dy,
+            dropdown_width,
+            dropdown_height,
+            border_color,
+            bg,
+            Color::Reset,
+        );
 
         // Fill inside
         for y in (dy + 1)..(dy + dropdown_height - 1) {

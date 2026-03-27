@@ -1,7 +1,7 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -116,7 +116,8 @@ impl Widget for Log {
 
     fn context_menu_items(&self) -> Vec<super::context_menu::ContextMenuItem> {
         vec![
-            super::context_menu::ContextMenuItem::new("Copy All", "copy_all").with_shortcut("Ctrl+C"),
+            super::context_menu::ContextMenuItem::new("Copy All", "copy_all")
+                .with_shortcut("Ctrl+C"),
             super::context_menu::ContextMenuItem::new("Clear", "clear"),
         ]
     }
@@ -164,7 +165,9 @@ impl Widget for Log {
             return;
         }
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -181,7 +184,11 @@ impl Widget for Log {
             let line_idx = offset + row;
             let y = area.y + row as u16;
             // Reserve last column for scrollbar
-            let text_width = if area.width > 1 { area.width - 1 } else { area.width };
+            let text_width = if area.width > 1 {
+                area.width - 1
+            } else {
+                area.width
+            };
             let line_text: String = lines[line_idx].chars().take(text_width as usize).collect();
             buf.set_string(area.x, y, &line_text, style);
         }

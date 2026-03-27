@@ -1,7 +1,7 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::Widget;
@@ -148,10 +148,12 @@ impl Widget for ScrollView {
                 self.scroll_offset_x.set((offset_x + 1).min(max_scroll_x));
             }
             "page_up" => {
-                self.scroll_offset_y.set(offset_y.saturating_sub(viewport_h));
+                self.scroll_offset_y
+                    .set(offset_y.saturating_sub(viewport_h));
             }
             "page_down" => {
-                self.scroll_offset_y.set((offset_y + viewport_h).min(max_scroll_y));
+                self.scroll_offset_y
+                    .set((offset_y + viewport_h).min(max_scroll_y));
             }
             _ => {}
         }
@@ -174,8 +176,16 @@ impl Widget for ScrollView {
         let need_hscroll = self.content_width > area.width as usize;
 
         // Adjust effective viewport to leave room for scrollbars
-        let render_w = if need_vscroll && area.width > 1 { area.width - 1 } else { area.width };
-        let render_h = if need_hscroll && area.height > 1 { area.height - 1 } else { area.height };
+        let render_w = if need_vscroll && area.width > 1 {
+            area.width - 1
+        } else {
+            area.width
+        };
+        let render_h = if need_hscroll && area.height > 1 {
+            area.height - 1
+        } else {
+            area.height
+        };
 
         // Allocate a virtual buffer for the full content area
         let vbuf_w = self.content_width as u16;
@@ -185,7 +195,12 @@ impl Widget for ScrollView {
             return;
         }
 
-        let virtual_area = Rect { x: 0, y: 0, width: vbuf_w, height: vbuf_h };
+        let virtual_area = Rect {
+            x: 0,
+            y: 0,
+            width: vbuf_w,
+            height: vbuf_h,
+        };
         let mut virtual_buf = Buffer::empty(virtual_area);
 
         // Render each child into the virtual buffer, stacking vertically (1 child per row for v1)
@@ -248,7 +263,8 @@ impl Widget for ScrollView {
             let bar_color = ratatui::style::Color::Rgb(0, 255, 163);
             let track_color = ratatui::style::Color::Rgb(30, 30, 40);
             let max_offset = self.content_width.saturating_sub(area.width as usize);
-            let thumb_size = ((render_w as f32 / self.content_width as f32) * render_w as f32).max(1.0) as u16;
+            let thumb_size =
+                ((render_w as f32 / self.content_width as f32) * render_w as f32).max(1.0) as u16;
             let thumb_pos = if max_offset > 0 {
                 (offset_x as f32 / max_offset as f32 * (render_w - thumb_size) as f32) as u16
             } else {

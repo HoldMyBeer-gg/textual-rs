@@ -11,8 +11,8 @@
 
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use textual_rs::{App, Widget, Header, Footer, Label};
 use textual_rs::widget::context::AppContext;
+use textual_rs::{App, Footer, Header, Label, Widget};
 
 // ---------------------------------------------------------------------------
 // Inline TCSS stylesheet.
@@ -117,7 +117,6 @@ impl Widget for LayoutScreen {
 fn main() -> anyhow::Result<()> {
     // with_css() parses and applies the inline TCSS stylesheet.
     // CSS errors are logged to stderr; the app still runs with defaults.
-    let mut app = App::new(|| Box::new(LayoutScreen))
-        .with_css(CSS);
+    let mut app = App::new(|| Box::new(LayoutScreen)).with_css(CSS);
     app.run()
 }

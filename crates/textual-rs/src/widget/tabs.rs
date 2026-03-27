@@ -1,13 +1,13 @@
-use std::cell::{Cell, RefCell};
-use std::time::Duration;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::{Cell, RefCell};
+use std::time::Duration;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
-use crate::animation::{Tween, ease_out_cubic};
+use crate::animation::{ease_out_cubic, Tween};
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 
@@ -131,7 +131,13 @@ impl Widget for Tabs {
         self.active.set(new_idx);
         if let Some(id) = self.own_id.get() {
             let label = self.tab_labels.get(new_idx).cloned().unwrap_or_default();
-            ctx.post_message(id, messages::TabChanged { index: new_idx, label });
+            ctx.post_message(
+                id,
+                messages::TabChanged {
+                    index: new_idx,
+                    label,
+                },
+            );
         }
     }
 
@@ -140,7 +146,9 @@ impl Widget for Tabs {
             return;
         }
 
-        let base_style = self.own_id.get()
+        let base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -242,13 +250,28 @@ impl TabBar {
 }
 
 impl Widget for TabBar {
-    fn widget_type_name(&self) -> &'static str { "TabBar" }
-    fn can_focus(&self) -> bool { true }
-    fn default_css() -> &'static str where Self: Sized { "TabBar { height: 1; }" }
+    fn widget_type_name(&self) -> &'static str {
+        "TabBar"
+    }
+    fn can_focus(&self) -> bool {
+        true
+    }
+    fn default_css() -> &'static str
+    where
+        Self: Sized,
+    {
+        "TabBar { height: 1; }"
+    }
 
-    fn on_mount(&self, id: WidgetId) { self.own_id.set(Some(id)); }
-    fn on_unmount(&self, _id: WidgetId) { self.own_id.set(None); }
-    fn key_bindings(&self) -> &[KeyBinding] { TAB_BAR_BINDINGS }
+    fn on_mount(&self, id: WidgetId) {
+        self.own_id.set(Some(id));
+    }
+    fn on_unmount(&self, _id: WidgetId) {
+        self.own_id.set(None);
+    }
+    fn key_bindings(&self) -> &[KeyBinding] {
+        TAB_BAR_BINDINGS
+    }
 
     fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
         use crossterm::event::{MouseEvent, MouseEventKind};
@@ -290,7 +313,9 @@ impl Widget for TabBar {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        if area.height == 0 || area.width == 0 { return; }
+        if area.height == 0 || area.width == 0 {
+            return;
+        }
         self.last_area_x.set(area.x);
         let base_style = ratatui::style::Style::default();
         let active_idx = self.active.get();
@@ -298,10 +323,14 @@ impl Widget for TabBar {
         let mut x = area.x;
         let y = area.y;
         for (i, label) in self.labels.iter().enumerate() {
-            if x >= area.x + area.width { break; }
+            if x >= area.x + area.width {
+                break;
+            }
             if i > 0 {
                 for ch in separator.chars() {
-                    if x >= area.x + area.width { break; }
+                    if x >= area.x + area.width {
+                        break;
+                    }
                     if let Some(cell) = buf.cell_mut((x, y)) {
                         cell.set_char(ch).set_style(base_style);
                     }
@@ -309,7 +338,9 @@ impl Widget for TabBar {
                 }
             }
             if x < area.x + area.width {
-                if let Some(cell) = buf.cell_mut((x, y)) { cell.set_char(' ').set_style(base_style); }
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_char(' ').set_style(base_style);
+                }
                 x += 1;
             }
             let style = if i == active_idx {
@@ -321,8 +352,12 @@ impl Widget for TabBar {
                 base_style.fg(ratatui::style::Color::Rgb(140, 140, 160))
             };
             for ch in label.chars() {
-                if x >= area.x + area.width { break; }
-                if let Some(cell) = buf.cell_mut((x, y)) { cell.set_char(ch).set_style(style); }
+                if x >= area.x + area.width {
+                    break;
+                }
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_char(ch).set_style(style);
+                }
                 x += 1;
             }
             if x < area.x + area.width {

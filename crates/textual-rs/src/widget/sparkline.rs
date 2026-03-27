@@ -49,7 +49,10 @@ impl Widget for Sparkline {
             return;
         }
 
-        let style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let style = buf
+            .cell((area.x, area.y))
+            .map(|c| c.style())
+            .unwrap_or_default();
         let fg = style.fg.unwrap_or(Color::Rgb(0, 212, 255));
         let bg = style.bg.unwrap_or(Color::Reset);
 

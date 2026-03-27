@@ -248,7 +248,9 @@ fn draw_tall_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
         let max_len = (area.width as usize).saturating_sub(4);
         let display: String = title.chars().take(max_len).collect();
         if !display.is_empty() {
-            let title_style = Style::default().fg(fg).bg(bg)
+            let title_style = Style::default()
+                .fg(fg)
+                .bg(bg)
                 .add_modifier(ratatui::style::Modifier::BOLD);
             buf.set_string(x1 + 2, y1, format!(" {} ", display), title_style);
         }
@@ -278,9 +280,13 @@ fn draw_mcgugan_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect
 
     let (ix, iy, iw, ih) = crate::canvas::mcgugan_box(
         buf,
-        area.x, area.y,
-        area.width, area.height,
-        border_color, inside_color, outside_color,
+        area.x,
+        area.y,
+        area.width,
+        area.height,
+        border_color,
+        inside_color,
+        outside_color,
     );
 
     // Fill inside with background color
@@ -307,7 +313,12 @@ fn draw_mcgugan_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect
         }
     }
 
-    Rect { x: ix, y: iy, width: iw, height: ih }
+    Rect {
+        x: ix,
+        y: iy,
+        width: iw,
+        height: ih,
+    }
 }
 
 /// Paint background and borders for a widget. Returns the content area for the widget to render into.

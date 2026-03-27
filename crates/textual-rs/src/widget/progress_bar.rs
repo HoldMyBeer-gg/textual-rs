@@ -1,7 +1,7 @@
-use std::cell::Cell;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::Widget;
@@ -63,21 +63,14 @@ impl Widget for ProgressBar {
                 // For single-row bars, half_block_cell packs two color shades into one cell.
                 let track_top = canvas::blend_color(empty_color, Color::Rgb(50, 50, 50), 0.3);
                 let track_bottom = empty_color;
-                let filled_cells = ((p.clamp(0.0, 1.0) * (area.width as f64) * 8.0).round() as usize) / 8;
+                let filled_cells =
+                    ((p.clamp(0.0, 1.0) * (area.width as f64) * 8.0).round() as usize) / 8;
                 for col in (filled_cells as u16)..area.width {
                     canvas::half_block_cell(buf, area.x + col, area.y, track_top, track_bottom);
                 }
 
                 // Overlay the eighth-block progress fill on top
-                canvas::progress_bar(
-                    buf,
-                    area.x,
-                    area.y,
-                    area.width,
-                    p,
-                    fill_color,
-                    empty_color,
-                );
+                canvas::progress_bar(buf, area.x, area.y, area.width, p, fill_color, empty_color);
             }
             None => {
                 // Indeterminate: bouncing block animation
@@ -117,8 +110,8 @@ impl ProgressBar {
         // Try to get colors from computed CSS style
         let default_fill = Color::Rgb(0, 255, 163); // accent green
         let default_empty = Color::Rgb(74, 74, 90); // muted
-        // We don't have own_id stored, so use defaults.
-        // TODO: wire up own_id to read computed style colors
+                                                    // We don't have own_id stored, so use defaults.
+                                                    // TODO: wire up own_id to read computed style colors
         let _ = ctx;
         (default_fill, default_empty)
     }

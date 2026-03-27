@@ -47,7 +47,9 @@ use crate::layout::bridge::TaffyBridge;
 use crate::layout::hit_map::MouseHitMap;
 use crate::terminal::{init_panic_hook, TerminalGuard};
 use crate::widget::context::AppContext;
-use crate::widget::tree::{advance_focus, advance_focus_backward, clear_dirty_subtree, pop_screen, push_screen};
+use crate::widget::tree::{
+    advance_focus, advance_focus_backward, clear_dirty_subtree, pop_screen, push_screen,
+};
 use crate::widget::{Widget, WidgetId};
 
 /// Root application entry point for a textual-rs TUI application.
@@ -285,7 +287,8 @@ impl App {
 
         // Create dedicated worker result channel. The sender is stored on AppContext
         // so run_worker can send results; we poll the receiver in the select! loop.
-        let (worker_tx, worker_rx) = flume::unbounded::<(WidgetId, Box<dyn std::any::Any + Send>)>();
+        let (worker_tx, worker_rx) =
+            flume::unbounded::<(WidgetId, Box<dyn std::any::Any + Send>)>();
         self.ctx.worker_tx = Some(worker_tx);
         self.worker_rx = Some(worker_rx);
 
@@ -685,7 +688,8 @@ impl App {
 
         // c. Compute layout
         let size = terminal.size()?;
-        self.bridge.compute_layout(screen_id, size.width, size.height, &self.ctx);
+        self.bridge
+            .compute_layout(screen_id, size.width, size.height, &self.ctx);
 
         // d. Clear dirty flags
         clear_dirty_subtree(screen_id, &mut self.ctx);
@@ -868,7 +872,7 @@ impl App {
 
     /// Handle a mouse event: hit-test and dispatch to target widget.
     pub fn handle_mouse_event(&mut self, m: crossterm::event::MouseEvent) {
-        use crossterm::event::{MouseEventKind, MouseButton};
+        use crossterm::event::{MouseButton, MouseEventKind};
 
         // If an overlay is active, route events to it first
         if self.ctx.active_overlay.borrow().is_some() {
@@ -889,14 +893,19 @@ impl App {
                 // Right-click: spawn context menu. Walk parent chain to find items.
                 if let Some(ref hit_map) = self.hit_map {
                     if let Some(target_id) = hit_map.hit_test(m.column, m.row) {
-                        let chain = crate::event::dispatch::collect_parent_chain(target_id, &self.ctx);
+                        let chain =
+                            crate::event::dispatch::collect_parent_chain(target_id, &self.ctx);
                         for &id in &chain {
                             if let Some(widget) = self.ctx.arena.get(id) {
                                 let items = widget.context_menu_items();
                                 if !items.is_empty() {
-                                    let overlay = crate::widget::context_menu::ContextMenuOverlay::new(
-                                        items, Some(id), m.column, m.row,
-                                    );
+                                    let overlay =
+                                        crate::widget::context_menu::ContextMenuOverlay::new(
+                                            items,
+                                            Some(id),
+                                            m.column,
+                                            m.row,
+                                        );
                                     *self.ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
                                     break;
                                 }
@@ -920,8 +929,10 @@ impl App {
                     }
                 }
             }
-            MouseEventKind::ScrollDown | MouseEventKind::ScrollUp
-            | MouseEventKind::ScrollLeft | MouseEventKind::ScrollRight => {
+            MouseEventKind::ScrollDown
+            | MouseEventKind::ScrollUp
+            | MouseEventKind::ScrollLeft
+            | MouseEventKind::ScrollRight => {
                 let action = match m.kind {
                     MouseEventKind::ScrollUp => "scroll_up",
                     MouseEventKind::ScrollDown => "scroll_down",
@@ -970,13 +981,19 @@ impl App {
             }
         }
 
-        let pushes: Vec<Box<dyn Widget>> = self.ctx.pending_screen_pushes.borrow_mut().drain(..).collect();
+        let pushes: Vec<Box<dyn Widget>> = self
+            .ctx
+            .pending_screen_pushes
+            .borrow_mut()
+            .drain(..)
+            .collect();
         for screen in pushes {
             push_screen(screen, &mut self.ctx);
         }
 
         // Process pending recompositions (e.g. tab switching)
-        let recompose_ids: Vec<WidgetId> = self.ctx.pending_recompose.borrow_mut().drain(..).collect();
+        let recompose_ids: Vec<WidgetId> =
+            self.ctx.pending_recompose.borrow_mut().drain(..).collect();
         if !recompose_ids.is_empty() {
             for id in recompose_ids {
                 crate::widget::tree::recompose_widget(id, &mut self.ctx);
@@ -1042,7 +1059,12 @@ fn collect_subtree_dfs(root: WidgetId, ctx: &AppContext) -> Vec<WidgetId> {
 }
 
 /// Walk the active screen subtree in DFS order and call each widget's render().
-fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridge, frame: &mut Frame) {
+fn render_widget_tree(
+    screen_id: WidgetId,
+    ctx: &AppContext,
+    bridge: &TaffyBridge,
+    frame: &mut Frame,
+) {
     use crate::css::types::{BorderStyle as TcssBorder, TcssColor};
 
     let buf_area = frame.area();
@@ -1069,8 +1091,8 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                     let is_hovered = ctx.hovered_widget == Some(id);
 
                     // Check widget-driven border color override (e.g. Input invalid → red)
-                    let widget_border_override = ctx.arena.get(id)
-                        .and_then(|w| w.border_color_override());
+                    let widget_border_override =
+                        ctx.arena.get(id).and_then(|w| w.border_color_override());
 
                     if let Some((r, g, b)) = widget_border_override {
                         // Widget override takes highest priority (invalid state)
@@ -1081,7 +1103,7 @@ fn render_widget_tree(screen_id: WidgetId, ctx: &AppContext, bridge: &TaffyBridg
                         // Focused widget WITH border — upgrade border color to accent
                         let mut focused_cs = cs.clone();
                         focused_cs.color = TcssColor::Rgb(0, 255, 163); // accent green
-                        // Keep tall/mcgugan borders as-is; upgrade others to heavy
+                                                                        // Keep tall/mcgugan borders as-is; upgrade others to heavy
                         if cs.border != TcssBorder::Tall && cs.border != TcssBorder::McguganBox {
                             focused_cs.border = TcssBorder::Heavy;
                         }

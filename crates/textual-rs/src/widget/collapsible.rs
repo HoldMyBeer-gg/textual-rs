@@ -1,7 +1,7 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -105,7 +105,9 @@ impl Widget for Collapsible {
         // Use get_untracked() to avoid reactive tracking loops in render
         let expanded = self.expanded.get_untracked();
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -114,7 +116,8 @@ impl Widget for Collapsible {
         let arrow_style = style.fg(ratatui::style::Color::Rgb(0, 255, 163));
         buf.set_string(area.x, area.y, arrow, arrow_style);
         if area.width > 2 {
-            let title_display: String = self.title.chars().take((area.width - 2) as usize).collect();
+            let title_display: String =
+                self.title.chars().take((area.width - 2) as usize).collect();
             let title_style = style.add_modifier(ratatui::style::Modifier::BOLD);
             buf.set_string(area.x + 2, area.y, &title_display, title_style);
         }

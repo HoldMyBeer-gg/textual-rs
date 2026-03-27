@@ -1,11 +1,11 @@
-use std::cell::{Cell, RefCell};
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
+use std::cell::{Cell, RefCell};
 
-use super::registry::{Command, fuzzy_score};
+use super::registry::{fuzzy_score, Command};
 use crate::event::keybinding::KeyBinding;
 use crate::widget::context::AppContext;
 use crate::widget::{EventPropagation, Widget, WidgetId};
@@ -45,7 +45,8 @@ impl CommandPalette {
             return self.commands.iter().collect();
         }
         let threshold = 0.3_f64;
-        let mut scored: Vec<(&Command, f64)> = self.commands
+        let mut scored: Vec<(&Command, f64)> = self
+            .commands
             .iter()
             .filter_map(|cmd| {
                 let score = fuzzy_score(&query, &cmd.name);
@@ -154,11 +155,11 @@ impl Widget for CommandPalette {
         }
 
         // Colors
-        let cyan = Color::Rgb(0, 212, 255);     // #00d4ff
-        let green = Color::Rgb(0, 255, 163);    // #00ffa3
-        let dark = Color::Rgb(10, 10, 15);      // #0a0a0f
-        let muted = Color::Rgb(74, 74, 90);     // #4a4a5a
-        let bg = Color::Rgb(18, 18, 26);        // #12121a
+        let cyan = Color::Rgb(0, 212, 255); // #00d4ff
+        let green = Color::Rgb(0, 255, 163); // #00ffa3
+        let dark = Color::Rgb(10, 10, 15); // #0a0a0f
+        let muted = Color::Rgb(74, 74, 90); // #4a4a5a
+        let bg = Color::Rgb(18, 18, 26); // #12121a
         let normal = Color::Rgb(200, 200, 216); // ~#c8c8d8
 
         let _bg_style = Style::default().bg(bg);
@@ -171,7 +172,16 @@ impl Widget for CommandPalette {
 
         // Draw McGugan box border
         let border_color = Color::Rgb(0, 212, 255);
-        crate::canvas::mcgugan_box(buf, px, py, panel_w, panel_h, border_color, bg, Color::Reset);
+        crate::canvas::mcgugan_box(
+            buf,
+            px,
+            py,
+            panel_w,
+            panel_h,
+            border_color,
+            bg,
+            Color::Reset,
+        );
 
         // Fill inside
         for y in (py + 1)..(py + panel_h - 1) {

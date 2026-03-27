@@ -15,10 +15,10 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 
-use textual_rs::{App, Widget, Button, ButtonVariant, Label, Header, Footer};
+use textual_rs::reactive::Reactive;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::{EventPropagation, WidgetId};
-use textual_rs::reactive::Reactive;
+use textual_rs::{App, Button, ButtonVariant, Footer, Header, Label, Widget};
 
 // WorkerResult<T> is the message delivered to on_event() when a worker completes.
 // T is whatever type the worker's future returns.
@@ -79,7 +79,9 @@ struct WorkerDemo {
 impl WorkerDemo {
     fn new() -> Self {
         Self {
-            status: Reactive::new(String::from("Press 'Start Worker' to run a background task.")),
+            status: Reactive::new(String::from(
+                "Press 'Start Worker' to run a background task.",
+            )),
             loading: Reactive::new(false),
             own_id: Cell::new(None),
         }
@@ -87,15 +89,13 @@ impl WorkerDemo {
 }
 
 // Key binding to start the worker manually (pressing 's').
-static WORKER_BINDINGS: &[KeyBinding] = &[
-    KeyBinding {
-        key: KeyCode::Char('s'),
-        modifiers: KeyModifiers::NONE,
-        action: "start_worker",
-        description: "Start Worker",
-        show: true,
-    },
-];
+static WORKER_BINDINGS: &[KeyBinding] = &[KeyBinding {
+    key: KeyCode::Char('s'),
+    modifiers: KeyModifiers::NONE,
+    action: "start_worker",
+    description: "Start Worker",
+    show: true,
+}];
 
 impl Widget for WorkerDemo {
     fn widget_type_name(&self) -> &'static str {
@@ -140,8 +140,12 @@ impl Widget for WorkerDemo {
         vec![
             Box::new(Label::new("Background Worker Demo")),
             Box::new(Label::new("")),
-            Box::new(Label::new("Workers run async tasks without blocking the UI.")),
-            Box::new(Label::new("The event loop stays responsive while work happens.")),
+            Box::new(Label::new(
+                "Workers run async tasks without blocking the UI.",
+            )),
+            Box::new(Label::new(
+                "The event loop stays responsive while work happens.",
+            )),
             Box::new(Label::new("")),
             Box::new(Button::new("Start Worker").with_variant(ButtonVariant::Primary)),
         ]
@@ -162,7 +166,9 @@ impl Widget for WorkerDemo {
             format!("Result: {}", status)
         };
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 

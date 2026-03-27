@@ -12,10 +12,10 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 
-use textual_rs::{App, Widget, Input, Label, Header, Footer};
 use textual_rs::widget::context::AppContext;
-use textual_rs::widget::{EventPropagation, WidgetId};
 use textual_rs::widget::input::messages::Changed;
+use textual_rs::widget::{EventPropagation, WidgetId};
+use textual_rs::{App, Footer, Header, Input, Label, Widget};
 
 // Reactive<T> wraps a value and notifies the framework when it changes,
 // triggering a re-render automatically. Import from the reactive module.
@@ -124,7 +124,9 @@ impl Widget for EchoWidget {
         let label = format!("You typed: {}", current);
         let display: String = label.chars().take(area.width as usize).collect();
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 

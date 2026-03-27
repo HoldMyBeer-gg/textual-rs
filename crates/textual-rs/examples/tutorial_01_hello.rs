@@ -62,7 +62,8 @@ impl Widget for HelloScreen {
 
         // Inherit the current style from the buffer cell at our position.
         // This picks up any background/foreground color set by the CSS engine.
-        let style = buf.cell((area.x, area.y))
+        let style = buf
+            .cell((area.x, area.y))
             .map(|c| c.style())
             .unwrap_or_default();
 

@@ -55,18 +55,20 @@ mod style_map_tests {
 
 #[cfg(test)]
 mod bridge_tests {
-    use ratatui::layout::Rect;
     use crate::css::types::*;
     use crate::layout::bridge::TaffyBridge;
     use crate::widget::context::AppContext;
-    use crate::widget::tree::{mount_widget, clear_dirty_subtree};
+    use crate::widget::tree::{clear_dirty_subtree, mount_widget};
     use crate::widget::{Widget, WidgetId};
     use ratatui::buffer::Buffer;
+    use ratatui::layout::Rect;
 
     struct TestWidget;
     impl Widget for TestWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "TestWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "TestWidget"
+        }
     }
 
     fn make_widget() -> Box<dyn Widget> {
@@ -122,8 +124,24 @@ mod bridge_tests {
         let r1 = bridge.rect_for(child1).expect("child1 should have rect");
         let r2 = bridge.rect_for(child2).expect("child2 should have rect");
 
-        assert_eq!(r1, Rect { x: 0, y: 0, width: 80, height: 12 });
-        assert_eq!(r2, Rect { x: 0, y: 12, width: 80, height: 12 });
+        assert_eq!(
+            r1,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 80,
+                height: 12
+            }
+        );
+        assert_eq!(
+            r2,
+            Rect {
+                x: 0,
+                y: 12,
+                width: 80,
+                height: 12
+            }
+        );
     }
 
     #[test]
@@ -140,9 +158,30 @@ mod bridge_tests {
         let screen = mount_with_style(&mut ctx, None, screen_style);
 
         // 3 children with flex_grow 1, 2, 1 → widths 20, 40, 20
-        let c1 = mount_with_style(&mut ctx, Some(screen), ComputedStyle { flex_grow: 1.0, ..Default::default() });
-        let c2 = mount_with_style(&mut ctx, Some(screen), ComputedStyle { flex_grow: 2.0, ..Default::default() });
-        let c3 = mount_with_style(&mut ctx, Some(screen), ComputedStyle { flex_grow: 1.0, ..Default::default() });
+        let c1 = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                flex_grow: 1.0,
+                ..Default::default()
+            },
+        );
+        let c2 = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                flex_grow: 2.0,
+                ..Default::default()
+            },
+        );
+        let c3 = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                flex_grow: 1.0,
+                ..Default::default()
+            },
+        );
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
@@ -169,8 +208,14 @@ mod bridge_tests {
             display: TcssDisplay::Grid,
             width: TcssDimension::Length(80.0),
             height: TcssDimension::Length(24.0),
-            grid_columns: Some(vec![TcssDimension::Fraction(1.0), TcssDimension::Fraction(1.0)]),
-            grid_rows: Some(vec![TcssDimension::Fraction(1.0), TcssDimension::Fraction(1.0)]),
+            grid_columns: Some(vec![
+                TcssDimension::Fraction(1.0),
+                TcssDimension::Fraction(1.0),
+            ]),
+            grid_rows: Some(vec![
+                TcssDimension::Fraction(1.0),
+                TcssDimension::Fraction(1.0),
+            ]),
             ..Default::default()
         };
         let screen = mount_with_style(&mut ctx, None, screen_style);
@@ -191,10 +236,42 @@ mod bridge_tests {
         let r4 = bridge.rect_for(c4).expect("c4 rect");
 
         // 2 columns: each 40 wide. 2 rows: each 12 tall.
-        assert_eq!(r1, Rect { x: 0, y: 0, width: 40, height: 12 });
-        assert_eq!(r2, Rect { x: 40, y: 0, width: 40, height: 12 });
-        assert_eq!(r3, Rect { x: 0, y: 12, width: 40, height: 12 });
-        assert_eq!(r4, Rect { x: 40, y: 12, width: 40, height: 12 });
+        assert_eq!(
+            r1,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 12
+            }
+        );
+        assert_eq!(
+            r2,
+            Rect {
+                x: 40,
+                y: 0,
+                width: 40,
+                height: 12
+            }
+        );
+        assert_eq!(
+            r3,
+            Rect {
+                x: 0,
+                y: 12,
+                width: 40,
+                height: 12
+            }
+        );
+        assert_eq!(
+            r4,
+            Rect {
+                x: 40,
+                y: 12,
+                width: 40,
+                height: 12
+            }
+        );
     }
 
     #[test]
@@ -231,7 +308,15 @@ mod bridge_tests {
         bridge.compute_layout(screen, 80, 24, &ctx);
 
         let header_rect = bridge.rect_for(header).expect("header rect");
-        assert_eq!(header_rect, Rect { x: 0, y: 0, width: 80, height: 1 });
+        assert_eq!(
+            header_rect,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 80,
+                height: 1
+            }
+        );
     }
 
     #[test]
@@ -247,15 +332,23 @@ mod bridge_tests {
         let screen = mount_with_style(&mut ctx, None, screen_style);
 
         // fixed: 20 wide
-        let fixed = mount_with_style(&mut ctx, Some(screen), ComputedStyle {
-            width: TcssDimension::Length(20.0),
-            ..Default::default()
-        });
+        let fixed = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                width: TcssDimension::Length(20.0),
+                ..Default::default()
+            },
+        );
         // auto: fills remainder with flex_grow
-        let auto_fill = mount_with_style(&mut ctx, Some(screen), ComputedStyle {
-            flex_grow: 1.0,
-            ..Default::default()
-        });
+        let auto_fill = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                flex_grow: 1.0,
+                ..Default::default()
+            },
+        );
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
@@ -280,10 +373,14 @@ mod bridge_tests {
         };
         let screen = mount_with_style(&mut ctx, None, screen_style);
 
-        let child = mount_with_style(&mut ctx, Some(screen), ComputedStyle {
-            width: TcssDimension::Percent(50.0),
-            ..Default::default()
-        });
+        let child = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                width: TcssDimension::Percent(50.0),
+                ..Default::default()
+            },
+        );
 
         let mut bridge = TaffyBridge::new();
         bridge.sync_subtree(screen, &ctx);
@@ -305,10 +402,14 @@ mod bridge_tests {
         };
         let screen = mount_with_style(&mut ctx, None, screen_style);
 
-        let child = mount_with_style(&mut ctx, Some(screen), ComputedStyle {
-            flex_grow: 1.0,
-            ..Default::default()
-        });
+        let child = mount_with_style(
+            &mut ctx,
+            Some(screen),
+            ComputedStyle {
+                flex_grow: 1.0,
+                ..Default::default()
+            },
+        );
 
         let mut bridge = TaffyBridge::new();
 
@@ -342,18 +443,20 @@ mod bridge_tests {
 
 #[cfg(test)]
 mod hit_map_tests {
-    use std::collections::HashMap;
-    use ratatui::layout::Rect;
+    use crate::layout::hit_map::MouseHitMap;
     use crate::widget::context::AppContext;
     use crate::widget::tree::mount_widget;
     use crate::widget::{Widget, WidgetId};
-    use crate::layout::hit_map::MouseHitMap;
     use ratatui::buffer::Buffer;
+    use ratatui::layout::Rect;
+    use std::collections::HashMap;
 
     struct TestWidget;
     impl Widget for TestWidget {
         fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { "TestWidget" }
+        fn widget_type_name(&self) -> &'static str {
+            "TestWidget"
+        }
     }
 
     fn make_ctx_with_two_widgets() -> (AppContext, WidgetId, WidgetId) {
@@ -367,8 +470,24 @@ mod hit_map_tests {
     fn hit_test_returns_correct_widget_for_cell_inside_rect() {
         let (_, w1, w2) = make_ctx_with_two_widgets();
         let mut cache: HashMap<WidgetId, Rect> = HashMap::new();
-        cache.insert(w1, Rect { x: 0, y: 0, width: 40, height: 12 });
-        cache.insert(w2, Rect { x: 40, y: 0, width: 40, height: 12 });
+        cache.insert(
+            w1,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 12,
+            },
+        );
+        cache.insert(
+            w2,
+            Rect {
+                x: 40,
+                y: 0,
+                width: 40,
+                height: 12,
+            },
+        );
 
         let order = vec![w1, w2];
         let hit_map = MouseHitMap::build(&order, &cache);
@@ -386,7 +505,15 @@ mod hit_map_tests {
     fn hit_test_returns_none_outside_all_rects() {
         let (_, w1, _w2) = make_ctx_with_two_widgets();
         let mut cache: HashMap<WidgetId, Rect> = HashMap::new();
-        cache.insert(w1, Rect { x: 0, y: 0, width: 40, height: 12 });
+        cache.insert(
+            w1,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 12,
+            },
+        );
 
         let order = vec![w1];
         let hit_map = MouseHitMap::build(&order, &cache);
@@ -402,8 +529,24 @@ mod hit_map_tests {
         let (_, w1, w2) = make_ctx_with_two_widgets();
         let mut cache: HashMap<WidgetId, Rect> = HashMap::new();
         // Both occupy same area — w2 is later in DFS so it wins
-        cache.insert(w1, Rect { x: 0, y: 0, width: 40, height: 12 });
-        cache.insert(w2, Rect { x: 0, y: 0, width: 40, height: 12 });
+        cache.insert(
+            w1,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 12,
+            },
+        );
+        cache.insert(
+            w2,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 12,
+            },
+        );
 
         let order = vec![w1, w2]; // w2 is later
         let hit_map = MouseHitMap::build(&order, &cache);

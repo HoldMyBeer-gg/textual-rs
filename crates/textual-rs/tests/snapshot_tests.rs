@@ -12,7 +12,12 @@ struct GreetingWidget;
 
 impl Widget for GreetingWidget {
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        buf.set_string(area.x, area.y, "Hello, World!", ratatui::style::Style::default());
+        buf.set_string(
+            area.x,
+            area.y,
+            "Hello, World!",
+            ratatui::style::Style::default(),
+        );
     }
     fn widget_type_name(&self) -> &'static str {
         "GreetingWidget"

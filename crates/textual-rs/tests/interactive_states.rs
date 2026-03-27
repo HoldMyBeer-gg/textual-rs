@@ -7,11 +7,11 @@
 
 use crossterm::event::KeyCode;
 use ratatui::{buffer::Buffer, layout::Rect, style::Modifier};
+use textual_rs::css::types::PseudoClass;
 use textual_rs::testing::TestApp;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::WidgetId;
 use textual_rs::{Button, Input, ListView, Widget};
-use textual_rs::css::types::PseudoClass;
 
 // ---------------------------------------------------------------------------
 // Helper screens
@@ -21,7 +21,9 @@ use textual_rs::css::types::PseudoClass;
 struct ButtonScreen;
 impl Widget for ButtonScreen {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "ButtonScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "ButtonScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(Button::new("OK"))]
     }
@@ -31,12 +33,13 @@ impl Widget for ButtonScreen {
 struct ValidatedInputScreen;
 impl Widget for ValidatedInputScreen {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "ValidatedInputScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "ValidatedInputScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
-        vec![Box::new(
-            Input::new("Type a letter...")
-                .with_validator(|s: &str| s.is_empty() || s.chars().next().map_or(false, |c| c.is_alphabetic())),
-        )]
+        vec![Box::new(Input::new("Type a letter...").with_validator(
+            |s: &str| s.is_empty() || s.chars().next().map_or(false, |c| c.is_alphabetic()),
+        ))]
     }
 }
 
@@ -44,7 +47,9 @@ impl Widget for ValidatedInputScreen {
 struct TwoWidgetScreen;
 impl Widget for TwoWidgetScreen {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "TwoWidgetScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "TwoWidgetScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Button::new("First")),
@@ -57,7 +62,9 @@ impl Widget for TwoWidgetScreen {
 struct ListScreen;
 impl Widget for ListScreen {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "ListScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "ListScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(ListView::new(vec![
             "Alpha".into(),
@@ -71,7 +78,9 @@ impl Widget for ListScreen {
 struct FocusableButtonScreen;
 impl Widget for FocusableButtonScreen {
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-    fn widget_type_name(&self) -> &'static str { "FocusableButtonScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "FocusableButtonScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(Button::new("Focus Me"))]
     }
@@ -103,7 +112,10 @@ fn button_press_shows_reversed_modifier() {
     )));
 
     // Verify button is focused
-    assert!(test_app.ctx().focused_widget.is_some(), "Button should be focused after Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Button should be focused after Tab"
+    );
 
     // Press Space to trigger "press" action
     test_app.process_event(textual_rs::AppEvent::Key(crossterm::event::KeyEvent::new(
@@ -211,11 +223,17 @@ fn hover_sets_pseudo_class_on_hovered_widget() {
     let mut test_app = TestApp::new_styled(40, 10, "", || Box::new(TwoWidgetScreen));
 
     // Find one of the button widget IDs
-    let button_ids: Vec<WidgetId> = test_app.ctx().arena.iter()
+    let button_ids: Vec<WidgetId> = test_app
+        .ctx()
+        .arena
+        .iter()
         .filter(|(_, w)| w.widget_type_name() == "Button")
         .map(|(id, _)| id)
         .collect();
-    assert!(button_ids.len() >= 2, "Should have at least 2 Button widgets");
+    assert!(
+        button_ids.len() >= 2,
+        "Should have at least 2 Button widgets"
+    );
 
     // Simulate a mouse move event. We need to trigger handle_mouse_event with Moved.
     // The TestApp processes mouse events through process_event.
@@ -277,7 +295,10 @@ fn focused_widget_shows_accent_border() {
         crossterm::event::KeyModifiers::NONE,
     )));
 
-    assert!(test_app.ctx().focused_widget.is_some(), "Should have focus after Tab");
+    assert!(
+        test_app.ctx().focused_widget.is_some(),
+        "Should have focus after Tab"
+    );
 
     // The focused button should have accent green (0, 255, 163) border.
     // Check the buffer for cells with the accent green foreground color.
@@ -292,7 +313,9 @@ fn focused_widget_shows_accent_border() {
                 break;
             }
         }
-        if found_accent { break; }
+        if found_accent {
+            break;
+        }
     }
     assert!(
         found_accent,
@@ -321,12 +344,17 @@ fn listview_selected_item_accent_bold() {
     for y in 0..buf.area.height {
         for x in 0..buf.area.width {
             let cell = &buf[(x, y)];
-            if cell.symbol() == "A" && cell.fg == accent_green && cell.modifier.contains(Modifier::BOLD) {
+            if cell.symbol() == "A"
+                && cell.fg == accent_green
+                && cell.modifier.contains(Modifier::BOLD)
+            {
                 found_accent_bold = true;
                 break;
             }
         }
-        if found_accent_bold { break; }
+        if found_accent_bold {
+            break;
+        }
     }
     assert!(
         found_accent_bold,

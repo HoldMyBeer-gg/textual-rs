@@ -1,3 +1,4 @@
+use ratatui::{buffer::Buffer, layout::Rect};
 /// Integration tests for the textual-rs-macros proc-macro crate.
 ///
 /// Tests verify that #[derive(Widget)] and #[widget_impl] work correctly:
@@ -8,9 +9,8 @@
 /// - #[keybinding("key", "action")] wires key_bindings and on_action
 use std::any::Any;
 use std::cell::Cell;
-use ratatui::{buffer::Buffer, layout::Rect};
 use textual_rs::widget::context::AppContext;
-use textual_rs::widget::{Widget, WidgetId, EventPropagation};
+use textual_rs::widget::{EventPropagation, Widget, WidgetId};
 
 // ---------------------------------------------------------------------------
 // Test 1: Basic derive + widget_impl generates widget_type_name and on_mount
@@ -50,7 +50,9 @@ fn derive_widget_on_mount_sets_id() {
 
     // Create a minimal context and insert a widget to get a valid WidgetId
     let mut ctx = AppContext::new();
-    let id = ctx.arena.insert(Box::new(BasicWidget::new()) as Box<dyn Widget>);
+    let id = ctx
+        .arena
+        .insert(Box::new(BasicWidget::new()) as Box<dyn Widget>);
 
     w.on_mount(id);
     assert_eq!(w.own_id.get(), Some(id));
@@ -184,7 +186,10 @@ fn keybinding_dispatch() {
     // Call on_action with the right action
     assert!(!w.action_called.get());
     w.on_action("submit", &ctx);
-    assert!(w.action_called.get(), "on_action('submit') should have called handle_submit");
+    assert!(
+        w.action_called.get(),
+        "on_action('submit') should have called handle_submit"
+    );
 
     // Unknown action should be a no-op
     w.action_called.set(false);
@@ -233,8 +238,12 @@ fn manual_override_not_duplicated() {
 // Test 6: Multiple #[on(T)] annotations on the same widget
 // ---------------------------------------------------------------------------
 
-struct Msg1 { v: i32 }
-struct Msg2 { v: i32 }
+struct Msg1 {
+    v: i32,
+}
+struct Msg2 {
+    v: i32,
+}
 
 #[derive(textual_rs::Widget)]
 struct MultiEventWidget {

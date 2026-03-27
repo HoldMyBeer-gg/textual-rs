@@ -1,5 +1,5 @@
-use taffy::prelude::*;
 use crate::css::types::*;
+use taffy::prelude::*;
 
 /// Convert a `ComputedStyle` (TCSS) to a `taffy::Style`.
 ///
@@ -14,10 +14,14 @@ pub fn taffy_style_from_computed(s: &ComputedStyle) -> taffy::Style {
     // expands in its parent's flex container instead of collapsing to zero.
     let mut flex_grow = s.flex_grow;
     if let TcssDimension::Fraction(n) = s.width {
-        if flex_grow == 0.0 { flex_grow = n; }
+        if flex_grow == 0.0 {
+            flex_grow = n;
+        }
     }
     if let TcssDimension::Fraction(n) = s.height {
-        if flex_grow == 0.0 { flex_grow = n; }
+        if flex_grow == 0.0 {
+            flex_grow = n;
+        }
     }
 
     taffy::Style {
@@ -89,12 +93,16 @@ fn tcss_dim_to_dimension(d: TcssDimension) -> Dimension {
 fn tcss_dim_to_track(d: &TcssDimension) -> TrackSizingFunction {
     match *d {
         TcssDimension::Fraction(n) => TrackSizingFunction::from_fr(n),
-        TcssDimension::Length(n) => {
-            minmax(MinTrackSizingFunction::length(n), MaxTrackSizingFunction::length(n))
-        }
+        TcssDimension::Length(n) => minmax(
+            MinTrackSizingFunction::length(n),
+            MaxTrackSizingFunction::length(n),
+        ),
         TcssDimension::Percent(p) => {
             let frac = p / 100.0;
-            minmax(MinTrackSizingFunction::percent(frac), MaxTrackSizingFunction::percent(frac))
+            minmax(
+                MinTrackSizingFunction::percent(frac),
+                MaxTrackSizingFunction::percent(frac),
+            )
         }
         TcssDimension::Auto => TrackSizingFunction::AUTO,
     }

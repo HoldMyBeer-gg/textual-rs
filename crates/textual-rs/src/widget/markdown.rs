@@ -1,8 +1,8 @@
-use std::cell::RefCell;
+use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd, CodeBlockKind};
+use std::cell::RefCell;
 
 use super::context::AppContext;
 use super::Widget;
@@ -186,7 +186,8 @@ impl MdParseState {
             Event::Start(Tag::Link { dest_url, .. }) => {
                 self.link_url = dest_url.to_string();
                 self.style_stack.push(self.current_style);
-                self.current_style = self.current_style
+                self.current_style = self
+                    .current_style
                     .fg(Color::Rgb(0, 178, 214))
                     .add_modifier(Modifier::UNDERLINED);
             }
@@ -258,24 +259,49 @@ impl MdParseState {
 fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
     let keywords: &[&str] = match language {
         "rust" | "rs" => &[
-            "fn", "let", "mut", "pub", "struct", "enum", "impl", "use", "mod",
-            "match", "if", "else", "for", "while", "return", "self", "Self",
-            "async", "await", "trait", "where", "type", "const", "static",
-            "crate", "super", "true", "false", "loop", "break", "continue",
-            "as", "in", "ref", "move",
+            "fn", "let", "mut", "pub", "struct", "enum", "impl", "use", "mod", "match", "if",
+            "else", "for", "while", "return", "self", "Self", "async", "await", "trait", "where",
+            "type", "const", "static", "crate", "super", "true", "false", "loop", "break",
+            "continue", "as", "in", "ref", "move",
         ],
         "python" | "py" => &[
-            "def", "class", "import", "from", "return", "if", "else", "elif",
-            "for", "while", "with", "as", "try", "except", "raise", "yield",
-            "async", "await", "True", "False", "None", "and", "or", "not",
-            "in", "is", "lambda", "pass", "break", "continue",
+            "def", "class", "import", "from", "return", "if", "else", "elif", "for", "while",
+            "with", "as", "try", "except", "raise", "yield", "async", "await", "True", "False",
+            "None", "and", "or", "not", "in", "is", "lambda", "pass", "break", "continue",
         ],
         "javascript" | "js" | "typescript" | "ts" => &[
-            "function", "const", "let", "var", "return", "if", "else", "for",
-            "while", "class", "import", "export", "from", "async", "await",
-            "new", "this", "true", "false", "null", "undefined", "typeof",
-            "instanceof", "switch", "case", "default", "break", "continue",
-            "throw", "try", "catch", "finally",
+            "function",
+            "const",
+            "let",
+            "var",
+            "return",
+            "if",
+            "else",
+            "for",
+            "while",
+            "class",
+            "import",
+            "export",
+            "from",
+            "async",
+            "await",
+            "new",
+            "this",
+            "true",
+            "false",
+            "null",
+            "undefined",
+            "typeof",
+            "instanceof",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "throw",
+            "try",
+            "catch",
+            "finally",
         ],
         _ => &[],
     };
@@ -289,24 +315,24 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
         .fg(Color::Rgb(255, 166, 43))
         .bg(bg)
         .add_modifier(Modifier::BOLD);
-    let string_style = Style::default()
-        .fg(Color::Rgb(78, 191, 113))
-        .bg(bg);
-    let comment_style = Style::default()
-        .fg(Color::Rgb(100, 100, 120))
-        .bg(bg);
-    let default_style = Style::default()
-        .fg(Color::Rgb(180, 180, 200))
-        .bg(bg);
+    let string_style = Style::default().fg(Color::Rgb(78, 191, 113)).bg(bg);
+    let comment_style = Style::default().fg(Color::Rgb(100, 100, 120)).bg(bg);
+    let default_style = Style::default().fg(Color::Rgb(180, 180, 200)).bg(bg);
 
     // If the line (trimmed) starts with a comment prefix, highlight the whole line as comment
     let trimmed = line.trim_start();
     if trimmed.starts_with(comment_prefix) {
-        return vec![StyledSpan { text: line.to_string(), style: comment_style }];
+        return vec![StyledSpan {
+            text: line.to_string(),
+            style: comment_style,
+        }];
     }
 
     if keywords.is_empty() {
-        return vec![StyledSpan { text: line.to_string(), style: default_style }];
+        return vec![StyledSpan {
+            text: line.to_string(),
+            style: default_style,
+        }];
     }
 
     let mut spans = Vec::new();
@@ -340,7 +366,10 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
                     i += 1;
                 }
             }
-            spans.push(StyledSpan { text: s, style: string_style });
+            spans.push(StyledSpan {
+                text: s,
+                style: string_style,
+            });
             continue;
         }
 
@@ -351,7 +380,10 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
                 current.clear();
             }
             let rest: String = chars[i..].iter().collect();
-            spans.push(StyledSpan { text: rest, style: comment_style });
+            spans.push(StyledSpan {
+                text: rest,
+                style: comment_style,
+            });
             return spans;
         }
 
@@ -362,7 +394,10 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
                 current.clear();
             }
             let rest: String = chars[i..].iter().collect();
-            spans.push(StyledSpan { text: rest, style: comment_style });
+            spans.push(StyledSpan {
+                text: rest,
+                style: comment_style,
+            });
             return spans;
         }
 
@@ -372,7 +407,10 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
                 flush_word_buffer(&current, keywords, keyword_style, default_style, &mut spans);
                 current.clear();
             }
-            spans.push(StyledSpan { text: ch.to_string(), style: default_style });
+            spans.push(StyledSpan {
+                text: ch.to_string(),
+                style: default_style,
+            });
         } else {
             current.push(ch);
         }
@@ -400,7 +438,10 @@ fn flush_word_buffer(
     } else {
         default_style
     };
-    spans.push(StyledSpan { text: word.to_string(), style });
+    spans.push(StyledSpan {
+        text: word.to_string(),
+        style,
+    });
 }
 
 /// A widget that renders CommonMark Markdown content using pulldown-cmark.

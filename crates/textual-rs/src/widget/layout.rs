@@ -11,7 +11,9 @@ pub struct Vertical {
 
 impl Vertical {
     pub fn new() -> Self {
-        Self { children: Vec::new() }
+        Self {
+            children: Vec::new(),
+        }
     }
 
     pub fn with_children(children: Vec<Box<dyn Widget>>) -> Self {
@@ -59,7 +61,9 @@ pub struct Horizontal {
 
 impl Horizontal {
     pub fn new() -> Self {
-        Self { children: Vec::new() }
+        Self {
+            children: Vec::new(),
+        }
     }
 
     pub fn with_children(children: Vec<Box<dyn Widget>>) -> Self {

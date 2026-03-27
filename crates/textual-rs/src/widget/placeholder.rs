@@ -15,7 +15,9 @@ impl Placeholder {
     }
 
     pub fn with_label(label: impl Into<String>) -> Self {
-        Self { label: Some(label.into()) }
+        Self {
+            label: Some(label.into()),
+        }
     }
 }
 
@@ -48,7 +50,10 @@ impl Widget for Placeholder {
             return;
         }
 
-        let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let base_style = buf
+            .cell((area.x, area.y))
+            .map(|c| c.style())
+            .unwrap_or_default();
         let hatch_fg = Color::Rgb(40, 40, 55);
         let hatch_bg = base_style.bg.unwrap_or(Color::Rgb(20, 20, 30));
 
@@ -59,7 +64,11 @@ impl Widget for Placeholder {
         let pattern_b: u8 = 0b0110; // diagonal: top-right + bottom-left
         for row in 0..area.height {
             for col in 0..area.width {
-                let pattern = if (row + col) % 2 == 0 { pattern_a } else { pattern_b };
+                let pattern = if (row + col) % 2 == 0 {
+                    pattern_a
+                } else {
+                    pattern_b
+                };
                 crate::canvas::quadrant_cell(
                     buf,
                     area.x + col,
@@ -79,15 +88,17 @@ impl Widget for Placeholder {
             .fg(Color::Rgb(140, 140, 160))
             .bg(hatch_bg)
             .add_modifier(Modifier::BOLD);
-        let dim_style = Style::default()
-            .fg(Color::Rgb(90, 90, 110))
-            .bg(hatch_bg);
+        let dim_style = Style::default().fg(Color::Rgb(90, 90, 110)).bg(hatch_bg);
 
         let mid_y = area.y + area.height / 2;
 
         let center_x = |text: &str| -> u16 {
             let len = text.chars().count() as u16;
-            if area.width > len { area.x + (area.width - len) / 2 } else { area.x }
+            if area.width > len {
+                area.x + (area.width - len) / 2
+            } else {
+                area.x
+            }
         };
 
         if area.height == 1 {

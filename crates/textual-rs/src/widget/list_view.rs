@@ -1,8 +1,8 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
@@ -137,12 +137,13 @@ impl Widget for ListView {
 
     fn context_menu_items(&self) -> Vec<super::context_menu::ContextMenuItem> {
         vec![
-            super::context_menu::ContextMenuItem::new("Copy Selected", "copy_selected").with_shortcut("Ctrl+C"),
+            super::context_menu::ContextMenuItem::new("Copy Selected", "copy_selected")
+                .with_shortcut("Ctrl+C"),
         ]
     }
 
     fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> super::EventPropagation {
-        use crossterm::event::{MouseEvent, MouseEventKind, MouseButton};
+        use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
         if let Some(m) = event.downcast_ref::<MouseEvent>() {
             if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
                 let local_row = m.row.saturating_sub(self.last_area_y.get()) as usize;
@@ -154,7 +155,13 @@ impl Widget for ListView {
                         ctx.post_message(id, messages::Highlighted { index: item_idx });
                         // Also fire Selected on click (single click = select)
                         let value = self.items[item_idx].clone();
-                        ctx.post_message(id, messages::Selected { index: item_idx, value });
+                        ctx.post_message(
+                            id,
+                            messages::Selected {
+                                index: item_idx,
+                                value,
+                            },
+                        );
                     }
                     return super::EventPropagation::Stop;
                 }
@@ -179,7 +186,12 @@ impl Widget for ListView {
                     if new_selected < offset {
                         self.scroll_offset.set(new_selected);
                     }
-                    ctx.post_message(id, messages::Highlighted { index: new_selected });
+                    ctx.post_message(
+                        id,
+                        messages::Highlighted {
+                            index: new_selected,
+                        },
+                    );
                 }
             }
             "cursor_down" => {
@@ -190,13 +202,24 @@ impl Widget for ListView {
                     if viewport_h > 0 && new_selected >= offset + viewport_h {
                         self.scroll_offset.set(new_selected - viewport_h + 1);
                     }
-                    ctx.post_message(id, messages::Highlighted { index: new_selected });
+                    ctx.post_message(
+                        id,
+                        messages::Highlighted {
+                            index: new_selected,
+                        },
+                    );
                 }
             }
             "select" => {
                 if count > 0 {
                     let value = self.items[current].clone();
-                    ctx.post_message(id, messages::Selected { index: current, value });
+                    ctx.post_message(
+                        id,
+                        messages::Selected {
+                            index: current,
+                            value,
+                        },
+                    );
                 }
             }
             "cursor_home" => {
@@ -238,7 +261,9 @@ impl Widget for ListView {
         }
         self.last_area_y.set(area.y);
 
-        let style = self.own_id.get()
+        let style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -257,8 +282,15 @@ impl Widget for ListView {
             let is_selected = item_idx == selected;
 
             // Reserve last column for scrollbar
-            let text_width = if area.width > 1 { area.width - 1 } else { area.width };
-            let item_text: String = self.items[item_idx].chars().take(text_width as usize).collect();
+            let text_width = if area.width > 1 {
+                area.width - 1
+            } else {
+                area.width
+            };
+            let item_text: String = self.items[item_idx]
+                .chars()
+                .take(text_width as usize)
+                .collect();
 
             // Pad to text_width so selection highlight covers the whole row
             let padded = format!("{:<width$}", item_text, width = text_width as usize);

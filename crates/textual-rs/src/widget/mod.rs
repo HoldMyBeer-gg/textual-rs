@@ -1,34 +1,34 @@
-pub mod context;
-pub mod context_menu;
-pub mod tree;
-pub mod label;
 pub mod button;
 pub mod checkbox;
-pub mod switch;
-pub mod input;
-pub mod radio;
-pub mod text_area;
-pub mod select;
-pub mod layout;
-pub mod header;
+pub mod collapsible;
+pub mod context;
+pub mod context_menu;
+pub mod data_table;
 pub mod footer;
-pub mod placeholder;
-pub mod progress_bar;
-pub mod sparkline;
+pub mod header;
+pub mod input;
+pub mod label;
+pub mod layout;
 pub mod list_view;
 pub mod log;
-pub mod scroll_view;
-pub mod data_table;
-pub mod tree_view;
-pub mod tabs;
-pub mod collapsible;
 pub mod markdown;
+pub mod placeholder;
+pub mod progress_bar;
+pub mod radio;
+pub mod scroll_view;
+pub mod select;
+pub mod sparkline;
+pub mod switch;
+pub mod tabs;
+pub mod text_area;
+pub mod tree;
+pub mod tree_view;
 
+use crate::event::keybinding::KeyBinding;
+use context::AppContext;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use slotmap::new_key_type;
-use context::AppContext;
-use crate::event::keybinding::KeyBinding;
 
 /// Unique identifier for a widget in the arena (slotmap generational index).
 /// Passed to `on_mount`, `on_action`, `post_message`, and `run_worker`.

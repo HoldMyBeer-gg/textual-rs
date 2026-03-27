@@ -33,7 +33,10 @@ impl Widget for Footer {
             return;
         }
 
-        let base_style = buf.cell((area.x, area.y)).map(|c| c.style()).unwrap_or_default();
+        let base_style = buf
+            .cell((area.x, area.y))
+            .map(|c| c.style())
+            .unwrap_or_default();
         // Key badge: accent bg with dark text
         let key_style = base_style
             .fg(Color::Rgb(15, 15, 25))

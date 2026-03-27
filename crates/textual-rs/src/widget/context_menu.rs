@@ -1,8 +1,8 @@
-use std::cell::Cell;
+use crossterm::event::{KeyCode, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
-use crossterm::event::{KeyCode, KeyModifiers, MouseEvent, MouseEventKind, MouseButton};
+use std::cell::Cell;
 
 use super::context::AppContext;
 use super::{EventPropagation, Widget, WidgetId};
@@ -193,7 +193,9 @@ impl Widget for ContextMenuOverlay {
         }
 
         // Calculate menu dimensions
-        let max_label_len = self.items.iter()
+        let max_label_len = self
+            .items
+            .iter()
             .map(|item| {
                 let shortcut_len = item.shortcut.as_ref().map(|s| s.len() + 2).unwrap_or(0);
                 item.label.len() + shortcut_len
@@ -211,7 +213,12 @@ impl Widget for ContextMenuOverlay {
             self.anchor_y
         };
 
-        self.last_area.set((menu_x, menu_y + 1, menu_width, menu_height.saturating_sub(2)));
+        self.last_area.set((
+            menu_x,
+            menu_y + 1,
+            menu_width,
+            menu_height.saturating_sub(2),
+        ));
 
         let border_color = Color::Rgb(100, 100, 120);
         let bg = Color::Rgb(30, 30, 42);
@@ -220,9 +227,13 @@ impl Widget for ContextMenuOverlay {
         // Draw McGugan box border
         crate::canvas::mcgugan_box(
             buf,
-            menu_x, menu_y,
-            menu_width, menu_height,
-            border_color, bg, Color::Reset,
+            menu_x,
+            menu_y,
+            menu_width,
+            menu_height,
+            border_color,
+            bg,
+            Color::Reset,
         );
 
         // Fill inside with bg
@@ -246,7 +257,10 @@ impl Widget for ContextMenuOverlay {
 
             let is_selected = i == cursor;
             let style = if is_selected {
-                Style::default().fg(Color::Rgb(0, 255, 163)).bg(bg).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(Color::Rgb(0, 255, 163))
+                    .bg(bg)
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(fg).bg(bg)
             };

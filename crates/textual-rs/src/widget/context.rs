@@ -1,15 +1,15 @@
-use std::any::Any;
-use std::cell::{Cell, RefCell};
-use ratatui::style::Style;
-use slotmap::{DenseSlotMap, SecondaryMap};
-use super::WidgetId;
 use super::Widget;
+use super::WidgetId;
 use crate::css::cascade::Stylesheet;
+use crate::css::render_style;
 use crate::css::theme::{self, Theme};
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
-use crate::css::render_style;
 use crate::event::AppEvent;
 use crate::terminal::TerminalCaps;
+use ratatui::style::Style;
+use slotmap::{DenseSlotMap, SecondaryMap};
+use std::any::Any;
+use std::cell::{Cell, RefCell};
 
 pub struct AppContext {
     pub arena: DenseSlotMap<WidgetId, Box<dyn Widget>>,
@@ -132,14 +132,17 @@ impl AppContext {
     /// Use this from `on_action(&self, ...)` where only &self is available.
     /// The event loop drains `pending_screen_pops` after each event cycle.
     pub fn pop_screen_deferred(&self) {
-        self.pending_screen_pops.set(self.pending_screen_pops.get() + 1);
+        self.pending_screen_pops
+            .set(self.pending_screen_pops.get() + 1);
     }
 
     /// Post a typed message from a widget.
     /// It will be dispatched via bubbling in the next event loop iteration.
     /// Takes &self so this can be called from on_event or on_action without borrow conflict.
     pub fn post_message(&self, source: WidgetId, message: impl Any + 'static) {
-        self.message_queue.borrow_mut().push((source, Box::new(message)));
+        self.message_queue
+            .borrow_mut()
+            .push((source, Box::new(message)));
     }
 
     /// Convenience alias: post a message that bubbles up from the source widget.
@@ -170,7 +173,10 @@ impl AppContext {
             let result = fut.await;
             let _ = tx.send((
                 source_id,
-                Box::new(crate::worker::WorkerResult { source_id, value: result }),
+                Box::new(crate::worker::WorkerResult {
+                    source_id,
+                    value: result,
+                }),
             ));
         });
         let abort = handle.abort_handle();
@@ -204,14 +210,16 @@ impl AppContext {
     pub fn run_worker_with_progress<T, P>(
         &self,
         source_id: WidgetId,
-        progress_fn: impl FnOnce(flume::Sender<P>) -> std::pin::Pin<Box<dyn std::future::Future<Output = T>>> + 'static,
+        progress_fn: impl FnOnce(flume::Sender<P>) -> std::pin::Pin<Box<dyn std::future::Future<Output = T>>>
+            + 'static,
     ) -> tokio::task::AbortHandle
     where
         T: Send + 'static,
         P: Send + 'static,
     {
-        let worker_tx = self.worker_tx.clone()
-            .expect("worker_tx not initialized — run_worker_with_progress called outside App::run()");
+        let worker_tx = self.worker_tx.clone().expect(
+            "worker_tx not initialized — run_worker_with_progress called outside App::run()",
+        );
 
         let (progress_sender, progress_receiver) = flume::unbounded::<P>();
 

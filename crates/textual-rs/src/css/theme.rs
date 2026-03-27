@@ -466,8 +466,14 @@ mod tests {
         assert_eq!(theme.resolve("accent"), Some(TcssColor::Rgb(255, 166, 43)));
         assert_eq!(theme.resolve("surface"), Some(TcssColor::Rgb(30, 30, 30)));
         assert_eq!(theme.resolve("panel"), Some(TcssColor::Rgb(27, 39, 48)));
-        assert_eq!(theme.resolve("background"), Some(TcssColor::Rgb(18, 18, 18)));
-        assert_eq!(theme.resolve("foreground"), Some(TcssColor::Rgb(224, 224, 224)));
+        assert_eq!(
+            theme.resolve("background"),
+            Some(TcssColor::Rgb(18, 18, 18))
+        );
+        assert_eq!(
+            theme.resolve("foreground"),
+            Some(TcssColor::Rgb(224, 224, 224))
+        );
         assert_eq!(theme.resolve("success"), Some(TcssColor::Rgb(78, 191, 113)));
         assert_eq!(theme.resolve("warning"), Some(TcssColor::Rgb(255, 166, 43)));
         assert_eq!(theme.resolve("error"), Some(TcssColor::Rgb(186, 60, 91)));
@@ -497,7 +503,10 @@ mod tests {
             TcssColor::Rgb(r, g, b) => rgb_to_hsl(r, g, b).2,
             _ => panic!("expected Rgb"),
         };
-        assert!(lighter_l > base_l, "lighten-1 should have higher L than base");
+        assert!(
+            lighter_l > base_l,
+            "lighten-1 should have higher L than base"
+        );
     }
 
     #[test]
@@ -531,7 +540,9 @@ mod tests {
         let luminosities: Vec<f64> = names
             .iter()
             .map(|n| {
-                let color = theme.resolve(n).unwrap_or_else(|| panic!("failed to resolve {}", n));
+                let color = theme
+                    .resolve(n)
+                    .unwrap_or_else(|| panic!("failed to resolve {}", n));
                 match color {
                     TcssColor::Rgb(r, g, b) => rgb_to_hsl(r, g, b).2,
                     _ => panic!("expected Rgb"),
@@ -543,7 +554,12 @@ mod tests {
             assert!(
                 luminosities[i] > luminosities[i - 1],
                 "L[{}] ({}) should be > L[{}] ({}), names: {} > {}",
-                i, luminosities[i], i - 1, luminosities[i - 1], names[i], names[i - 1]
+                i,
+                luminosities[i],
+                i - 1,
+                luminosities[i - 1],
+                names[i],
+                names[i - 1]
             );
         }
     }
@@ -570,7 +586,9 @@ mod tests {
     fn variables_override_computed_shades() {
         let mut theme = default_dark_theme();
         let override_color = TcssColor::Rgb(99, 99, 99);
-        theme.variables.insert("primary".to_string(), override_color);
+        theme
+            .variables
+            .insert("primary".to_string(), override_color);
         assert_eq!(theme.resolve("primary"), Some(TcssColor::Rgb(99, 99, 99)));
     }
 
@@ -578,7 +596,9 @@ mod tests {
     fn variables_override_shade_variant() {
         let mut theme = default_dark_theme();
         let override_color = TcssColor::Rgb(42, 42, 42);
-        theme.variables.insert("primary-lighten-1".to_string(), override_color);
+        theme
+            .variables
+            .insert("primary-lighten-1".to_string(), override_color);
         assert_eq!(
             theme.resolve("primary-lighten-1"),
             Some(TcssColor::Rgb(42, 42, 42))
@@ -652,10 +672,7 @@ mod tests {
     #[test]
     fn light_theme_resolves_variables() {
         let theme = default_light_theme();
-        assert_eq!(
-            theme.resolve("primary"),
-            Some(TcssColor::Rgb(0, 120, 212))
-        );
+        assert_eq!(theme.resolve("primary"), Some(TcssColor::Rgb(0, 120, 212)));
         assert_eq!(
             theme.resolve("background"),
             Some(TcssColor::Rgb(255, 255, 255))
@@ -747,8 +764,16 @@ mod tests {
     #[test]
     fn all_themes_resolve_all_base_names() {
         let base_names = [
-            "primary", "secondary", "accent", "surface", "panel",
-            "background", "foreground", "success", "warning", "error",
+            "primary",
+            "secondary",
+            "accent",
+            "surface",
+            "panel",
+            "background",
+            "foreground",
+            "success",
+            "warning",
+            "error",
         ];
         for theme in builtin_themes() {
             for name in &base_names {

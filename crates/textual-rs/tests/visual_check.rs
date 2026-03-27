@@ -1,11 +1,15 @@
-use textual_rs::{App, Widget, Header, Footer, Button, ButtonVariant, Label, Input, Checkbox, TabbedContent};
-use textual_rs::widget::context::AppContext;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use textual_rs::widget::context::AppContext;
+use textual_rs::{
+    App, Button, ButtonVariant, Checkbox, Footer, Header, Input, Label, TabbedContent, Widget,
+};
 
 struct DemoScreen;
 impl Widget for DemoScreen {
-    fn widget_type_name(&self) -> &'static str { "DemoScreen" }
+    fn widget_type_name(&self) -> &'static str {
+        "DemoScreen"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Header::new("textual-rs Demo").with_subtitle("test")),
@@ -20,7 +24,9 @@ impl Widget for DemoScreen {
 
 struct ControlsPane;
 impl Widget for ControlsPane {
-    fn widget_type_name(&self) -> &'static str { "ControlsPane" }
+    fn widget_type_name(&self) -> &'static str {
+        "ControlsPane"
+    }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Label::new("Form Controls")),
@@ -46,7 +52,7 @@ Checkbox { height: 1; }
 "#;
     let mut app = App::new(|| Box::new(DemoScreen)).with_css(css);
     let buf = app.render_to_test_backend(60, 16);
-    
+
     for y in 0..16u16 {
         let mut line = String::new();
         for x in 0..60u16 {
@@ -58,11 +64,16 @@ Checkbox { height: 1; }
             println!("{:2}|{}", y, trimmed);
         }
     }
-    
+
     // Check that borders actually render
     let cell_0_0 = buf.cell((0, 0)).unwrap();
-    println!("\nCell (0,0): symbol='{}' fg={:?} bg={:?}", cell_0_0.symbol(), cell_0_0.style().fg, cell_0_0.style().bg);
-    
+    println!(
+        "\nCell (0,0): symbol='{}' fg={:?} bg={:?}",
+        cell_0_0.symbol(),
+        cell_0_0.style().fg,
+        cell_0_0.style().bg
+    );
+
     // Check a button border cell (should be ┏ or similar)
     // Find any cell with border chars
     let mut found_border = false;
@@ -75,8 +86,13 @@ Checkbox { height: 1; }
                 break;
             }
         }
-        if found_border { break; }
+        if found_border {
+            break;
+        }
     }
-    
-    assert!(found_border, "No border characters found in rendered output!");
+
+    assert!(
+        found_border,
+        "No border characters found in rendered output!"
+    );
 }

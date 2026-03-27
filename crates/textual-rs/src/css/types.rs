@@ -253,43 +253,47 @@ impl ComputedStyle {
                         self.background = c;
                     }
                 }
-                "border" => {
-                    match &decl.value {
-                        TcssValue::Border(b) => self.border = *b,
-                        TcssValue::BorderWithColor(b, c) => {
-                            self.border = *b;
-                            self.color = *c;
-                        }
-                        _ => {}
+                "border" => match &decl.value {
+                    TcssValue::Border(b) => self.border = *b,
+                    TcssValue::BorderWithColor(b, c) => {
+                        self.border = *b;
+                        self.color = *c;
                     }
-                }
+                    _ => {}
+                },
                 "border-title" => {
                     if let TcssValue::String(ref s) = decl.value {
                         self.border_title = Some(s.clone());
                     }
                 }
-                "padding" => {
-                    match &decl.value {
-                        TcssValue::Float(v) => {
-                            self.padding = Sides { top: *v, right: *v, bottom: *v, left: *v };
-                        }
-                        TcssValue::Sides(s) => {
-                            self.padding = *s;
-                        }
-                        _ => {}
+                "padding" => match &decl.value {
+                    TcssValue::Float(v) => {
+                        self.padding = Sides {
+                            top: *v,
+                            right: *v,
+                            bottom: *v,
+                            left: *v,
+                        };
                     }
-                }
-                "margin" => {
-                    match &decl.value {
-                        TcssValue::Float(v) => {
-                            self.margin = Sides { top: *v, right: *v, bottom: *v, left: *v };
-                        }
-                        TcssValue::Sides(s) => {
-                            self.margin = *s;
-                        }
-                        _ => {}
+                    TcssValue::Sides(s) => {
+                        self.padding = *s;
                     }
-                }
+                    _ => {}
+                },
+                "margin" => match &decl.value {
+                    TcssValue::Float(v) => {
+                        self.margin = Sides {
+                            top: *v,
+                            right: *v,
+                            bottom: *v,
+                            left: *v,
+                        };
+                    }
+                    TcssValue::Sides(s) => {
+                        self.margin = *s;
+                    }
+                    _ => {}
+                },
                 "width" => {
                     if let TcssValue::Dimension(d) = decl.value {
                         self.width = d;
@@ -380,13 +384,11 @@ impl ComputedStyle {
                         self.hatch = Some(h);
                     }
                 }
-                "keyline" => {
-                    match &decl.value {
-                        TcssValue::Keyline(c) => self.keyline = Some(*c),
-                        TcssValue::Color(c) => self.keyline = Some(*c),
-                        _ => {}
-                    }
-                }
+                "keyline" => match &decl.value {
+                    TcssValue::Keyline(c) => self.keyline = Some(*c),
+                    TcssValue::Color(c) => self.keyline = Some(*c),
+                    _ => {}
+                },
                 _ => {
                     #[cfg(debug_assertions)]
                     eprintln!(

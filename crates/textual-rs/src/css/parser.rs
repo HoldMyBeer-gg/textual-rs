@@ -1,7 +1,9 @@
-use cssparser::{AtRuleParser, ParseError, Parser, ParserInput, QualifiedRuleParser, StyleSheetParser};
+use cssparser::{
+    AtRuleParser, ParseError, Parser, ParserInput, QualifiedRuleParser, StyleSheetParser,
+};
 
 use crate::css::property::{parse_declaration_block, PropertyParseError};
-use crate::css::selector::{Selector, SelectorParser, SelectorParseError};
+use crate::css::selector::{Selector, SelectorParseError, SelectorParser};
 use crate::css::types::Declaration;
 
 /// A parsed TCSS rule: a selector list + declaration block.
@@ -52,8 +54,7 @@ impl<'i> QualifiedRuleParser<'i> for TcssRuleParser {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        SelectorParser::parse_selector_list(input)
-            .map_err(|e| e.into::<TcssParseError>())
+        SelectorParser::parse_selector_list(input).map_err(|e| e.into::<TcssParseError>())
     }
 
     fn parse_block<'t>(
@@ -62,8 +63,8 @@ impl<'i> QualifiedRuleParser<'i> for TcssRuleParser {
         _start: &cssparser::ParserState,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
-        let declarations = parse_declaration_block(input)
-            .map_err(|e| e.into::<TcssParseError>())?;
+        let declarations =
+            parse_declaration_block(input).map_err(|e| e.into::<TcssParseError>())?;
         Ok(Rule {
             selectors: prelude,
             declarations,
@@ -91,7 +92,10 @@ pub fn parse_stylesheet(css: &str) -> (Vec<Rule>, Vec<String>) {
                 // loc.line is 0-indexed; add 1 for human-readable line numbers
                 let msg = format!(
                     "CSS parse error at line {}, column {}: {:?} (near {:?})",
-                    loc.line + 1, loc.column, parse_error.kind, slice
+                    loc.line + 1,
+                    loc.column,
+                    parse_error.kind,
+                    slice
                 );
                 errors.push(msg);
             }
@@ -112,7 +116,10 @@ mod tests {
         let (rules, errors) = parse_stylesheet("Button { color: red; }");
         assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
         assert_eq!(rules.len(), 1);
-        assert_eq!(rules[0].selectors, vec![Selector::Type("Button".to_string())]);
+        assert_eq!(
+            rules[0].selectors,
+            vec![Selector::Type("Button".to_string())]
+        );
         assert_eq!(rules[0].declarations.len(), 1);
         assert_eq!(rules[0].declarations[0].property, "color");
         assert!(matches!(
@@ -149,7 +156,10 @@ Label { display: flex; }"#;
             errors[0]
         );
         // The valid rules before/after the error should still be parsed
-        assert!(rules.len() >= 1, "should have parsed at least one valid rule");
+        assert!(
+            rules.len() >= 1,
+            "should have parsed at least one valid rule"
+        );
     }
 
     #[test]

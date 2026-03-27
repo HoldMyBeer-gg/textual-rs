@@ -1,13 +1,13 @@
-use std::cell::{Cell, RefCell};
-use std::time::Duration;
+use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
-use crossterm::event::{KeyCode, KeyModifiers};
+use std::cell::{Cell, RefCell};
+use std::time::Duration;
 
 use super::context::AppContext;
 use super::{Widget, WidgetId};
-use crate::animation::{Tween, ease_in_out_cubic};
+use crate::animation::{ease_in_out_cubic, Tween};
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 
@@ -118,7 +118,9 @@ impl Widget for Switch {
             return;
         }
         let on = self.value.get_untracked();
-        let _base_style = self.own_id.get()
+        let _base_style = self
+            .own_id
+            .get()
             .map(|id| ctx.text_style(id))
             .unwrap_or_default();
 
@@ -133,21 +135,37 @@ impl Widget for Switch {
         let knob_fraction = {
             let tween = self.knob_tween.borrow();
             if ctx.skip_animations {
-                if on { 1.0 } else { 0.0 }
+                if on {
+                    1.0
+                } else {
+                    0.0
+                }
             } else if let Some(ref tw) = *tween {
                 if tw.is_complete() {
-                    if on { 1.0 } else { 0.0 }
+                    if on {
+                        1.0
+                    } else {
+                        0.0
+                    }
                 } else {
                     tw.value()
                 }
             } else {
-                if on { 1.0 } else { 0.0 }
+                if on {
+                    1.0
+                } else {
+                    0.0
+                }
             }
         };
 
         // Clean up completed tweens
         {
-            let should_clear = self.knob_tween.borrow().as_ref().is_some_and(|tw| tw.is_complete());
+            let should_clear = self
+                .knob_tween
+                .borrow()
+                .as_ref()
+                .is_some_and(|tw| tw.is_complete());
             if should_clear {
                 *self.knob_tween.borrow_mut() = None;
             }
@@ -163,14 +181,24 @@ impl Widget for Switch {
             let off_bg = (30u8, 30u8, 38u8);
 
             let f = knob_fraction as f32;
-            let lerp = |a: u8, b: u8| -> u8 {
-                (a as f32 + (b as f32 - a as f32) * f) as u8
-            };
+            let lerp = |a: u8, b: u8| -> u8 { (a as f32 + (b as f32 - a as f32) * f) as u8 };
 
             (
-                Color::Rgb(lerp(off_track.0, on_track.0), lerp(off_track.1, on_track.1), lerp(off_track.2, on_track.2)),
-                Color::Rgb(lerp(off_knob.0, on_knob.0), lerp(off_knob.1, on_knob.1), lerp(off_knob.2, on_knob.2)),
-                Color::Rgb(lerp(off_bg.0, on_bg.0), lerp(off_bg.1, on_bg.1), lerp(off_bg.2, on_bg.2)),
+                Color::Rgb(
+                    lerp(off_track.0, on_track.0),
+                    lerp(off_track.1, on_track.1),
+                    lerp(off_track.2, on_track.2),
+                ),
+                Color::Rgb(
+                    lerp(off_knob.0, on_knob.0),
+                    lerp(off_knob.1, on_knob.1),
+                    lerp(off_knob.2, on_knob.2),
+                ),
+                Color::Rgb(
+                    lerp(off_bg.0, on_bg.0),
+                    lerp(off_bg.1, on_bg.1),
+                    lerp(off_bg.2, on_bg.2),
+                ),
             )
         };
 
@@ -182,7 +210,9 @@ impl Widget for Switch {
 
         // Left cap
         if x < area.x + area.width {
-            let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+            let style = ratatui::style::Style::default()
+                .fg(track_color)
+                .bg(track_bg);
             buf.set_string(x, area.y, "\u{2590}", style); // ▐
             x += 1;
         }
@@ -197,7 +227,9 @@ impl Widget for Switch {
                 let style = ratatui::style::Style::default().fg(knob_color).bg(track_bg);
                 buf.set_string(x, area.y, "\u{2588}", style); // █
             } else {
-                let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+                let style = ratatui::style::Style::default()
+                    .fg(track_color)
+                    .bg(track_bg);
                 buf.set_string(x, area.y, "\u{2501}", style); // ━
             }
             x += 1;
@@ -205,7 +237,9 @@ impl Widget for Switch {
 
         // Right cap
         if x < area.x + area.width {
-            let style = ratatui::style::Style::default().fg(track_color).bg(track_bg);
+            let style = ratatui::style::Style::default()
+                .fg(track_color)
+                .bg(track_bg);
             buf.set_string(x, area.y, "\u{258C}", style); // ▌
         }
     }

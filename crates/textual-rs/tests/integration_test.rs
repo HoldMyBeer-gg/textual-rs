@@ -23,9 +23,7 @@ fn test_render_hello() {
     let mut app = App::new(|| Box::new(TestScreen));
     let buffer = app.render_to_test_backend(80, 24);
 
-    let content: String = buffer.content().iter()
-        .map(|cell| cell.symbol())
-        .collect();
+    let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
     assert!(
         content.contains("Hello from textual-rs!"),
         "Buffer should contain 'Hello from textual-rs!' but got: {}",
@@ -38,9 +36,7 @@ fn test_render_has_title() {
     let mut app = App::new(|| Box::new(TestScreen));
     let buffer = app.render_to_test_backend(80, 24);
 
-    let content: String = buffer.content().iter()
-        .map(|cell| cell.symbol())
-        .collect();
+    let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
     assert!(
         content.contains("textual-rs"),
         "Buffer should contain 'textual-rs'"
@@ -66,16 +62,29 @@ fn test_render_at_different_sizes() {
     let mut app_large = App::new(|| Box::new(TestScreen));
     let buf_large = app_large.render_to_test_backend(120, 40);
 
-    let small_content: String = buf_small.content().iter()
-        .map(|cell| cell.symbol()).collect();
-    let large_content: String = buf_large.content().iter()
-        .map(|cell| cell.symbol()).collect();
+    let small_content: String = buf_small
+        .content()
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect();
+    let large_content: String = buf_large
+        .content()
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect();
 
-    assert!(small_content.contains("Hello from textual-rs!"),
-        "Small terminal should render the hello text");
-    assert!(large_content.contains("Hello from textual-rs!"),
-        "Large terminal should render the hello text");
+    assert!(
+        small_content.contains("Hello from textual-rs!"),
+        "Small terminal should render the hello text"
+    );
+    assert!(
+        large_content.contains("Hello from textual-rs!"),
+        "Large terminal should render the hello text"
+    );
 
-    assert_ne!(buf_small.area(), buf_large.area(),
-        "Different terminal sizes should produce different buffer areas");
+    assert_ne!(
+        buf_small.area(),
+        buf_large.area(),
+        "Different terminal sizes should produce different buffer areas"
+    );
 }

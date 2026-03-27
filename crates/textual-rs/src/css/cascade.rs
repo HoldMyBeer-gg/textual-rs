@@ -12,30 +12,28 @@ use crate::widget::WidgetId;
 fn resolve_variables(decls: &[Declaration], theme: &Theme) -> Vec<Declaration> {
     decls
         .iter()
-        .map(|d| {
-            match &d.value {
-                TcssValue::Variable(ref name) => {
-                    if let Some(color) = theme.resolve(name) {
-                        Declaration {
-                            property: d.property.clone(),
-                            value: TcssValue::Color(color),
-                        }
-                    } else {
-                        d.clone()
+        .map(|d| match &d.value {
+            TcssValue::Variable(ref name) => {
+                if let Some(color) = theme.resolve(name) {
+                    Declaration {
+                        property: d.property.clone(),
+                        value: TcssValue::Color(color),
                     }
+                } else {
+                    d.clone()
                 }
-                TcssValue::BorderWithVariable(ref style, ref name) => {
-                    if let Some(color) = theme.resolve(name) {
-                        Declaration {
-                            property: d.property.clone(),
-                            value: TcssValue::BorderWithColor(*style, color),
-                        }
-                    } else {
-                        d.clone()
-                    }
-                }
-                _ => d.clone(),
             }
+            TcssValue::BorderWithVariable(ref style, ref name) => {
+                if let Some(color) = theme.resolve(name) {
+                    Declaration {
+                        property: d.property.clone(),
+                        value: TcssValue::BorderWithColor(*style, color),
+                    }
+                } else {
+                    d.clone()
+                }
+            }
+            _ => d.clone(),
         })
         .collect()
 }
@@ -98,9 +96,7 @@ pub fn resolve_cascade(
     }
 
     // Sort ascending: lower specificity/source_order first → applied first, then overridden
-    matched.sort_by(|a, b| {
-        a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1))
-    });
+    matched.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
 
     // Apply declarations in order (later overwrites earlier), resolving theme variables
     let mut style = ComputedStyle::default();
@@ -164,21 +160,39 @@ mod tests {
 
     impl crate::widget::Widget for TestWidget {
         fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
-        fn widget_type_name(&self) -> &'static str { self.type_name }
-        fn classes(&self) -> &[&str] { &self.classes }
-        fn id(&self) -> Option<&str> { self.id }
+        fn widget_type_name(&self) -> &'static str {
+            self.type_name
+        }
+        fn classes(&self) -> &[&str] {
+            &self.classes
+        }
+        fn id(&self) -> Option<&str> {
+            self.id
+        }
     }
 
     fn btn() -> Box<dyn crate::widget::Widget> {
-        Box::new(TestWidget { type_name: "Button", classes: vec![], id: None })
+        Box::new(TestWidget {
+            type_name: "Button",
+            classes: vec![],
+            id: None,
+        })
     }
 
     fn btn_with_class(cls: &'static str) -> Box<dyn crate::widget::Widget> {
-        Box::new(TestWidget { type_name: "Button", classes: vec![cls], id: None })
+        Box::new(TestWidget {
+            type_name: "Button",
+            classes: vec![cls],
+            id: None,
+        })
     }
 
     fn btn_with_id(id: &'static str) -> Box<dyn crate::widget::Widget> {
-        Box::new(TestWidget { type_name: "Button", classes: vec![], id: Some(id) })
+        Box::new(TestWidget {
+            type_name: "Button",
+            classes: vec![],
+            id: Some(id),
+        })
     }
 
     fn setup_single_widget(w: Box<dyn crate::widget::Widget>) -> (AppContext, WidgetId) {
@@ -212,7 +226,11 @@ mod tests {
 
         let style = resolve_cascade(id, &[stylesheet], &ctx);
         // Class (.active) has higher specificity than type (Button), so blue should win
-        assert_eq!(style.color, TcssColor::Rgb(0, 0, 255), "class should override type");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(0, 0, 255),
+            "class should override type"
+        );
     }
 
     #[test]
@@ -236,7 +254,11 @@ mod tests {
         assert!(errors.is_empty());
 
         let style = resolve_cascade(id2, &[stylesheet], &ctx2);
-        assert_eq!(style.color, TcssColor::Rgb(0, 255, 0), "ID should override class");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(0, 255, 0),
+            "ID should override class"
+        );
     }
 
     #[test]
@@ -251,10 +273,13 @@ mod tests {
         ctx.pseudo_classes.insert(id, PseudoClassSet::default());
         ctx.computed_styles.insert(id, ComputedStyle::default());
         // Inline style sets color to red
-        ctx.inline_styles.insert(id, vec![Declaration {
-            property: "color".to_string(),
-            value: TcssValue::Color(TcssColor::Rgb(255, 0, 0)),
-        }]);
+        ctx.inline_styles.insert(
+            id,
+            vec![Declaration {
+                property: "color".to_string(),
+                value: TcssValue::Color(TcssColor::Rgb(255, 0, 0)),
+            }],
+        );
 
         let css = "#main { color: #0000ff; }";
         let (stylesheet, errors) = Stylesheet::parse(css);
@@ -262,7 +287,11 @@ mod tests {
 
         let style = resolve_cascade(id, &[stylesheet], &ctx);
         // Inline should win over ID selector
-        assert_eq!(style.color, TcssColor::Rgb(255, 0, 0), "inline should override ID");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(255, 0, 0),
+            "inline should override ID"
+        );
     }
 
     #[test]
@@ -274,7 +303,11 @@ mod tests {
         assert!(errors.is_empty(), "errors: {:?}", errors);
 
         let style = resolve_cascade(id, &[stylesheet], &ctx);
-        assert_eq!(style.color, TcssColor::Rgb(0, 0, 255), "later source should win at equal specificity");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(0, 0, 255),
+            "later source should win at equal specificity"
+        );
     }
 
     #[test]
@@ -292,7 +325,11 @@ mod tests {
 
         // Without focus — should be red
         let style = resolve_cascade(id, &[stylesheet.clone()], &ctx);
-        assert_eq!(style.color, TcssColor::Rgb(255, 0, 0), "without focus should be red");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(255, 0, 0),
+            "without focus should be red"
+        );
 
         // Now add focus
         let mut pcs = PseudoClassSet::default();
@@ -300,7 +337,11 @@ mod tests {
         ctx.pseudo_classes.insert(id, pcs);
 
         let style = resolve_cascade(id, &[stylesheet], &ctx);
-        assert_eq!(style.color, TcssColor::Rgb(0, 0, 255), "with focus should be blue");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(0, 0, 255),
+            "with focus should be blue"
+        );
     }
 
     #[test]
@@ -314,7 +355,11 @@ mod tests {
 
         let style = resolve_cascade(id, &[default_sheet, user_sheet], &ctx);
         // User stylesheet (sheet 1) should override default (sheet 0) even at equal specificity
-        assert_eq!(style.color, TcssColor::Rgb(0, 0, 255), "user CSS should override default CSS");
+        assert_eq!(
+            style.color,
+            TcssColor::Rgb(0, 0, 255),
+            "user CSS should override default CSS"
+        );
     }
 
     #[test]
@@ -352,8 +397,16 @@ mod tests {
     #[test]
     fn apply_cascade_to_tree_sets_computed_styles() {
         let mut ctx = AppContext::new();
-        let screen = ctx.arena.insert(Box::new(TestWidget { type_name: "Screen", classes: vec![], id: None }) as Box<dyn crate::widget::Widget>);
-        let button = ctx.arena.insert(Box::new(TestWidget { type_name: "Button", classes: vec![], id: None }) as Box<dyn crate::widget::Widget>);
+        let screen = ctx.arena.insert(Box::new(TestWidget {
+            type_name: "Screen",
+            classes: vec![],
+            id: None,
+        }) as Box<dyn crate::widget::Widget>);
+        let button = ctx.arena.insert(Box::new(TestWidget {
+            type_name: "Button",
+            classes: vec![],
+            id: None,
+        }) as Box<dyn crate::widget::Widget>);
 
         ctx.parent.insert(screen, None);
         ctx.parent.insert(button, Some(screen));
@@ -481,7 +534,8 @@ mod tests {
                 style.color,
                 TcssColor::Rgb(expected_rgb.0, expected_rgb.1, expected_rgb.2),
                 "variable ${} should resolve to {:?}",
-                var_name, expected_rgb
+                var_name,
+                expected_rgb
             );
         }
     }

@@ -57,7 +57,11 @@ fn mcgugan_box_uses_eighth_block_chars() {
     // Right edge (inner rows): RIGHT_BORDER_FALLBACK (U+2595) with fg=border, bg=inside
     for y in 1..4 {
         let cell = buf.cell((7, y)).unwrap();
-        assert_eq!(cell.symbol(), canvas::RIGHT_BORDER_FALLBACK, "right edge y={y}");
+        assert_eq!(
+            cell.symbol(),
+            canvas::RIGHT_BORDER_FALLBACK,
+            "right edge y={y}"
+        );
         assert_eq!(cell.fg, border, "right fg y={y}");
         assert_eq!(cell.bg, inside, "right bg y={y}");
     }
@@ -214,8 +218,16 @@ fn vertical_gradient_produces_half_block_cells() {
     );
 
     // Top cell fg should be close to red, bottom cell bg should be close to blue
-    assert_eq!(top_cell.fg, Color::Rgb(255, 0, 0), "Top fg should be pure red");
-    assert_eq!(bot_cell.bg, Color::Rgb(0, 0, 255), "Bottom bg should be pure blue");
+    assert_eq!(
+        top_cell.fg,
+        Color::Rgb(255, 0, 0),
+        "Top fg should be pure red"
+    );
+    assert_eq!(
+        bot_cell.bg,
+        Color::Rgb(0, 0, 255),
+        "Bottom bg should be pure blue"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -224,16 +236,18 @@ fn vertical_gradient_produces_half_block_cells() {
 
 #[test]
 fn overlay_preserves_underlying_screen_content() {
-    use textual_rs::{Label, Widget};
+    use crossterm::event::{KeyModifiers as KMods, MouseButton, MouseEvent, MouseEventKind};
+    use textual_rs::event::AppEvent;
     use textual_rs::widget::context::AppContext;
     use textual_rs::widget::context_menu::ContextMenuItem;
-    use textual_rs::event::AppEvent;
-    use crossterm::event::{MouseEvent, MouseEventKind, MouseButton, KeyModifiers as KMods};
+    use textual_rs::{Label, Widget};
 
     // Screen with visible text and a context menu
     struct TestScreen;
     impl Widget for TestScreen {
-        fn widget_type_name(&self) -> &'static str { "TestScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "TestScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![Box::new(Label::new("VISIBLE_TEXT_HERE"))]
         }
@@ -248,8 +262,14 @@ fn overlay_preserves_underlying_screen_content() {
 
     // Verify label rendered
     let buf = test_app.buffer();
-    let row0: String = (0..40u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
-    assert!(row0.contains("VISIBLE_TEXT_HERE"), "Before overlay: {:?}", row0.trim());
+    let row0: String = (0..40u16)
+        .map(|x| buf[(x, 0)].symbol().to_string())
+        .collect();
+    assert!(
+        row0.contains("VISIBLE_TEXT_HERE"),
+        "Before overlay: {:?}",
+        row0.trim()
+    );
 
     // Right-click at row 5 (away from the label at row 0) to spawn context menu
     let right_click = MouseEvent {
@@ -261,32 +281,48 @@ fn overlay_preserves_underlying_screen_content() {
     test_app.process_event(AppEvent::Mouse(right_click));
 
     // Check overlay is active
-    assert!(test_app.ctx().active_overlay.borrow().is_some(), "Overlay should be active after right-click");
+    assert!(
+        test_app.ctx().active_overlay.borrow().is_some(),
+        "Overlay should be active after right-click"
+    );
 
     let buf = test_app.buffer();
 
     // Debug: dump all rows
     let mut all_rows = String::new();
     for y in 0..10u16 {
-        let row: String = (0..40u16).map(|x| buf[(x, y)].symbol().to_string()).collect();
+        let row: String = (0..40u16)
+            .map(|x| buf[(x, y)].symbol().to_string())
+            .collect();
         all_rows.push_str(&format!("  row {}: {:?}\n", y, row.trim_end()));
     }
 
     // Label at row 0 should survive (menu renders at row 5, not row 0)
-    let row0: String = (0..40u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
-    assert!(row0.contains("VISIBLE_TEXT_HERE"),
-        "Label should survive when menu is below it.\nBuffer:\n{}", all_rows);
+    let row0: String = (0..40u16)
+        .map(|x| buf[(x, 0)].symbol().to_string())
+        .collect();
+    assert!(
+        row0.contains("VISIBLE_TEXT_HERE"),
+        "Label should survive when menu is below it.\nBuffer:\n{}",
+        all_rows
+    );
 
     // Context menu should be visible somewhere in the lower rows
     let mut found_menu = false;
     for y in 4..10u16 {
-        let row: String = (0..40u16).map(|x| buf[(x, y)].symbol().to_string()).collect();
+        let row: String = (0..40u16)
+            .map(|x| buf[(x, y)].symbol().to_string())
+            .collect();
         if row.contains("Test Action") {
             found_menu = true;
             break;
         }
     }
-    assert!(found_menu, "Context menu should be visible.\nBuffer:\n{}", all_rows);
+    assert!(
+        found_menu,
+        "Context menu should be visible.\nBuffer:\n{}",
+        all_rows
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -295,12 +331,14 @@ fn overlay_preserves_underlying_screen_content() {
 
 #[test]
 fn css_padding_shifts_content() {
-    use textual_rs::{Label, Widget};
     use textual_rs::widget::context::AppContext;
+    use textual_rs::{Label, Widget};
 
     struct PaddedScreen;
     impl Widget for PaddedScreen {
-        fn widget_type_name(&self) -> &'static str { "PaddedScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "PaddedScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![Box::new(Label::new("PADTEST"))]
         }
@@ -312,10 +350,22 @@ fn css_padding_shifts_content() {
     let buf = app.buffer();
 
     // Row 0 should NOT have content (top padding = 1)
-    let row0: String = (0..20u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
-    assert!(!row0.contains("PADTEST"), "Row 0 should be empty (top padding), got: {:?}", row0.trim());
+    let row0: String = (0..20u16)
+        .map(|x| buf[(x, 0)].symbol().to_string())
+        .collect();
+    assert!(
+        !row0.contains("PADTEST"),
+        "Row 0 should be empty (top padding), got: {:?}",
+        row0.trim()
+    );
 
     // Row 1 should have content
-    let row1: String = (0..20u16).map(|x| buf[(x, 1)].symbol().to_string()).collect();
-    assert!(row1.contains("PADTEST"), "Row 1 should have PADTEST (after padding), got: {:?}", row1.trim());
+    let row1: String = (0..20u16)
+        .map(|x| buf[(x, 1)].symbol().to_string())
+        .collect();
+    assert!(
+        row1.contains("PADTEST"),
+        "Row 1 should have PADTEST (after padding), got: {:?}",
+        row1.trim()
+    );
 }
