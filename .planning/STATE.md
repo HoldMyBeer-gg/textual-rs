@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: completed
-stopped_at: Completed 08-02-PLAN.md (LoadingIndicator + loading overlay)
-last_updated: "2026-03-27T14:55:46.904Z"
+stopped_at: Completed 09-01-PLAN.md (MaskedInput widget)
+last_updated: "2026-03-27T21:20:00Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** Phase 08 — enhanced-display-widgets
+**Current focus:** Phase 09 — complex-widgets
 
 ## Current Position
 
 Phase: 9
-Plan: Not started
-Status: Phase 08 complete
+Plan: 1 (complete)
+Status: 09-01 complete, 09-02 and 09-03 in progress (parallel)
 Last activity: 2026-03-27
 
 ### Progress
@@ -65,7 +65,9 @@ Phase 10 [ ] Platform Verification and Publish
 - RichLog PageUp/PageDown added beyond minimum 4 bindings for usability (08-01)
 - `focus_history: Vec<Option<WidgetId>>` must be added to AppContext before any screen stack consumer code is written
 - Toast uses `Vec<ToastEntry>` on AppContext — NOT `active_overlay` (that slot is single-instance only)
-- MaskedInput cursor tracked in raw-value space only; display cursor derived per render
+- MaskedInput cursor tracked in raw-value space only; display cursor derived per render via precomputed slot_display_cols O(1) lookup (09-01)
+- MaskedInput raw_value stores only user-typed chars; separators exist only in display string built at render time (09-01)
+- Case modifiers (>/< in mask) consume during parse, not stored as slots — only influence slot_case vec (09-01)
 - ContentSwitcher uses `recompose_widget` pattern, not CSS display toggling (Taffy has no display:none)
 - DirectoryTree filesystem I/O always via `ctx.run_worker`, never in `on_event` or `compose`
 
@@ -83,6 +85,6 @@ Phase 10 [ ] Platform Verification and Publish
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Completed 08-02-PLAN.md (LoadingIndicator + loading overlay)
+Stopped at: Completed 09-01-PLAN.md (MaskedInput widget)
 Resume file: None
-Next action: Phase 08 complete — proceed to next phase
+Next action: Continue phase 09 with 09-02 (DirectoryTree) and 09-03 (Toast)
