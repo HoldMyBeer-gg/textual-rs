@@ -142,6 +142,7 @@ ListView {
     border: tall #4a4a5a;
     min-height: 6;
     flex-grow: 1;
+    padding: 0 1;
     color: $foreground;
     background: $panel;
 }
