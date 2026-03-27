@@ -18,6 +18,7 @@ Button { border: heavy; min-width: 16; height: 3; text-align: center; }
 Checkbox { height: 1; }
 Collapsible { min-height: 1; }
 DataTable { border: rounded; min-height: 5; }
+DirectoryTree { border: rounded; min-height: 5; flex-grow: 1; }
 Footer { height: 1; }
 Header { height: 1; }
 Horizontal { layout-direction: horizontal; }

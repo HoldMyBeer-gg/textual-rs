@@ -5,6 +5,7 @@ pub mod collapsible;
 pub mod context;
 pub mod context_menu;
 pub mod data_table;
+pub mod directory_tree;
 pub mod footer;
 pub mod header;
 pub mod input;
