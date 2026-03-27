@@ -14,6 +14,7 @@ pub mod list_view;
 pub mod loading_indicator;
 pub mod log;
 pub mod markdown;
+pub mod masked_input;
 pub mod placeholder;
 pub mod progress_bar;
 pub mod radio;
