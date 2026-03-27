@@ -135,16 +135,78 @@ impl AppContext {
         self.pending_overlay_dismiss.set(true);
     }
 
-    /// Schedule a new screen push deferred to the next event loop tick.
-    /// Use this from `on_action(&self, ...)` where only &self is available.
-    /// The event loop drains `pending_screen_pushes` after each event cycle.
+    /// Push a new screen onto the screen stack.
+    ///
+    /// The current screen is kept in memory; the new screen receives keyboard
+    /// focus immediately. When the new screen is later popped, focus returns
+    /// to the widget that was focused before the push.
+    ///
+    /// Call this from `on_action` (where only `&self` is available). The
+    /// push is applied at the end of the current event cycle.
+    ///
+    /// To present a modal dialog that blocks input to all screens beneath it,
+    /// wrap your widget in [`crate::widget::screen::ModalScreen`]:
+    ///
+    /// ```no_run
+    /// # use textual_rs::widget::context::AppContext;
+    /// # use textual_rs::widget::screen::ModalScreen;
+    /// # use textual_rs::{Widget, WidgetId};
+    /// # use ratatui::{buffer::Buffer, layout::Rect};
+    /// struct ConfirmDialog;
+    /// impl Widget for ConfirmDialog {
+    ///     fn widget_type_name(&self) -> &'static str { "ConfirmDialog" }
+    ///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+    ///     fn on_action(&self, action: &str, ctx: &AppContext) {
+    ///         if action == "confirm" || action == "cancel" {
+    ///             ctx.pop_screen_deferred();
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// struct MyScreen;
+    /// impl Widget for MyScreen {
+    ///     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+    ///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+    ///     fn on_action(&self, action: &str, ctx: &AppContext) {
+    ///         if action == "open_dialog" {
+    ///             ctx.push_screen_deferred(Box::new(ModalScreen::new(Box::new(ConfirmDialog))));
+    ///         }
+    ///     }
+    /// }
+    /// ```
     pub fn push_screen_deferred(&self, screen: Box<dyn Widget>) {
         self.pending_screen_pushes.borrow_mut().push(screen);
     }
 
-    /// Schedule a screen pop deferred to the next event loop tick.
-    /// Use this from `on_action(&self, ...)` where only &self is available.
-    /// The event loop drains `pending_screen_pops` after each event cycle.
+    /// Pop the top screen from the stack and restore focus to the previous screen.
+    ///
+    /// The popped screen and its entire widget subtree are unmounted. Focus
+    /// returns to whichever widget was focused when the screen was pushed — or
+    /// advances to the next focusable widget if that widget no longer exists.
+    ///
+    /// Call this from `on_action` (where only `&self` is available). The pop
+    /// is applied at the end of the current event cycle.
+    ///
+    /// Calling `pop_screen_deferred` on the last remaining screen is a no-op.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use textual_rs::widget::context::AppContext;
+    /// # use textual_rs::{Widget, WidgetId};
+    /// # use ratatui::{buffer::Buffer, layout::Rect};
+    /// struct Dialog;
+    /// impl Widget for Dialog {
+    ///     fn widget_type_name(&self) -> &'static str { "Dialog" }
+    ///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+    ///     fn on_action(&self, action: &str, ctx: &AppContext) {
+    ///         match action {
+    ///             "ok" | "cancel" | "close" => ctx.pop_screen_deferred(),
+    ///             _ => {}
+    ///         }
+    ///     }
+    /// }
+    /// ```
     pub fn pop_screen_deferred(&self) {
         self.pending_screen_pops
             .set(self.pending_screen_pops.get() + 1);
