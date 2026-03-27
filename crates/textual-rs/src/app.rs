@@ -739,6 +739,9 @@ impl App {
             render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
         })?;
 
+        // Advance spinner tick for next frame (all loading overlays animate in sync)
+        self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));
+
         Ok(())
     }
 
@@ -779,6 +782,9 @@ impl App {
                 render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
             })
             .expect("failed to draw to TestBackend");
+
+        // Advance spinner tick for next frame (all loading overlays animate in sync)
+        self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));
 
         terminal.backend().buffer().clone()
     }
@@ -1212,6 +1218,15 @@ fn render_widget_tree(
                 };
                 if let Some(widget) = ctx.arena.get(id) {
                     widget.render(ctx, content_area, frame.buffer_mut());
+                }
+                // Draw loading overlay if this widget is in loading state
+                if ctx.loading_widgets.borrow().contains_key(id) {
+                    crate::widget::loading_indicator::draw_loading_spinner_overlay(
+                        rect,  // Use full rect (including borders) for overlay
+                        frame.buffer_mut(),
+                        ctx.spinner_tick.get(),
+                        ctx.skip_animations,
+                    );
                 }
             }
         }

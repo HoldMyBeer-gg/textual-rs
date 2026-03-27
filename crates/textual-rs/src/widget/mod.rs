@@ -11,6 +11,7 @@ pub mod input;
 pub mod label;
 pub mod layout;
 pub mod list_view;
+pub mod loading_indicator;
 pub mod log;
 pub mod markdown;
 pub mod placeholder;
