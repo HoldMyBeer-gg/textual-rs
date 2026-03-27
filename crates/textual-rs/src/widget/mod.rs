@@ -16,6 +16,7 @@ pub mod markdown;
 pub mod placeholder;
 pub mod progress_bar;
 pub mod radio;
+pub mod rich_log;
 pub mod scroll_view;
 pub mod select;
 pub mod sparkline;
