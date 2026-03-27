@@ -387,7 +387,13 @@ impl ComputedStyle {
                         _ => {}
                     }
                 }
-                _ => {}
+                _ => {
+                    #[cfg(debug_assertions)]
+                    eprintln!(
+                        "[textual-rs] warning: unknown CSS property '{}' (ignored)",
+                        decl.property
+                    );
+                }
             }
         }
     }
@@ -451,5 +457,25 @@ mod tests {
         assert_eq!(style.color, TcssColor::Rgb(255, 0, 0));
         assert_eq!(style.display, TcssDisplay::Block);
         assert_eq!(style.opacity, 0.5);
+    }
+
+    #[test]
+    fn unknown_property_does_not_panic() {
+        // Unknown properties should be silently ignored (with a debug warning).
+        // This test verifies no panic occurs.
+        let mut style = ComputedStyle::default();
+        let decls = vec![
+            Declaration {
+                property: "nonexistent-prop".to_string(),
+                value: TcssValue::Float(1.0),
+            },
+            Declaration {
+                property: "color".to_string(),
+                value: TcssValue::Color(TcssColor::Rgb(0, 255, 0)),
+            },
+        ];
+        style.apply_declarations(&decls);
+        // Known property should still be applied after the unknown one
+        assert_eq!(style.color, TcssColor::Rgb(0, 255, 0));
     }
 }
