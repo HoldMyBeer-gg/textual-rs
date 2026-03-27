@@ -26,6 +26,7 @@ Label { min-height: 1; }
 ListView { min-height: 3; flex-grow: 1; }
 Log { min-height: 3; flex-grow: 1; }
 Markdown { min-height: 3; }
+MaskedInput { border: rounded; height: 3; }
 Placeholder { border: rounded; min-height: 3; min-width: 10; }
 ProgressBar { height: 1; }
 RadioButton { height: 1; }
