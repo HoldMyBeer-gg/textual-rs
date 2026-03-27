@@ -74,6 +74,13 @@ pub struct AppContext {
     pub pending_mouse_push: RefCell<Vec<bool>>,
     /// Deferred mouse capture pop count from widgets (drained by event loop).
     pub pending_mouse_pops: Cell<usize>,
+    /// Per-widget loading state. When a widget's ID is present and true,
+    /// render_widget_tree draws a spinner overlay on top of that widget.
+    /// Manipulated via set_loading(). Uses SecondaryMap (same as computed_styles, dirty, etc.).
+    pub loading_widgets: RefCell<SecondaryMap<WidgetId, bool>>,
+    /// Global spinner tick counter. Incremented once per full_render_pass.
+    /// All loading overlays and LoadingIndicator widgets use this for synchronized animation.
+    pub spinner_tick: Cell<u8>,
 }
 
 impl Default for AppContext {
@@ -114,6 +121,8 @@ impl AppContext {
             mouse_capture_stack: MouseCaptureStack::new(),
             pending_mouse_push: RefCell::new(Vec::new()),
             pending_mouse_pops: Cell::new(0),
+            loading_widgets: RefCell::new(SecondaryMap::new()),
+            spinner_tick: Cell::new(0),
         }
     }
 
@@ -329,6 +338,31 @@ impl AppContext {
     pub fn pop_mouse_capture(&self) {
         self.pending_mouse_pops
             .set(self.pending_mouse_pops.get() + 1);
+    }
+
+    /// Set or clear the loading overlay for a widget.
+    ///
+    /// When loading is true, `render_widget_tree` will draw a spinner overlay
+    /// on top of the widget's area after calling its `render()` method.
+    /// When loading is false, the overlay is removed.
+    ///
+    /// This is the textual-rs equivalent of Python Textual's `widget.loading = True`.
+    ///
+    /// # Example
+    /// ```ignore
+    /// // In on_action or on_message:
+    /// ctx.set_loading(self.own_id.get().unwrap(), true);
+    /// // Start async work...
+    /// // In worker result handler:
+    /// ctx.set_loading(self.own_id.get().unwrap(), false);
+    /// ```
+    pub fn set_loading(&self, id: WidgetId, loading: bool) {
+        let mut map = self.loading_widgets.borrow_mut();
+        if loading {
+            map.insert(id, true);
+        } else {
+            map.remove(id);
+        }
     }
 
     /// Cancel all workers associated with a widget. Called automatically during unmount.
