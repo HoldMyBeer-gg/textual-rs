@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-27T04:59:37.797Z",
+  "phase": "04",
+  "phase_name": "production-readiness",
+  "phase_dir": ".planning/phases/04-production-readiness",
+  "plan": 5,
+  "task": 2,
+  "total_tasks": 2,
+  "status": "Phase 4 complete. Post-phase polish in progress.",
+  "completed_this_session": [
+    "v1.1 Phase 1: Semantic Theme Engine (CSS $variable resolution, shade generation, 7 themes)",
+    "v1.1 Phase 2: Interactive States (hover, pressed, invalid border, quadrant/braille rendering)",
+    "v1.1 Phase 3: Widget Visual Polish (DataTable zebra, demo updates, theme variables in CSS)",
+    "v1.1 Phase 4: Production Readiness (clipboard, text selection, overlays, terminal caps, animation, themes, syntax highlighting, hatch/keyline/image)",
+    "Context menu system (right-click, floating overlay, McGugan border)",
+    "Horizontal layout fix (fr units -> flex_grow)",
+    "Multi-value padding/margin fix",
+    "Tall border corner fix (interior bg blending)",
+    "Select dropdown anchoring (near widget, smart direction)",
+    "30fps animation render tick",
+    "CI pipeline (GitHub Actions)",
+    "CHANGELOG, README, LICENSE, docs (guide.md, css-reference.md)",
+    "Visual regression test suite (21 tests)",
+    "Clippy cleanup, cargo fmt, dead code removal"
+  ],
+  "remaining": [
+    "Click-to-focus should show same visual as Tab-focus (currently delayed by 33ms render tick)",
+    "Borderless widget focus shows left-edge bar — user likes the 3D look but UX intent unclear",
+    "Cross-platform clipboard verification (arboard untested on Linux/macOS)",
+    "Animation tweens untested visually (Switch slide, Tab underline slide)",
+    "CSS hot-reload untested in real use",
+    "Worker progress reporting untested in real use",
+    "Accessibility (screen reader support)",
+    "crates.io publish (cargo publish)"
+  ],
+  "decisions": [
+    "McGugan Box right border uses U+2595 fallback instead of U+1FB87 for broad terminal support",
+    "Context menus use active_overlay pattern (not screen push) to preserve underlying content",
+    "30fps render tick drives animations — ratatui diff makes unchanged frames nearly free",
+    "Removed 3D button depth (black splits) — McGugan border is sufficient",
+    "fr units in CSS promote to flex_grow for flex children"
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    "Visual review of all 4 demo tabs",
+    "Test Ctrl+T theme cycling",
+    "Test clipboard (Ctrl+C copy, Ctrl+V paste) in Input widget",
+    "Decide on borderless focus indicator style (left-edge bar vs something else)"
+  ],
+  "background_processes": [],
+  "uncommitted_files": []
+}
