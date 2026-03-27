@@ -3,6 +3,12 @@ name = "textual-rs"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+description = "A Rust port of the Textual TUI framework — build beautiful terminal UIs with CSS styling, reactive signals, and composable widgets"
+license = "MIT"
+repository = "https://github.com/mbeha/textual-rs"
+readme = "../../README.md"
+keywords = ["tui", "terminal", "css", "widgets", "reactive"]
+categories = ["command-line-interface", "gui"]
 
 [dependencies]
 textual-rs-macros = { path = "../textual-rs-macros" }
