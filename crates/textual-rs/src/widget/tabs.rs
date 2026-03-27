@@ -8,7 +8,6 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use super::context::AppContext;
 use super::{Widget, WidgetId};
 use crate::animation::{Tween, ease_out_cubic};
-use crate::css::render_style::fill_background;
 use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 
