@@ -23,21 +23,19 @@ use textual_rs::reactive::Reactive;
 
 const CSS: &str = r#"
 ReactiveScreen {
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: $background;
+    color: $foreground;
     layout-direction: vertical;
 }
 Header {
     height: 1;
-    background: #12121a;
-    color: #00d4ff;
-
+    background: $panel;
+    color: $primary;
 }
 Footer {
     height: 1;
-    background: #12121a;
-    color: #4a4a5a;
-
+    background: $panel;
+    color: $text;
 }
 EchoWidget {
     flex-grow: 1;
@@ -45,13 +43,13 @@ EchoWidget {
     padding: 1;
 }
 Input {
-    border: rounded;
+    border: tall $primary;
     height: 3;
-    color: #c8c8d8;
+    color: $foreground;
 }
 Label {
     height: 1;
-    color: #00ffa3;
+    color: $accent;
 }
 "#;
 

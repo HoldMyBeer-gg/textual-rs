@@ -26,21 +26,19 @@ use textual_rs::event::keybinding::KeyBinding;
 
 const CSS: &str = r#"
 EventScreen {
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: $background;
+    color: $foreground;
     layout-direction: vertical;
 }
 Header {
     height: 1;
-    background: #12121a;
-    color: #00d4ff;
-
+    background: $panel;
+    color: $primary;
 }
 Footer {
     height: 1;
-    background: #12121a;
-    color: #4a4a5a;
-
+    background: $panel;
+    color: $text;
 }
 CounterWidget {
     flex-grow: 1;
@@ -48,14 +46,14 @@ CounterWidget {
     padding: 1;
 }
 Button {
-    border: heavy;
+    border: mcgugan-box $accent;
     height: 3;
     min-width: 16;
-    color: #00ffa3;
+    color: $accent;
 }
 Label {
     height: 1;
-    color: #c8c8d8;
+    color: $foreground;
 }
 "#;
 

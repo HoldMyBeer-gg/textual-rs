@@ -29,30 +29,29 @@ use textual_rs::widget::context::AppContext;
 // ---------------------------------------------------------------------------
 const CSS: &str = r#"
 LayoutScreen {
-    background: #0a0a0f;
-    color: #c8c8d8;
+    background: $background;
+    color: $foreground;
     layout-direction: vertical;
 }
 Header {
     height: 1;
-    background: #12121a;
-    color: #00d4ff;
-
+    background: $panel;
+    color: $primary;
 }
 Footer {
     height: 1;
-    background: #12121a;
-    color: #4a4a5a;
-
+    background: $panel;
+    color: $text;
 }
 ContentArea {
     flex-grow: 1;
     layout-direction: vertical;
     padding: 1;
+    border: tall $primary;
 }
 Label {
     height: 1;
-    color: #c8c8d8;
+    color: $foreground;
 }
 "#;
 
