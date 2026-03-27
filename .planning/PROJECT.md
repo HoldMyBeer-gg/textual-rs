@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A Rust library that ports the Textual Python TUI framework to Rust, delivering the same visual quality and developer ergonomics in a compiled, memory-safe language. The library provides a widget tree, CSS-like styling engine, reactive properties, async event loop, and rich built-in widgets — targeting developers who want beautiful terminal UIs without the Python runtime.
+A Rust TUI framework inspired by Python Textual, delivering modern terminal interfaces with CSS styling, reactive state, and 25+ built-in widgets. Includes semantic theming, sub-cell rendering, animation, clipboard support, and a headless test harness.
 
 ## Core Value
 
@@ -12,107 +12,75 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 
 ### Validated
 
-- [x] Cross-platform terminal backend (ratatui + crossterm) — Validated in Phase 1: Foundation
-- [x] Async event loop with Tokio LocalSet — Validated in Phase 1: Foundation
-- [x] Stable Rust (no nightly features required) — Validated in Phase 1: Foundation
-- [x] Cross-platform: Windows 10+ confirmed (FOUND-01, FOUND-02) — Validated in Phase 1: Foundation
-- [x] Reactive property system that triggers re-renders on state change — Validated in Phase 3: Reactive System, Events, and Testing
-- [x] Async event loop with message passing between widgets — Validated in Phase 3: Reactive System, Events, and Testing
-- [x] Keyboard and mouse input handling — Validated in Phase 3: Reactive System, Events, and Testing
-- [x] Snapshot testing infrastructure for visual regression tests — Validated in Phase 3: Reactive System, Events, and Testing
-- [x] Test pilot system for simulating user interaction in tests — Validated in Phase 3: Reactive System, Events, and Testing
+- [x] Cross-platform terminal backend (ratatui + crossterm) — v1.0
+- [x] Async event loop with Tokio LocalSet — v1.0
+- [x] Stable Rust (no nightly features required) — v1.0
+- [x] Cross-platform: Windows 10+ — v1.0
+- [x] Reactive property system that triggers re-renders on state change — v1.0
+- [x] Async event loop with message passing between widgets — v1.0
+- [x] Keyboard and mouse input handling — v1.0
+- [x] Snapshot testing infrastructure for visual regression tests — v1.0
+- [x] Test pilot system for simulating user interaction in tests — v1.0
+- [x] CSS-like styling system (TCSS-equivalent) for widget appearance and layout — v1.0
+- [x] Widget tree with App > Screen > Widget hierarchy — v1.0
+- [x] Layout engine: vertical, horizontal, dock layouts — v1.0
+- [x] Built-in widget library: 25+ widgets — v1.0/v1.2
+- [x] Scrollable containers (ScrollView, ListView, DataTable, Tree) — v1.0
+- [x] Border styles, padding, margin (box model) — v1.0
+- [x] Derive macros (#[derive(Widget)], #[widget_impl]) — v1.0
+- [x] Worker API for background tasks — v1.0
+- [x] Command palette (Ctrl+P) — v1.0
+- [x] Demo apps and tutorial examples — v1.0
+- [x] Semantic color theming ($primary, $surface, $accent + shade generation) — v1.1
+- [x] Sub-cell rendering (half-block, eighth-block, quadrant, braille) — v1.1
+- [x] Interactive states (focus, hover, pressed, selected, invalid) — v1.1
+- [x] 7 built-in themes with runtime Ctrl+T switching — v1.2
+- [x] Clipboard integration (Ctrl+C/V/X) — v1.2
+- [x] Text selection in Input and TextArea — v1.2
+- [x] Animation system (Switch toggle, Tab underline) — v1.2
+- [x] Terminal capability detection — v1.2
+- [x] Mouse capture push/pop stack + Shift bypass — v1.2
 
 ### Active
 
-- [ ] CSS-like styling system (TCSS-equivalent) for widget appearance and layout
-- [ ] Widget tree with App > Screen > Widget hierarchy
-- [ ] Layout engine: vertical, horizontal, grid, dock layouts
-- [x] Built-in widget library: 22 widgets implemented — Validated in Phase 4: Built-in Widget Library
-- [x] Scrollable containers (ScrollView, ListView, DataTable, Tree) — Validated in Phase 4: Built-in Widget Library
 - [ ] Screen stack for modal dialogs and navigation
-- [ ] Border styles, padding, margin (box model)
-- [ ] Color themes and dark/light mode support
-- [ ] Cross-platform: Windows 10+, macOS, Linux
-- [x] Derive macros (#[derive(Widget)], #[widget_impl]) — Validated in Phase 5: Developer Experience
-- [x] Worker API for background tasks — Validated in Phase 5: Developer Experience
-- [x] Command palette (Ctrl+P) — Validated in Phase 5: Developer Experience
-- [x] Demo apps and tutorial examples — Validated in Phase 5: Developer Experience
-- [x] Rustdoc on key public types — Validated in Phase 5: Developer Experience
+- [ ] Cross-platform verification: macOS, Linux (Windows confirmed)
+- [ ] crates.io publish
 
 ### Out of Scope
 
 - Web/WASM deployment target — focus on native terminals first
 - Python bindings — pure Rust library
 - Direct API compatibility with Python Textual — inspired by, not identical to
+- Accessibility / screen reader support — future consideration
 
 ## Context
 
-The Python Textual codebase (in `textual/` subdirectory) serves as the primary reference. Key architectural insights from the codebase map:
-
-- **Textual's core pattern**: Hierarchical event-driven TUI with reactive data binding, CSS-based styling, and async message passing
-- **CSS engine**: Custom TCSS parser with selector matching, cascade, computed styles — a significant subsystem
-- **Render pipeline**: Compositor combines Strip-based widget renders into terminal output with dirty region tracking
-- **Async design**: asyncio-based, every node (App/Screen/Widget) inherits MessagePump — maps naturally to Rust's tokio/async-std
-- **Rich dependency**: Textual uses the `rich` Python library for ANSI/segment rendering — Rust has no equivalent; this must be built or an existing crate used
-- **ratatui**: Popular Rust TUI crate. Must be evaluated — if it can serve as the rendering backend, build on top of it rather than reinventing the wheel
-
-**Cross-platform requirements**: Must work on Windows 10+, macOS, and Linux. Terminal input/output handling differs significantly across platforms.
+Shipped through v1.2 with ~17,400 LOC Rust across 25+ widgets, CSS engine, reactive system, animation, theming, and test harness. Tech stack: ratatui 0.30, crossterm 0.29, tokio, reactive_graph, taffy, arboard.
 
 ## Constraints
 
 - **Language**: Rust — stable channel, no nightly-only features
-- **Testing**: Unit tests written before implementation code (TDD approach)
-- **Quality**: No shortcuts — correctness and safety over speed of development
-- **Cross-platform**: Windows/macOS/Linux from day one — no platform-specific assumptions
-- **Dependencies**: Prefer crates with broad adoption and maintenance; evaluate ratatui as rendering foundation before building from scratch
+- **Testing**: TDD approach with insta snapshot tests
+- **Quality**: Correctness and safety over speed of development
+- **Cross-platform**: Windows/macOS/Linux
+- **Dependencies**: Prefer well-maintained crates; ratatui as rendering foundation
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Research ratatui before building | Popular, well-maintained — may eliminate need to build low-level terminal backend | ✓ Adopted: ratatui 0.30.0 + crossterm 0.29.0 (Phase 1) |
-| TDD approach | User requirement: tests before code | ✓ Applied: TestBackend integration tests written TDD-style (Phase 1) |
-| Async runtime choice (tokio vs async-std vs smol) | Event loop and message passing require async | ✓ Decided: tokio current_thread + LocalSet; avoids Send pressure on future widget state (Phase 1) |
-| reactive_graph for reactive signals | Battle-tested signals from Leptos; ArcRwSignal/ArcMemo for widget state | ✓ Adopted: reactive_graph 0.2.13 + any_spawner 0.3.0; Executor::init_tokio() verified with LocalSet (Phase 3) |
-| Event dispatch via on_event + dyn Any | Simple, extensible, no TypeId registry needed | ✓ Applied: Widget::on_event with downcast, parent-chain bubbling (Phase 3) |
-| insta for snapshot testing | Human-readable diffs, ratatui TestBackend Display integration | ✓ Adopted: insta 1.42, plain-text buffer snapshots (Phase 3) |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition:**
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone:**
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-
-## Current Milestone: v1.1 Visual Parity with Python Textual
-
-**Goal:** Make textual-rs rendering identical to Python Textual — use the same half-block, sub-cell, and Unicode rendering techniques that give Textual its modern look.
-
-**Target features:**
-- Tall borders (half-block `▀▄▐▌`) as default border style, matching Textual's signature thin frames
-- 3D button depth — lighter top / darker bottom borders simulating lighting; inverted on press
-- Textual-quality Switch — pill-shaped sliding toggle with block elements and color transitions
-- Sub-cell rendering — 1/8th-block characters, half-blocks for higher visual resolution
-- Proper widget chrome — visual feedback for focus, hover, selected, active states via color/modifier
-- Semantic color theming — `$primary`, `$surface`, `$panel`, `$accent` variables with shade generation
-- Background fills and depth — widgets float above background via layered surface hierarchy
-- Footer key badges — styled key indicators matching Textual's footer
-- DataTable polish — zebra striping, hover, bold headers, proper separators
-- Tab underline indicator — colored underline bar on active tab
+| ratatui + crossterm backend | Popular, well-maintained | Adopted v1.0 |
+| tokio current_thread + LocalSet | Avoids Send pressure on widget state | Adopted v1.0 |
+| reactive_graph signals | Battle-tested from Leptos | Adopted v1.0 |
+| on_event + dyn Any dispatch | Simple, extensible | Adopted v1.0 |
+| insta snapshot testing | Human-readable diffs | Adopted v1.0 |
+| Pure-math HSL for shade generation | No external crate needed | Adopted v1.1 |
+| Two-phase CSS variable resolution | Parse as Variable, resolve at cascade | Adopted v1.1 |
+| McGugan Box with U+2595 fallback | Broad terminal compatibility | Adopted v1.2 |
+| active_overlay for Select/CommandPalette | Avoids screen blanking | Adopted v1.2 |
+| arboard for clipboard | Cross-platform clipboard access | Adopted v1.2 |
+| MouseCaptureStack push/pop | Prevents competing enable/disable clobber | Adopted v1.2 |
 
 ---
-## Current State
-
-v1.0 milestone complete — all 5 phases done. v1.1 started: visual parity with Python Textual. Preliminary work on tall borders, color-differentiated widget states, and modern rendering already in progress on master branch.
-
-*Last updated: 2026-03-26 — Milestone v1.1 started*
+*Last updated: 2026-03-27 after v1.2 milestone*
