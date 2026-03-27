@@ -47,6 +47,57 @@ impl Drop for TerminalGuard {
 }
 
 // ---------------------------------------------------------------------------
+// Mouse capture stack
+// ---------------------------------------------------------------------------
+
+/// Stack-based mouse capture state. The effective state is the top of the stack,
+/// defaulting to `true` (captured) when empty. Screens/widgets push to temporarily
+/// override; pop to restore. This prevents competing enable/disable calls from
+/// clobbering each other.
+#[derive(Debug, Clone)]
+pub struct MouseCaptureStack {
+    stack: Vec<bool>,
+}
+
+impl MouseCaptureStack {
+    pub fn new() -> Self {
+        Self { stack: Vec::new() }
+    }
+
+    /// Current effective mouse-capture state. True = terminal captures mouse events;
+    /// false = pass-through to terminal emulator for native selection.
+    pub fn is_enabled(&self) -> bool {
+        self.stack.last().copied().unwrap_or(true)
+    }
+
+    /// Push a new capture state. Returns the previous is_enabled() value
+    /// so the caller can detect transitions.
+    pub fn push(&mut self, enabled: bool) -> bool {
+        let prev = self.is_enabled();
+        self.stack.push(enabled);
+        prev
+    }
+
+    /// Pop the top capture state. Returns the new is_enabled() value.
+    /// No-op if stack is empty (default state cannot be popped).
+    pub fn pop(&mut self) -> bool {
+        self.stack.pop();
+        self.is_enabled()
+    }
+
+    /// Reset to default state (empty stack = captured). Used by resize guard.
+    pub fn reset(&mut self) {
+        self.stack.clear();
+    }
+}
+
+impl Default for MouseCaptureStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Terminal capability detection
 // ---------------------------------------------------------------------------
 
