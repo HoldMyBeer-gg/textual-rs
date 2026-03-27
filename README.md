@@ -4,22 +4,99 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 
 ## Features
 
-- **22+ built-in widgets** -- Button, Input, TextArea, Checkbox, Switch, RadioSet, Select, ListView, DataTable, Tree, Tabs, Markdown, and more
-- **CSS/TCSS styling** -- type/class/ID selectors, cascade, theme variables (`$primary`, `$accent-lighten-2`), 8 border styles including McGugan Boxes
-- **Sub-cell rendering** -- half-block, eighth-block, quadrant, and braille characters for high-resolution TUI graphics
-- **Reactive state** -- `Reactive<T>` properties trigger automatic re-renders
-- **Mouse support** -- click, hover, scroll wheel, right-click context menus
-- **Keyboard** -- key bindings, Tab focus cycling, Ctrl+C/X/V clipboard
-- **7 built-in themes** -- textual-dark, textual-light, tokyo-night, nord, gruvbox, dracula, catppuccin (Ctrl+T to cycle)
-- **Animation** -- smooth tween transitions on Switch toggle and Tab switching
-- **Testing** -- `TestApp` headless harness, `Pilot` for simulated input, snapshot testing with insta
-- **Cross-platform** -- Windows 10+, macOS, Linux via ratatui + crossterm
+### Widgets (25+)
+
+| Widget | Description |
+|--------|-------------|
+| `Button` | Clickable with 3D depth, press animation |
+| `Input` | Single-line text field with clipboard (Ctrl+C/V), text selection, validation states |
+| `TextArea` | Multi-line editor with selection, clipboard, scroll |
+| `Checkbox` | Toggle with checked/unchecked/indeterminate states |
+| `Switch` | Animated pill-shaped sliding toggle |
+| `RadioButton` / `RadioSet` | Mutually exclusive option groups |
+| `Select` | Dropdown overlay with search filtering |
+| `ListView` | Scrollable item list with keyboard navigation |
+| `DataTable` | Columns, zebra striping, sortable headers, cursor row |
+| `Tree` / `TreeView` | Hierarchical collapsible nodes |
+| `Tabs` / `TabbedContent` | Tab bar with animated underline indicator |
+| `Markdown` | Rendered markdown with headings, lists, code blocks |
+| `Log` | Scrollable append-only message log |
+| `ProgressBar` | Determinate progress with half-block fill |
+| `Sparkline` | Braille-character mini charts |
+| `Collapsible` | Expandable/collapsible sections |
+| `Placeholder` | Quadrant cross-hatch placeholder |
+| `ScrollView` | Scrollable container with eighth-block scrollbar |
+| `Header` / `Footer` | App chrome with key badges |
+| `Horizontal` / `Vertical` | Layout containers |
+| `ContextMenu` | Right-click floating overlay menus |
+| `CommandPalette` | Ctrl+P command discovery overlay |
+| `Label` | Static text display |
+
+### Styling
+
+- **CSS/TCSS engine** -- type, class, and ID selectors with cascade and specificity
+- **Theme variables** -- `$primary`, `$surface`, `$accent`, with shade generation (`$primary-lighten-2`, `$accent-darken-1`)
+- **7 built-in themes** -- textual-dark, textual-light, tokyo-night, nord, gruvbox, dracula, catppuccin
+- **Runtime theme switching** -- Ctrl+T to cycle themes
+- **8 border styles** -- ascii, blank, double, heavy, inner, outer, round, tall (McGugan Box)
+- **Box model** -- padding, margin, min/max width/height, flex grow
+- **Pseudo-classes** -- `:focus`, `:hover` with automatic visual feedback
+- **Custom themes** -- override any variable via user CSS
+
+### Layout
+
+- **Flexbox** via Taffy -- `layout-direction: vertical | horizontal`, `flex-grow`, `align-items`, `justify-content`
+- **Dock** -- `dock: top | bottom | left | right` for fixed chrome
+- **Responsive** -- recomputes on terminal resize
+
+### Interaction
+
+- **Mouse** -- click, hover tracking, scroll wheel, right-click context menus
+- **Mouse capture stack** -- push/pop mouse-enabled state; Shift+click bypasses capture for native text selection
+- **Keyboard** -- key bindings, Tab/Shift+Tab focus cycling, Ctrl+C/X/V clipboard
+- **Focus system** -- visible focus indicators with border color changes
+
+### Reactive State
+
+- **`Reactive<T>`** -- property wrapper that triggers re-renders on change
+- **Signals** -- built on `reactive_graph` (from Leptos); `ArcRwSignal` / `ArcMemo`
+- **Message passing** -- typed async messages bubble up the widget tree
+
+### Background Work
+
+- **Worker API** -- `run_worker()` and `run_worker_with_progress()` for async tasks off the UI thread
+- **Command palette** -- register commands via `CommandRegistry`, invoke with Ctrl+P
+
+### Animation
+
+- **Tween system** -- easing functions (linear, ease-in-out-cubic, ease-out-cubic)
+- **Built-in animations** -- Switch toggle slide, Tab underline slide
+- **30fps render tick** -- ratatui diff makes unchanged frames nearly free
+
+### Rendering
+
+- **Sub-cell graphics** -- half-block, eighth-block, quadrant, and braille characters
+- **McGugan Box borders** -- thin tall borders using Unicode block elements
+- **Terminal capability detection** -- color depth, Unicode support auto-detected
+
+### Testing
+
+- **`TestApp`** -- headless application harness, no terminal needed
+- **`Pilot`** -- simulated keyboard/mouse input for integration tests
+- **Snapshot testing** -- insta-based plain-text buffer snapshots
+- **21 visual regression tests** included
+
+### Cross-platform
+
+- Windows 10+, macOS, Linux
+- ratatui 0.30 + crossterm 0.29 backend
+- Stable Rust (no nightly required), MSRV 1.88
 
 ## Quick Start
 
 ```toml
 [dependencies]
-textual-rs = "0.2"
+textual-rs = "0.1"
 ```
 
 ```rust
@@ -79,16 +156,19 @@ Button.primary {
 ## Examples
 
 ```bash
-cargo run --example demo          # Widget showcase
-cargo run --example irc_demo      # IRC client demo
-cargo run --example tutorial_01_hello
+cargo run --example demo                  # Widget showcase (4 tabs)
+cargo run --example irc_demo              # IRC client demo
+cargo run --example tutorial_01_hello     # Hello world
+cargo run --example tutorial_02_layout    # Layout system
+cargo run --example tutorial_03_events    # Event handling
+cargo run --example tutorial_04_reactive  # Reactive state
+cargo run --example tutorial_05_workers   # Background workers
 ```
 
 ## Documentation
 
 - [User Guide](docs/guide.md) -- complete walkthrough
 - [CSS Reference](docs/css-reference.md) -- all properties, selectors, theme variables
-- [API Docs](https://docs.rs/textual-rs) -- rustdoc
 
 ## License
 

@@ -84,6 +84,12 @@ None yet.
 
 - Sparkline braille rendering not visually verified on real terminal
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260326-uwc | Mouse capture push/pop stack and Shift modifier bypass | 2026-03-27 | 2674edb | [260326-uwc](./quick/260326-uwc-mouse-capture-push-pop-stack-and-shift-m/) |
+
 ## Session Continuity
 
 Last session: 2026-03-26T23:30:00Z
