@@ -95,7 +95,7 @@ impl Widget for DisplayPane {
 
 // ---- Layout tab ----
 
-/// Layout tab: Horizontal/Vertical containers, Collapsible section.
+/// Layout tab: demonstrates Horizontal/Vertical containers, nested layouts, Collapsible.
 struct LayoutPane;
 
 impl Widget for LayoutPane {
@@ -105,22 +105,77 @@ impl Widget for LayoutPane {
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
-            Box::new(Label::new("Horizontal container (3 panels):")),
+            // Three side-by-side panels with different content
             Box::new(Horizontal::with_children(vec![
-                Box::new(Label::new("Panel 1")),
-                Box::new(Label::new("Panel 2")),
-                Box::new(Label::new("Panel 3")),
+                Box::new(LayoutPanel::new("Status", vec![
+                    "CPU: 42%",
+                    "Memory: 1.2 GB",
+                    "Disk: 78%",
+                    "Network: 12 Mbps",
+                ])),
+                Box::new(LayoutPanel::new("Events", vec![
+                    "08:31 Deploy started",
+                    "08:32 Build complete",
+                    "08:33 Tests passed",
+                    "08:34 Deploy live",
+                ])),
+                Box::new(LayoutPanel::new("Config", vec![
+                    "Region: us-east-1",
+                    "Env: production",
+                    "Version: v1.1.0",
+                    "Replicas: 3",
+                ])),
             ])),
-            Box::new(Label::new("Vertical container (2 rows):")),
-            Box::new(Vertical::with_children(vec![
-                Box::new(Label::new("Row A")),
-                Box::new(Label::new("Row B")),
+            // Nested vertical inside horizontal
+            Box::new(Horizontal::with_children(vec![
+                Box::new(Vertical::with_children(vec![
+                    Box::new(Label::new("Nested vertical → horizontal")),
+                    Box::new(ProgressBar::new(0.82)),
+                    Box::new(Sparkline::new(vec![4.0, 7.0, 2.0, 9.0, 5.0, 8.0, 3.0, 6.0])),
+                ])),
+                Box::new(Placeholder::with_label("Flex area")),
             ])),
+            // Collapsible with real content
             Box::new(Collapsible::new("Advanced Options", vec![
-                Box::new(Label::new("Option 1: enabled")),
-                Box::new(Label::new("Option 2: disabled")),
+                Box::new(Checkbox::new("Enable debug logging", false)),
+                Box::new(Checkbox::new("Verbose output", false)),
+                Box::new(Switch::new(true)),
+                Box::new(Label::new("Trace level: INFO")),
             ])),
         ]
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+}
+
+/// A bordered panel with a title and text rows — used in Layout tab.
+struct LayoutPanel {
+    title: String,
+    rows: Vec<String>,
+}
+
+impl LayoutPanel {
+    fn new(title: &str, rows: Vec<&str>) -> Self {
+        Self {
+            title: title.to_string(),
+            rows: rows.into_iter().map(|s| s.to_string()).collect(),
+        }
+    }
+}
+
+impl Widget for LayoutPanel {
+    fn widget_type_name(&self) -> &'static str {
+        "LayoutPanel"
+    }
+
+    fn compose(&self) -> Vec<Box<dyn Widget>> {
+        let mut children: Vec<Box<dyn Widget>> = vec![
+            Box::new(Label::new(&self.title)),
+        ];
+        for row in &self.rows {
+            children.push(Box::new(Label::new(row)));
+        }
+        children
     }
 
     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
