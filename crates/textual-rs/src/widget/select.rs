@@ -28,6 +28,7 @@ pub struct Select {
     pub options: Vec<String>,
     pub selected: Reactive<usize>,
     own_id: Cell<Option<WidgetId>>,
+    last_area: Cell<(u16, u16, u16, u16)>, // x, y, w, h from last render
 }
 
 impl Select {
@@ -37,6 +38,7 @@ impl Select {
             options,
             selected: Reactive::new(0),
             own_id: Cell::new(None),
+            last_area: Cell::new((0, 0, 20, 3)),
         }
     }
 }
@@ -84,11 +86,15 @@ impl Widget for Select {
     fn on_action(&self, action: &str, ctx: &AppContext) {
         if action == "open" {
             let current = self.selected.get_untracked();
+            let (ax, ay, aw, _ah) = self.last_area.get();
             let overlay = SelectOverlay {
                 options: self.options.clone(),
                 current,
                 cursor: Cell::new(current),
                 source_id: self.own_id.get(),
+                anchor_x: ax,
+                anchor_y: ay + 1, // below the Select widget
+                anchor_width: aw,
                 last_area_y: Cell::new(0),
             };
             *ctx.active_overlay.borrow_mut() = Some(Box::new(overlay));
@@ -107,6 +113,7 @@ impl Widget for Select {
         if area.height == 0 || area.width == 0 {
             return;
         }
+        self.last_area.set((area.x, area.y, area.width, area.height));
 
         let style = self.own_id.get()
             .map(|id| ctx.text_style(id))
@@ -126,12 +133,14 @@ impl Widget for Select {
 
 struct SelectOverlay {
     options: Vec<String>,
-    /// The index that was selected when the overlay opened (kept for future selection highlighting).
     #[allow(dead_code)]
     current: usize,
-    /// Cursor position within the overlay list.
     cursor: Cell<usize>,
     /// The WidgetId of the originating Select widget (to post Changed back).
+    /// Anchor position — where to render the dropdown relative to the Select widget.
+    anchor_x: u16,
+    anchor_y: u16,
+    anchor_width: u16,
     source_id: Option<WidgetId>,
     /// Last rendered area origin for mouse hit-testing.
     last_area_y: Cell<u16>,
@@ -258,21 +267,29 @@ impl Widget for SelectOverlay {
             return;
         }
 
-        // Calculate dropdown dimensions
+        // Calculate dropdown dimensions — at least as wide as the Select widget
         let max_label = self.options.iter().map(|o| o.chars().count()).max().unwrap_or(10);
-        let dropdown_width = (max_label + 4).min(area.width as usize) as u16;
+        let dropdown_width = ((max_label + 4) as u16)
+            .max(self.anchor_width)
+            .min(area.width);
         let dropdown_height = (self.options.len() as u16 + 2).min(area.height); // +2 for border
 
-        // Position: center horizontally, top of screen area
-        let dx = if area.width > dropdown_width {
-            area.x + (area.width - dropdown_width) / 2
+        // Position: anchored to the Select widget
+        // Horizontal: align left edge with anchor, clamp to screen
+        let dx = self.anchor_x.min(area.x + area.width - dropdown_width);
+
+        // Vertical: prefer below anchor. If not enough room, render above.
+        let space_below = (area.y + area.height).saturating_sub(self.anchor_y);
+        let space_above = self.anchor_y.saturating_sub(area.y);
+        let dy = if space_below >= dropdown_height {
+            // Enough room below — render downward
+            self.anchor_y
+        } else if space_above >= dropdown_height {
+            // Render upward (above the Select widget)
+            self.anchor_y.saturating_sub(dropdown_height)
         } else {
-            area.x
-        };
-        let dy = if area.height > dropdown_height {
-            area.y + (area.height - dropdown_height) / 2
-        } else {
-            area.y
+            // Not enough room either way — clamp to bottom
+            (area.y + area.height).saturating_sub(dropdown_height)
         };
 
         self.last_area_y.set(dy + 1); // content starts after top border
