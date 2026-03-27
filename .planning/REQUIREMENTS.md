@@ -74,6 +74,57 @@
 - [ ] **PROD-18**: Image rendering via half-block canvas
 - [ ] **PROD-19**: Syntax highlighting in Markdown code blocks
 
+## v1.3: Widget Parity & Ship
+
+### Widgets
+
+- [ ] **WIDGET-01**: User can display static text content with Static widget (base for Label/Link)
+- [ ] **WIDGET-02**: User can render a horizontal or vertical Rule separator
+- [ ] **WIDGET-03**: User can render a clickable Link that emits a message on press
+- [ ] **WIDGET-04**: User can display formatted data structures with Pretty widget (JSON/Debug via serde_json)
+- [ ] **WIDGET-05**: User can display large numbers as block-character Digits
+- [ ] **WIDGET-06**: User can select from a list of options with OptionList (keyboard + mouse navigation)
+- [ ] **WIDGET-07**: User can select multiple items from a list with SelectionList (checkboxes)
+- [ ] **WIDGET-08**: User can switch between named content panes with ContentSwitcher
+- [ ] **WIDGET-09**: User can view scrolling rich-text log output with RichLog (styled Lines, not plain strings)
+- [ ] **WIDGET-10**: User can display a loading spinner on any widget via `widget.loading = true`
+- [ ] **WIDGET-11**: User can enter text with a format mask using MaskedInput (e.g. date, phone)
+- [ ] **WIDGET-12**: User can browse a filesystem tree with DirectoryTree (lazy-loaded, async)
+- [ ] **WIDGET-13**: User receives toast notifications via `app.notify(message, severity, timeout)`
+
+### Navigation
+
+- [ ] **NAV-01**: Developer can push a new screen onto the stack with `ctx.push_screen()`
+- [ ] **NAV-02**: Developer can pop the top screen and restore focus to the underlying screen
+- [ ] **NAV-03**: Developer can create modal screens that block input to screens below
+
+### Platform
+
+- [ ] **PLATFORM-01**: Library builds and all tests pass on macOS and Linux (CI verified)
+
+### Publish
+
+- [ ] **PUBLISH-01**: Library is published to crates.io with correct README, docs, and semver metadata
+- [ ] **PUBLISH-02**: All public API items have rustdoc documentation
+- [ ] **PUBLISH-03**: `cargo package --list` produces a clean, complete package with no broken paths
+
+## Future Requirements
+
+### Widgets
+
+- **WIDGET-F01**: Modes system (independent screen stacks per named section)
+- **WIDGET-F02**: push_screen_wait (async callback on pop)
+- **WIDGET-F03**: widget.loading viral base-class property
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Web/WASM deployment | Native terminals first |
+| Python bindings | Pure Rust library |
+| Direct API compatibility with Python Textual | Inspired by, not identical |
+| Accessibility / screen reader support | Future consideration |
+
 ## Traceability
 
 | Requirement | Phase | Status |
@@ -121,3 +172,23 @@
 | PROD-17 | Phase 4 | Pending |
 | PROD-18 | Phase 4 | Pending |
 | PROD-19 | Phase 4 | Pending |
+| NAV-01 | TBD | Pending |
+| NAV-02 | TBD | Pending |
+| NAV-03 | TBD | Pending |
+| WIDGET-01 | TBD | Pending |
+| WIDGET-02 | TBD | Pending |
+| WIDGET-03 | TBD | Pending |
+| WIDGET-04 | TBD | Pending |
+| WIDGET-05 | TBD | Pending |
+| WIDGET-06 | TBD | Pending |
+| WIDGET-07 | TBD | Pending |
+| WIDGET-08 | TBD | Pending |
+| WIDGET-09 | TBD | Pending |
+| WIDGET-10 | TBD | Pending |
+| WIDGET-11 | TBD | Pending |
+| WIDGET-12 | TBD | Pending |
+| WIDGET-13 | TBD | Pending |
+| PLATFORM-01 | TBD | Pending |
+| PUBLISH-01 | TBD | Pending |
+| PUBLISH-02 | TBD | Pending |
+| PUBLISH-03 | TBD | Pending |
