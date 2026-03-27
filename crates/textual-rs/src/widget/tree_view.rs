@@ -10,6 +10,7 @@ use crate::event::keybinding::KeyBinding;
 use crate::reactive::Reactive;
 
 /// A single node in the tree hierarchy.
+#[derive(Clone)]
 pub struct TreeNode {
     pub label: String,
     pub data: Option<String>,
@@ -121,6 +122,30 @@ impl Tree {
         self.dirty.set(false);
     }
 
+    /// Return the index path of the currently-focused entry, if any.
+    /// Used by wrapper widgets (e.g. DirectoryTree) to identify the cursor node.
+    pub fn cursor_path(&self) -> Option<Vec<usize>> {
+        let cursor = self.cursor.get_untracked();
+        let flat = self.flat_entries.borrow();
+        flat.get(cursor).map(|e| e.path.clone())
+    }
+
+    /// Return whether the entry at `path` is currently expanded.
+    pub fn is_expanded_at(&self, path: &[usize]) -> bool {
+        let flat = self.flat_entries.borrow();
+        flat.iter()
+            .find(|e| e.path.as_slice() == path)
+            .map(|e| e.expanded)
+            .unwrap_or(false)
+    }
+
+    /// Mark the flat entry cache as stale. Call this after externally modifying
+    /// `root` children (e.g. from DirectoryTree after a worker delivers results).
+    /// The next `render()` call will rebuild the cache automatically.
+    pub fn mark_dirty(&self) {
+        self.dirty.set(true);
+    }
+
     fn adjust_scroll(&self) {
         let cursor = self.cursor.get_untracked();
         let vp = self.viewport_height.get() as usize;
@@ -167,6 +192,11 @@ fn flatten_children(
             flatten_children(&node.children, &node_path, &child_ancestor_is_last, entries);
         }
     }
+}
+
+/// Returns the static key bindings slice for Tree / DirectoryTree.
+pub fn tree_key_bindings() -> &'static [KeyBinding] {
+    TREE_BINDINGS
 }
 
 static TREE_BINDINGS: &[KeyBinding] = &[
