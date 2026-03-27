@@ -269,13 +269,25 @@ impl ComputedStyle {
                     }
                 }
                 "padding" => {
-                    if let TcssValue::Float(v) = decl.value {
-                        self.padding = Sides { top: v, right: v, bottom: v, left: v };
+                    match &decl.value {
+                        TcssValue::Float(v) => {
+                            self.padding = Sides { top: *v, right: *v, bottom: *v, left: *v };
+                        }
+                        TcssValue::Sides(s) => {
+                            self.padding = *s;
+                        }
+                        _ => {}
                     }
                 }
                 "margin" => {
-                    if let TcssValue::Float(v) = decl.value {
-                        self.margin = Sides { top: v, right: v, bottom: v, left: v };
+                    match &decl.value {
+                        TcssValue::Float(v) => {
+                            self.margin = Sides { top: *v, right: *v, bottom: *v, left: *v };
+                        }
+                        TcssValue::Sides(s) => {
+                            self.margin = *s;
+                        }
+                        _ => {}
                     }
                 }
                 "width" => {

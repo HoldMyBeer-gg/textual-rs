@@ -288,3 +288,34 @@ fn overlay_preserves_underlying_screen_content() {
     }
     assert!(found_menu, "Context menu should be visible.\nBuffer:\n{}", all_rows);
 }
+
+// ---------------------------------------------------------------------------
+// PADDING TEST: Verify CSS padding shifts content
+// ---------------------------------------------------------------------------
+
+#[test]
+fn css_padding_shifts_content() {
+    use textual_rs::{Label, Widget};
+    use textual_rs::widget::context::AppContext;
+
+    struct PaddedScreen;
+    impl Widget for PaddedScreen {
+        fn widget_type_name(&self) -> &'static str { "PaddedScreen" }
+        fn compose(&self) -> Vec<Box<dyn Widget>> {
+            vec![Box::new(Label::new("PADTEST"))]
+        }
+        fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+    }
+
+    let css = "PaddedScreen { layout-direction: vertical; padding: 1 2; } Label { height: 1; }";
+    let app = TestApp::new_styled(20, 5, css, || Box::new(PaddedScreen));
+    let buf = app.buffer();
+
+    // Row 0 should NOT have content (top padding = 1)
+    let row0: String = (0..20u16).map(|x| buf[(x, 0)].symbol().to_string()).collect();
+    assert!(!row0.contains("PADTEST"), "Row 0 should be empty (top padding), got: {:?}", row0.trim());
+
+    // Row 1 should have content
+    let row1: String = (0..20u16).map(|x| buf[(x, 1)].symbol().to_string()).collect();
+    assert!(row1.contains("PADTEST"), "Row 1 should have PADTEST (after padding), got: {:?}", row1.trim());
+}
