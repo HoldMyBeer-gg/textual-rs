@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: executing
-stopped_at: Completed 08-01-PLAN.md (RichLog widget)
-last_updated: "2026-03-27T14:45:00Z"
-last_activity: 2026-03-27 -- Completed Phase 08 Plan 01 (RichLog)
+stopped_at: Completed 08-02-PLAN.md (LoadingIndicator + loading overlay)
+last_updated: "2026-03-27T00:00:00Z"
+last_activity: 2026-03-27 -- Completed Phase 08 Plan 02 (LoadingIndicator)
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 08 (enhanced-display-widgets) — EXECUTING
-Plan: 2 of 2 (plan 01 complete)
-Status: Executing Phase 08
-Last activity: 2026-03-27 -- Completed 08-01-PLAN.md (RichLog widget)
+Plan: 2 of 2 (both complete)
+Status: Phase 08 complete
+Last activity: 2026-03-27 -- Completed 08-02-PLAN.md (LoadingIndicator + loading overlay)
 
 ### Progress
 
@@ -58,6 +58,9 @@ Phase 10 [ ] Platform Verification and Publish
 
 ### Key Decisions (v1.3)
 
+- LoadingIndicator uses ctx.spinner_tick (not own tick) for synchronized overlay animation across all instances (08-02)
+- set_loading() uses SecondaryMap<WidgetId,bool> — supports multiple simultaneous loading widgets (08-02)
+- Loading overlay drawn over full rect (including borders) for visual continuity (08-02)
 - RichLog uses imported `Line` type alias — `Reactive<Vec<Line<'static>>>` is `Reactive<Vec<ratatui::text::Line<'static>>>` (08-01)
 - RichLog PageUp/PageDown added beyond minimum 4 bindings for usability (08-01)
 - `focus_history: Vec<Option<WidgetId>>` must be added to AppContext before any screen stack consumer code is written
@@ -80,6 +83,6 @@ Phase 10 [ ] Platform Verification and Publish
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Completed 08-01-PLAN.md (RichLog widget)
+Stopped at: Completed 08-02-PLAN.md (LoadingIndicator + loading overlay)
 Resume file: None
-Next action: Execute 08-02-PLAN.md
+Next action: Phase 08 complete — proceed to next phase
