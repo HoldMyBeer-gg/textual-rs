@@ -1,30 +1,39 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-27T16:10:57.504Z",
-  "phase": "08",
-  "phase_name": "enhanced-display-widgets",
-  "phase_dir": ".planning/phases/08-enhanced-display-widgets",
-  "plan": null,
+  "timestamp": "2026-03-27T21:42:43.180Z",
+  "phase": "09",
+  "phase_name": "complex-widgets",
+  "phase_dir": ".planning/phases/09-complex-widgets",
+  "plan": 3,
   "task": null,
   "total_tasks": null,
-  "status": "paused_between_phases",
+  "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 08: RichLog widget (08-01)", "status": "done", "commit": "75cb30c"},
-    {"id": 2, "name": "Phase 08: LoadingIndicator + overlay (08-02)", "status": "done", "commit": "f3cd323"},
-    {"id": 3, "name": "yubitui feedback: configurable theme cycle key + on_theme_changed callback", "status": "done", "commit": "946a854"},
-    {"id": 4, "name": "yubitui feedback: fix default theme key Ctrl+T -> F5 (macOS SIGINFO + Windows Terminal conflict)", "status": "done", "commit": "ba3ec26"},
-    {"id": 5, "name": "yubitui feedback: document Reactive<T>: PartialEq bound", "status": "done", "commit": "946a854"}
+    {"id": 1, "name": "09-01: MaskedInput widget", "status": "done", "commit": "fc3b855"},
+    {"id": 2, "name": "09-01: Register module + BUILTIN_CSS", "status": "done", "commit": "d1fa1df"},
+    {"id": 3, "name": "09-02: DirectoryTree widget + walkdir dep", "status": "done", "commit": "5d64549"},
+    {"id": 4, "name": "09-02: Register DirectoryTree module + BUILTIN_CSS", "status": "done", "commit": "bc47d0d"},
+    {"id": 5, "name": "09-03: Toast types, render, unit tests", "status": "done", "commit": "ddef204"},
+    {"id": 6, "name": "09-03: Wire toast into AppContext + render pipeline", "status": "done", "commit": "71a75dd"}
   ],
   "remaining_tasks": [
-    {"id": 6, "name": "Phase 09: Complex Widgets — plan and execute", "status": "not_started"}
+    {"id": 7, "name": "Complete /gsd:verify-work UAT for phase 09 (13 tests, test 1 in progress)", "status": "in_progress"}
   ],
   "blockers": [],
-  "human_actions_pending": [],
-  "decisions": [
-    {"decision": "Theme cycle key default changed from Ctrl+T to F5", "rationale": "Ctrl+T intercepted at OS level on macOS (stty SIGINFO) and Windows Terminal (new tab). F5 has no common terminal binding.", "phase": "08-post"},
-    {"decision": "on_theme_changed callback added to App as Option<Box<dyn Fn(&str)>>", "rationale": "Simplest API for persist-theme use case yubitui needs; avoids event dispatch complexity", "phase": "08-post"}
+  "human_actions_pending": [
+    {"action": "Walk through 13 UAT tests in .planning/phases/09-complex-widgets/09-UAT.md", "context": "verify-work session started, UAT file created, paused after presenting test 1", "blocking": false}
   ],
-  "uncommitted_files": [],
-  "next_action": "Run /gsd:plan-phase 9 to plan Complex Widgets phase",
-  "context_notes": "Phase 08 fully verified (9/9 must-haves). Paused mid-session to address yubitui real-world feedback before continuing to phase 9. All feedback items resolved. Phase 9 is unplanned — start with /gsd:plan-phase 9."
+  "decisions": [
+    {"decision": "MaskedInput cursor tracked in raw-value space only", "rationale": "Separator skipping automatic; display col derived via precomputed slot_display_cols table (O(1))", "phase": "09"},
+    {"decision": "DirectoryTree lazy-loads via workers on first Space/Right press", "rationale": "on_mount has no ctx available; Loading... placeholder makes root appear expandable", "phase": "09"},
+    {"decision": "Toast uses Vec<ToastEntry> on AppContext not active_overlay", "rationale": "active_overlay is single-instance; toast stack needs multiple simultaneous entries", "phase": "09"},
+    {"decision": "render_toasts() fires before active_overlay in render_widget_tree", "rationale": "Ensures CommandPalette always renders on top of toasts", "phase": "09"}
+  ],
+  "uncommitted_files": [
+    ".planning/phases/09-complex-widgets/09-CONTEXT.md",
+    ".planning/phases/09-complex-widgets/09-UAT.md",
+    ".planning/phases/09-complex-widgets/09-VALIDATION.md"
+  ],
+  "next_action": "Resume /gsd:verify-work 9 — UAT file has 13 tests, test 1 (all unit tests pass) was being presented. All 263 tests pass including 34 new phase-09 tests.",
+  "context_notes": "Phase 09 implementation is 100% complete. Three widgets shipped: MaskedInput (mask enforcement, cursor tracking, case modifiers), DirectoryTree (lazy loading, cycle detection, hidden file filter, symlink detection), Toast (severity coloring, z-order, auto-dismiss, persistent toasts). Only remaining work is UAT sign-off."
 }
