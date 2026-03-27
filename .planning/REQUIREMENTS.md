@@ -87,7 +87,7 @@
 - [ ] **WIDGET-07**: User can select multiple items from a list with SelectionList (checkboxes)
 - [ ] **WIDGET-08**: User can switch between named content panes with ContentSwitcher
 - [x] **WIDGET-09**: User can view scrolling rich-text log output with RichLog (styled Lines, not plain strings)
-- [ ] **WIDGET-10**: User can display a loading spinner on any widget via `widget.loading = true`
+- [x] **WIDGET-10**: User can display a loading spinner on any widget via `widget.loading = true`
 - [ ] **WIDGET-11**: User can enter text with a format mask using MaskedInput (e.g. date, phone)
 - [ ] **WIDGET-12**: User can browse a filesystem tree with DirectoryTree (lazy-loaded, async)
 - [ ] **WIDGET-13**: User receives toast notifications via `app.notify(message, severity, timeout)`
@@ -184,7 +184,7 @@
 | WIDGET-07 | TBD | Pending |
 | WIDGET-08 | TBD | Pending |
 | WIDGET-09 | TBD | Complete |
-| WIDGET-10 | TBD | Pending |
+| WIDGET-10 | TBD | Complete |
 | WIDGET-11 | TBD | Pending |
 | WIDGET-12 | TBD | Pending |
 | WIDGET-13 | TBD | Pending |
