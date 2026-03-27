@@ -219,28 +219,24 @@ fn draw_tall_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
     let x2 = area.x + area.width - 1;
     let y2 = area.y + area.height - 1;
 
-    // Top edge: ▀ with fg=border_color, bg=content_bg
-    let top_style = Style::default().fg(fg).bg(bg);
+    // Top/bottom edges: fg=border_color, bg=parent's bg (use existing cell bg for transparency)
+    // This avoids the "black spacer" at corners where the widget bg differs from parent bg.
     for x in x1..=x2 {
-        buf.set_string(x, y1, "▀", top_style);
+        let existing_bg = buf.cell((x, y1)).and_then(|c| c.style().bg).unwrap_or(Color::Reset);
+        buf.set_string(x, y1, "▀", Style::default().fg(fg).bg(existing_bg));
     }
-
-    // Bottom edge: ▄ with fg=border_color, bg=content_bg (below content)
-    let bottom_style = Style::default().fg(fg).bg(bg);
     for x in x1..=x2 {
-        buf.set_string(x, y2, "▄", bottom_style);
+        let existing_bg = buf.cell((x, y2)).and_then(|c| c.style().bg).unwrap_or(Color::Reset);
+        buf.set_string(x, y2, "▄", Style::default().fg(fg).bg(existing_bg));
     }
 
-    // Left edge: ▐ with fg=border_color, bg=content_bg
-    let left_style = Style::default().fg(fg).bg(bg);
+    // Left/right edges: fg=border_color, bg=content_bg (inside the widget)
+    let inner_style = Style::default().fg(fg).bg(bg);
     for y in (y1 + 1)..y2 {
-        buf.set_string(x1, y, "▐", left_style);
+        buf.set_string(x1, y, "▐", inner_style);
     }
-
-    // Right edge: ▌ with fg=border_color, bg=content_bg
-    let right_style = Style::default().fg(fg).bg(bg);
     for y in (y1 + 1)..y2 {
-        buf.set_string(x2, y, "▌", right_style);
+        buf.set_string(x2, y, "▌", inner_style);
     }
 
     // Border title on top edge
