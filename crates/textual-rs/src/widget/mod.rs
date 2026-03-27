@@ -26,6 +26,7 @@ pub mod sparkline;
 pub mod switch;
 pub mod tabs;
 pub mod text_area;
+pub mod toast;
 pub mod tree;
 pub mod tree_view;
 

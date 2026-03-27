@@ -108,8 +108,8 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [ ] 09-01-PLAN.md — MaskedInput widget with format mask enforcement and raw-space cursor tracking
-- [x] 09-02-PLAN.md — DirectoryTree widget with lazy-loaded filesystem browsing and symlink safety
-- [ ] 09-03-PLAN.md — Toast notification system with stacking, auto-dismiss, and severity colors
+- [ ] 09-02-PLAN.md — DirectoryTree widget with lazy-loaded filesystem browsing and symlink safety
+- [x] 09-03-PLAN.md — Toast notification system with stacking, auto-dismiss, and severity colors
 **UI hint**: yes
 
 #### Phase 10: Platform Verification and Publish

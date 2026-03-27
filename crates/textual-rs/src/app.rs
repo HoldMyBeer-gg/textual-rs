@@ -807,6 +807,12 @@ impl App {
         // Advance spinner tick for next frame (all loading overlays animate in sync)
         self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));
 
+        // Advance toast countdowns and remove expired toasts
+        {
+            let mut toasts = self.ctx.toast_entries.borrow_mut();
+            crate::widget::toast::tick_toasts(&mut toasts);
+        }
+
         Ok(())
     }
 
@@ -1315,6 +1321,14 @@ fn render_widget_tree(
                     );
                 }
             }
+        }
+    }
+
+    // Render toast notifications (below active_overlay so CommandPalette wins z-order)
+    {
+        let toasts = ctx.toast_entries.borrow();
+        if !toasts.is_empty() {
+            crate::widget::toast::render_toasts(&toasts, buf_area, frame.buffer_mut(), &ctx.theme);
         }
     }
 
