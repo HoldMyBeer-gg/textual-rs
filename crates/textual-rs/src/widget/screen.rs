@@ -7,24 +7,52 @@ use super::{context::AppContext, Widget, WidgetId};
 /// A screen that blocks all keyboard and mouse input to screens beneath it
 /// while it is on top of the screen stack.
 ///
-/// Wrap any widget in `ModalScreen` to present it as a modal dialog:
+/// `ModalScreen` is a transparent wrapper — it owns one inner widget that
+/// becomes its only child. Size the inner widget with CSS (width, height,
+/// margin, align) to position it on screen.
+///
+/// Input blocking is guaranteed by the framework: keyboard focus is always
+/// scoped to the top screen, and the mouse hit-map is built from the top
+/// screen only. Screens below a modal are frozen but not unmounted.
+///
+/// # Usage
+///
+/// Push a modal from any `on_action` handler using
+/// [`AppContext::push_screen_deferred`](crate::widget::context::AppContext::push_screen_deferred):
 ///
 /// ```no_run
 /// # use textual_rs::widget::screen::ModalScreen;
-/// # use textual_rs::Widget;
 /// # use textual_rs::widget::context::AppContext;
-/// struct PinDialog;
-/// impl Widget for PinDialog {
-///     fn widget_type_name(&self) -> &'static str { "PinDialog" }
-///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut ratatui::buffer::Buffer) {}
+/// # use textual_rs::Widget;
+/// # use ratatui::{buffer::Buffer, layout::Rect};
+/// struct ConfirmDialog;
+/// impl Widget for ConfirmDialog {
+///     fn widget_type_name(&self) -> &'static str { "ConfirmDialog" }
+///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+///     fn on_action(&self, action: &str, ctx: &AppContext) {
+///         if action == "ok" || action == "cancel" {
+///             ctx.pop_screen_deferred(); // dismiss the modal
+///         }
+///     }
 /// }
 ///
-/// // In a button handler:
-/// // ctx.push_screen_deferred(Box::new(ModalScreen::new(Box::new(PinDialog))));
+/// struct MainScreen;
+/// impl Widget for MainScreen {
+///     fn widget_type_name(&self) -> &'static str { "MainScreen" }
+///     fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+///     fn on_action(&self, action: &str, ctx: &AppContext) {
+///         if action == "open_confirm" {
+///             ctx.push_screen_deferred(Box::new(ModalScreen::new(Box::new(ConfirmDialog))));
+///         }
+///     }
+/// }
 /// ```
 ///
-/// Input blocking is guaranteed by the framework: focus is always scoped to the
-/// top screen, and the mouse hit-map is built from the top screen only.
+/// # Dismissing a modal
+///
+/// Call [`AppContext::pop_screen_deferred`](crate::widget::context::AppContext::pop_screen_deferred)
+/// from within the inner widget's `on_action`. Focus automatically returns to
+/// the widget that was focused before the modal was opened.
 pub struct ModalScreen {
     /// Inner screen widget. Moved into compose() on first call via RefCell.
     inner: RefCell<Option<Box<dyn Widget>>>,
