@@ -86,7 +86,7 @@
 - [ ] **WIDGET-06**: User can select from a list of options with OptionList (keyboard + mouse navigation)
 - [ ] **WIDGET-07**: User can select multiple items from a list with SelectionList (checkboxes)
 - [ ] **WIDGET-08**: User can switch between named content panes with ContentSwitcher
-- [ ] **WIDGET-09**: User can view scrolling rich-text log output with RichLog (styled Lines, not plain strings)
+- [x] **WIDGET-09**: User can view scrolling rich-text log output with RichLog (styled Lines, not plain strings)
 - [ ] **WIDGET-10**: User can display a loading spinner on any widget via `widget.loading = true`
 - [ ] **WIDGET-11**: User can enter text with a format mask using MaskedInput (e.g. date, phone)
 - [ ] **WIDGET-12**: User can browse a filesystem tree with DirectoryTree (lazy-loaded, async)
@@ -183,7 +183,7 @@
 | WIDGET-06 | TBD | Pending |
 | WIDGET-07 | TBD | Pending |
 | WIDGET-08 | TBD | Pending |
-| WIDGET-09 | TBD | Pending |
+| WIDGET-09 | TBD | Complete |
 | WIDGET-10 | TBD | Pending |
 | WIDGET-11 | TBD | Pending |
 | WIDGET-12 | TBD | Pending |
