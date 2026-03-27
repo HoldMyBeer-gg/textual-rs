@@ -1,53 +1,30 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-27T04:59:37.797Z",
-  "phase": "04",
-  "phase_name": "production-readiness",
-  "phase_dir": ".planning/phases/04-production-readiness",
-  "plan": 5,
-  "task": 2,
-  "total_tasks": 2,
-  "status": "Phase 4 complete. Post-phase polish in progress.",
-  "completed_this_session": [
-    "v1.1 Phase 1: Semantic Theme Engine (CSS $variable resolution, shade generation, 7 themes)",
-    "v1.1 Phase 2: Interactive States (hover, pressed, invalid border, quadrant/braille rendering)",
-    "v1.1 Phase 3: Widget Visual Polish (DataTable zebra, demo updates, theme variables in CSS)",
-    "v1.1 Phase 4: Production Readiness (clipboard, text selection, overlays, terminal caps, animation, themes, syntax highlighting, hatch/keyline/image)",
-    "Context menu system (right-click, floating overlay, McGugan border)",
-    "Horizontal layout fix (fr units -> flex_grow)",
-    "Multi-value padding/margin fix",
-    "Tall border corner fix (interior bg blending)",
-    "Select dropdown anchoring (near widget, smart direction)",
-    "30fps animation render tick",
-    "CI pipeline (GitHub Actions)",
-    "CHANGELOG, README, LICENSE, docs (guide.md, css-reference.md)",
-    "Visual regression test suite (21 tests)",
-    "Clippy cleanup, cargo fmt, dead code removal"
+  "timestamp": "2026-03-27T16:10:57.504Z",
+  "phase": "08",
+  "phase_name": "enhanced-display-widgets",
+  "phase_dir": ".planning/phases/08-enhanced-display-widgets",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused_between_phases",
+  "completed_tasks": [
+    {"id": 1, "name": "Phase 08: RichLog widget (08-01)", "status": "done", "commit": "75cb30c"},
+    {"id": 2, "name": "Phase 08: LoadingIndicator + overlay (08-02)", "status": "done", "commit": "f3cd323"},
+    {"id": 3, "name": "yubitui feedback: configurable theme cycle key + on_theme_changed callback", "status": "done", "commit": "946a854"},
+    {"id": 4, "name": "yubitui feedback: fix default theme key Ctrl+T -> F5 (macOS SIGINFO + Windows Terminal conflict)", "status": "done", "commit": "ba3ec26"},
+    {"id": 5, "name": "yubitui feedback: document Reactive<T>: PartialEq bound", "status": "done", "commit": "946a854"}
   ],
-  "remaining": [
-    "Click-to-focus should show same visual as Tab-focus (currently delayed by 33ms render tick)",
-    "Borderless widget focus shows left-edge bar — user likes the 3D look but UX intent unclear",
-    "Cross-platform clipboard verification (arboard untested on Linux/macOS)",
-    "Animation tweens untested visually (Switch slide, Tab underline slide)",
-    "CSS hot-reload untested in real use",
-    "Worker progress reporting untested in real use",
-    "Accessibility (screen reader support)",
-    "crates.io publish (cargo publish)"
-  ],
-  "decisions": [
-    "McGugan Box right border uses U+2595 fallback instead of U+1FB87 for broad terminal support",
-    "Context menus use active_overlay pattern (not screen push) to preserve underlying content",
-    "30fps render tick drives animations — ratatui diff makes unchanged frames nearly free",
-    "Removed 3D button depth (black splits) — McGugan border is sufficient",
-    "fr units in CSS promote to flex_grow for flex children"
+  "remaining_tasks": [
+    {"id": 6, "name": "Phase 09: Complex Widgets — plan and execute", "status": "not_started"}
   ],
   "blockers": [],
-  "human_actions_pending": [
-    "Visual review of all 4 demo tabs",
-    "Test Ctrl+T theme cycling",
-    "Test clipboard (Ctrl+C copy, Ctrl+V paste) in Input widget",
-    "Decide on borderless focus indicator style (left-edge bar vs something else)"
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Theme cycle key default changed from Ctrl+T to F5", "rationale": "Ctrl+T intercepted at OS level on macOS (stty SIGINFO) and Windows Terminal (new tab). F5 has no common terminal binding.", "phase": "08-post"},
+    {"decision": "on_theme_changed callback added to App as Option<Box<dyn Fn(&str)>>", "rationale": "Simplest API for persist-theme use case yubitui needs; avoids event dispatch complexity", "phase": "08-post"}
   ],
-  "background_processes": [],
-  "uncommitted_files": []
+  "uncommitted_files": [],
+  "next_action": "Run /gsd:plan-phase 9 to plan Complex Widgets phase",
+  "context_notes": "Phase 08 fully verified (9/9 must-haves). Paused mid-session to address yubitui real-world feedback before continuing to phase 9. All feedback items resolved. Phase 9 is unplanned — start with /gsd:plan-phase 9."
 }
