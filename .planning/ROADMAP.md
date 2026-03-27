@@ -105,7 +105,11 @@ Plans:
   2. `DirectoryTree` renders a filesystem tree; expanding a directory node lazy-loads its children via a worker without blocking the UI tick
   3. `DirectoryTree` never enters an infinite loop on symlinked directories
   4. Calling `app.notify("message", severity, timeout)` displays a toast in the bottom-right corner; multiple rapid `notify()` calls stack visually and each auto-dismisses on its own timer
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 09-01-PLAN.md — MaskedInput widget with format mask enforcement and raw-space cursor tracking
+- [ ] 09-02-PLAN.md — DirectoryTree widget with lazy-loaded filesystem browsing and symlink safety
+- [ ] 09-03-PLAN.md — Toast notification system with stacking, auto-dismiss, and severity colors
 **UI hint**: yes
 
 #### Phase 10: Platform Verification and Publish
@@ -136,5 +140,5 @@ Plans:
 | 6. Render-Only Foundation Widgets | v1.3 | 0/? | Not started | - |
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
 | 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
-| 9. Complex Widgets | v1.3 | 0/? | Not started | - |
+| 9. Complex Widgets | v1.3 | 0/3 | Not started | - |
 | 10. Platform Verification and Publish | v1.3 | 0/? | Not started | - |
