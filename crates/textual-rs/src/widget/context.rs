@@ -66,6 +66,12 @@ pub struct AppContext {
     pub skip_animations: bool,
 }
 
+impl Default for AppContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AppContext {
     pub fn new() -> Self {
         Self {
@@ -173,7 +179,7 @@ impl AppContext {
             .borrow_mut()
             .entry(source_id)
             .unwrap()
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(abort.clone());
         abort
     }
@@ -242,7 +248,7 @@ impl AppContext {
     pub fn text_style(&self, id: WidgetId) -> Style {
         self.computed_styles
             .get(id)
-            .map(|cs| render_style::text_style(cs))
+            .map(render_style::text_style)
             .unwrap_or_default()
     }
 }

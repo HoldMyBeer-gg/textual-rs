@@ -310,7 +310,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
     }
 
     let mut spans = Vec::new();
-    let mut chars: Vec<char> = line.chars().collect();
+    let chars: Vec<char> = line.chars().collect();
     let mut i = 0;
     let mut current = String::new();
 
@@ -497,7 +497,7 @@ impl Widget for Markdown {
                             break;
                         }
                         if col < area.x + area.width {
-                            buf.set_string(col, y, &ch.to_string(), span.style);
+                            buf.set_string(col, y, ch.to_string(), span.style);
                             col += 1;
                             chars_written += 1;
                         }

@@ -469,7 +469,7 @@ pub fn render_image_halfblock(
         return;
     }
 
-    let cell_rows = (pixel_height as usize + 1) / 2;
+    let cell_rows = (pixel_height as usize).div_ceil(2);
 
     for cell_row in 0..cell_rows {
         let top_pixel_y = cell_row * 2;

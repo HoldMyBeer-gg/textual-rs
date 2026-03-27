@@ -455,7 +455,7 @@ impl App {
                                             if !items.is_empty() {
                                                 // Position at widget's top-left (approximate)
                                                 let (ax, ay) = self.hit_map.as_ref()
-                                                    .and_then(|hm| {
+                                                    .and({
                                                         // Use first cell of focused widget as anchor
                                                         None::<(u16, u16)> // fallback below
                                                     })

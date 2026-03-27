@@ -161,7 +161,7 @@ impl Widget for CommandPalette {
         let bg = Color::Rgb(18, 18, 26);        // #12121a
         let normal = Color::Rgb(200, 200, 216); // ~#c8c8d8
 
-        let bg_style = Style::default().bg(bg);
+        let _bg_style = Style::default().bg(bg);
 
         // Calculate floating panel dimensions (centered, max 60 cols, max 20 rows)
         let panel_w = area.width.min(60);

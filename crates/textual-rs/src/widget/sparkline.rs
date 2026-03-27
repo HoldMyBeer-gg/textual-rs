@@ -167,7 +167,7 @@ fn render_braille(data: &[f64], area: Rect, buf: &mut Buffer, fg: Color, bg: Col
     }
 
     // Render the grid
-    let style = ratatui::style::Style::default().fg(fg).bg(bg);
+    let _style = ratatui::style::Style::default().fg(fg).bg(bg);
     for row in 0..cell_rows {
         for col in 0..cell_cols {
             let dots = grid[row][col];

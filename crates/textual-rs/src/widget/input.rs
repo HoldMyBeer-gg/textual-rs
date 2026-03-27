@@ -679,7 +679,7 @@ impl Widget for Input {
             } else {
                 base_style
             };
-            buf.set_string(col, area.y, &ch.to_string(), style);
+            buf.set_string(col, area.y, ch.to_string(), style);
             col += 1;
         }
 
