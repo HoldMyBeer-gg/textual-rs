@@ -90,7 +90,7 @@
 - [x] **WIDGET-10**: User can display a loading spinner on any widget via `widget.loading = true`
 - [ ] **WIDGET-11**: User can enter text with a format mask using MaskedInput (e.g. date, phone)
 - [ ] **WIDGET-12**: User can browse a filesystem tree with DirectoryTree (lazy-loaded, async)
-- [ ] **WIDGET-13**: User receives toast notifications via `app.notify(message, severity, timeout)`
+- [x] **WIDGET-13**: User receives toast notifications via `app.notify(message, severity, timeout)`
 
 ### Navigation
 
@@ -187,7 +187,7 @@
 | WIDGET-10 | TBD | Complete |
 | WIDGET-11 | TBD | Pending |
 | WIDGET-12 | TBD | Pending |
-| WIDGET-13 | TBD | Pending |
+| WIDGET-13 | TBD | Complete |
 | PLATFORM-01 | TBD | Pending |
 | PUBLISH-01 | TBD | Pending |
 | PUBLISH-02 | TBD | Pending |
