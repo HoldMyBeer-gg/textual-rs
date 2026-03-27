@@ -96,6 +96,9 @@ pub struct App {
     theme_index: usize,
     /// CSS files being watched for hot-reload. Polled every 2 seconds.
     watched_css: Vec<WatchedCss>,
+    /// Tracks the last mouse-capture state sent to the terminal.
+    /// Initialized to `true` because TerminalGuard enables mouse capture on creation.
+    mouse_capture_active: bool,
 }
 
 /// A CSS file being watched for changes (hot-reload support).
@@ -145,6 +148,7 @@ impl App {
             last_ctrl_c: None,
             theme_index: 0,
             watched_css: Vec::new(),
+            mouse_capture_active: true,
         }
     }
 
@@ -173,6 +177,7 @@ impl App {
             last_ctrl_c: None,
             theme_index: 0,
             watched_css: Vec::new(),
+            mouse_capture_active: true,
         }
     }
 
@@ -489,12 +494,26 @@ impl App {
 
                             // 5. Drain message queue + process deferred screens
                             self.drain_message_queue();
+                            self.drain_mouse_capture_changes();
                             self.process_deferred_screens();
                             self.full_render_pass(&mut terminal)?;
                         }
 
                         Ok(AppEvent::Mouse(m)) => {
                             use crossterm::event::{MouseEventKind, MouseButton};
+
+                            // Shift+mouse bypasses capture -- let terminal handle native text selection.
+                            // When Shift is held, crossterm still delivers the event but we ignore it,
+                            // allowing the terminal emulator to handle selection natively.
+                            if m.modifiers.contains(KeyModifiers::SHIFT) {
+                                continue;
+                            }
+
+                            // If mouse capture is disabled (stack top = false), skip all mouse handling.
+                            // Events may still arrive briefly after DisableMouseCapture is sent.
+                            if !self.ctx.mouse_capture_stack.is_enabled() {
+                                continue;
+                            }
 
                             // Route to overlay if active
                             if self.ctx.active_overlay.borrow().is_some() {
@@ -549,6 +568,7 @@ impl App {
                                             }
                                             dispatch_message(target_id, &m, &self.ctx);
                                             self.drain_message_queue();
+                                            self.drain_mouse_capture_changes();
                                             self.process_deferred_screens();
                                             self.full_render_pass(&mut terminal)?;
                                         }
@@ -572,6 +592,7 @@ impl App {
                                             // respond to mouse wheel.
                                             dispatch_scroll_action(target_id, action, &self.ctx);
                                             self.drain_message_queue();
+                                            self.drain_mouse_capture_changes();
                                             self.process_deferred_screens();
                                             self.full_render_pass(&mut terminal)?;
                                         }
@@ -605,6 +626,18 @@ impl App {
 
                         Ok(AppEvent::Resize(_, _)) => {
                             self.needs_full_sync = true;
+                            // Re-sync mouse capture state after resize to prevent
+                            // terminal state from desynchronizing.
+                            {
+                                use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+                                use crossterm::execute;
+                                if self.ctx.mouse_capture_stack.is_enabled() {
+                                    let _ = execute!(std::io::stdout(), EnableMouseCapture);
+                                } else {
+                                    let _ = execute!(std::io::stdout(), DisableMouseCapture);
+                                }
+                                self.mouse_capture_active = self.ctx.mouse_capture_stack.is_enabled();
+                            }
                             self.full_render_pass(&mut terminal)?;
                         }
                         Ok(AppEvent::RenderRequest) => {
@@ -621,6 +654,7 @@ impl App {
                     if let Ok((source_id, payload)) = result {
                         self.ctx.message_queue.borrow_mut().push((source_id, payload));
                         self.drain_message_queue();
+                        self.drain_mouse_capture_changes();
                         self.process_deferred_screens();
                         self.full_render_pass(&mut terminal)?;
                     }
@@ -874,6 +908,16 @@ impl App {
     pub fn handle_mouse_event(&mut self, m: crossterm::event::MouseEvent) {
         use crossterm::event::{MouseButton, MouseEventKind};
 
+        // Shift+mouse bypasses capture -- native text selection passthrough.
+        if m.modifiers.contains(KeyModifiers::SHIFT) {
+            return;
+        }
+
+        // If mouse capture is disabled via stack, skip all mouse handling.
+        if !self.ctx.mouse_capture_stack.is_enabled() {
+            return;
+        }
+
         // If an overlay is active, route events to it first
         if self.ctx.active_overlay.borrow().is_some() {
             let overlay = self.ctx.active_overlay.borrow();
@@ -1021,6 +1065,39 @@ impl App {
             for (source, message) in more {
                 dispatch_message(source, message.as_ref(), &self.ctx);
             }
+        }
+    }
+
+    /// Drain deferred mouse capture pushes/pops from widgets and sync terminal state.
+    /// Called after drain_message_queue() in the event loop.
+    fn drain_mouse_capture_changes(&mut self) {
+        use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+        use crossterm::execute;
+
+        // Drain pending pushes
+        let pushes: Vec<bool> = self.ctx.pending_mouse_push.borrow_mut().drain(..).collect();
+        for enabled in pushes {
+            self.ctx.mouse_capture_stack.push(enabled);
+        }
+
+        // Drain pending pops
+        let pop_count = self.ctx.pending_mouse_pops.get();
+        if pop_count > 0 {
+            for _ in 0..pop_count {
+                self.ctx.mouse_capture_stack.pop();
+            }
+            self.ctx.pending_mouse_pops.set(0);
+        }
+
+        // Sync terminal state if changed
+        let desired = self.ctx.mouse_capture_stack.is_enabled();
+        if desired != self.mouse_capture_active {
+            if desired {
+                let _ = execute!(std::io::stdout(), EnableMouseCapture);
+            } else {
+                let _ = execute!(std::io::stdout(), DisableMouseCapture);
+            }
+            self.mouse_capture_active = desired;
         }
     }
 }
