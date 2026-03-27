@@ -1,391 +1,226 @@
 # Project Research Summary
 
-**Project:** textual-rs
-**Domain:** Rust TUI application framework library (Textual Python port)
-**Researched:** 2026-03-24
+**Project:** textual-rs v1.3 — Widget Parity & Screen Stack
+**Domain:** Rust TUI application framework (parity milestone with Python Textual)
+**Researched:** 2026-03-26
 **Confidence:** HIGH
 
 ## Executive Summary
 
-textual-rs is a Rust library that ports the Textual Python TUI framework, providing CSS-like
-styling, a reactive property system, a persistent widget tree, an async event loop, and a rich
-set of built-in widgets. The fundamental architecture challenge is that the Rust ecosystem has
-a mature rendering layer (ratatui, 19k stars, 3M downloads/month) but nothing above it that
-approaches Textual's ergonomics. No existing Rust library provides the DOM-like widget tree,
-CSS cascade engine, reactive signals, and event routing that Textual offers. This gap is the
-core justification for textual-rs, and the research confirms it is the right project to build.
+textual-rs v1.3 is a Rust TUI framework milestone to reach functional parity with Python Textual's widget library. The scope is 13 missing widgets plus screen stack behavioral wiring. Research confirms that the existing codebase infrastructure — widget arena, reactive signals, CSS cascade, layout engine, and event loop — is fully capable of supporting all 13 widgets without architectural rework. Only two new crates are needed: `walkdir` for DirectoryTree's filesystem traversal and `serde_json` for Pretty's structured output. Screen stack infrastructure already exists in `AppContext` and `tree.rs`; what is missing is focus save/restore on push/pop and the `advance_focus` call in the event loop drain path.
 
-The recommended strategy is to build on top of ratatui rather than from scratch. Ratatui
-solves hard problems that textual-rs should not reimplement: Unicode-correct buffer diffing,
-constraint-based 1D layout, a complete rendering pipeline, and a broad third-party widget
-ecosystem. textual-rs provides everything above ratatui — the retained widget tree (slotmap
-arena), CSS-like styling and layout (cssparser + Taffy), reactive properties (reactive_graph
-signals), event routing, focus management, and async lifecycle hooks (Tokio with LocalSet).
-crossterm is the only viable terminal backend for a cross-platform library; termion lacks
-Windows support and termwiz has an unstable API.
+The recommended approach is a 6-tier build order that respects hard widget dependencies: screen stack wiring first (unblocks modal workflows in demos), then trivial render-only widgets to accumulate widget count quickly, then list/selection widgets, then enhanced display widgets, then the three complex widgets that require novel patterns (DirectoryTree with worker integration, MaskedInput with raw-space cursor tracking, Toast with a dedicated `Vec<ToastEntry>` layer). The key architectural insight confirmed by research is that Toast must NOT reuse `active_overlay` — that slot is for single-instance overlays (Select, CommandPalette); toasts need their own queue to support stacking.
 
-The principal risks are Rust-specific: the borrow checker makes retained widget trees with
-cross-references difficult, async fn in trait objects requires workarounds, and reactive
-signals need a proof-of-concept before committing to reactive_graph. The CSS/layout work
-(cssparser + Taffy) is well-scoped and lower risk than it appears because the parsing surface
-for TCSS is small. Testing infrastructure is excellent: ratatui's TestBackend plus insta
-snapshots plus a TestApp harness model covers widget rendering, event dispatch, and visual
-regression with no real terminal required.
-
----
+Three design decisions must be made before writing code to avoid costly rewrites: (1) focus history must be a `Vec<Option<WidgetId>>` stored alongside `screen_stack` in `AppContext`, pushed before each `push_screen` and popped after each `pop_screen`; (2) Toast's `Vec<ToastEntry>` render layer must be designed as a dedicated structure distinct from `active_overlay`; and (3) MaskedInput cursor position must be tracked in raw-value space only, with display cursor derived per render, or drift bugs will appear on every Backspace. All three decisions are cheap to make upfront and expensive to retrofit.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The Rust ecosystem provides strong primitives for every layer of textual-rs. The rendering
-foundation is ratatui (v0.30.0, modular workspace since December 2025), which should be
-consumed via `ratatui-core` for API stability. The async runtime is Tokio — async-std was
-discontinued March 2025, and crossterm's EventStream is Tokio-native. The widget tree should
-use slotmap arenas (generational indices prevent use-after-free, O(1) lookup). Taffy (v0.9.2)
-is the layout engine; ratatui's Cassowary solver cannot express CSS Grid, absolute positioning,
-`align-items`, or `gap`, all of which Textual uses. cssparser (v0.35.0) handles CSS Syntax
-Level 3 tokenization, with hand-rolled property and selector matching on top.
+The stack is almost entirely fixed — the existing crate set handles everything for v1.3. Only two new dependencies are required. See [STACK.md](STACK.md) for full dependency rationale and alternatives considered.
 
-**Core technologies:**
-- `ratatui` (0.30) / `ratatui-core` (0.1): Terminal rendering — battle-tested, 19k stars, modular; target `ratatui-core` for API stability
-- `crossterm` (0.29): Terminal backend — only cross-platform option (Windows + macOS + Linux); 73.7M downloads
-- `tokio` (1.x) with `LocalSet`: Async runtime — ecosystem standard; crossterm EventStream requires it; LocalSet avoids `Send + 'static` pressure on widget state
-- `slotmap` (1.x): Widget tree storage — arena with generational keys prevents reference cycles and use-after-free bugs
-- `taffy` (0.9): Layout engine — CSS Flexbox + Grid, used by Servo/Bevy/Zed/Slint; necessary because ratatui cannot express 2D layouts
-- `cssparser` (0.35): CSS tokenization — handles Syntax Level 3 block structure; hand-roll property parsing on top
-- `reactive_graph` (from Leptos org): Reactive signals — `RwSignal<T>`, `Memo<T>`, `Effect`; Tokio-compatible via `any_spawner`; effects schedule async on next tick
-- `flume` (0.11): Event bus channel — unified sync/async API bridges keyboard thread to async event loop
-- `insta` (1.x): Snapshot testing — de-facto standard; inline snapshots make visual regressions obvious in code review
+**Core technologies (existing, confirmed, no change):**
+- `ratatui 0.30`: Terminal rendering backend — all widget rendering builds on this
+- `crossterm 0.29`: Terminal I/O — Windows KeyEventKind filtering already handled in `app.rs`
+- `tokio current_thread + LocalSet`: Single-threaded event loop — all blocking I/O must go through `ctx.run_worker`
+- `reactive_graph 0.2.13`: Reactive signals — `Reactive<T>` on widget fields drives state
+- `taffy 0.9.2`: CSS layout engine — ContentSwitcher uses `recompose_widget` to avoid needing display:none
+- `slotmap 1.0`: Widget arena — WidgetIds are single-use; treat as invalid across unmount/remount cycles
+- `insta 1.46.3`: Snapshot testing — primary verification for all new widgets
+
+**New dependencies for v1.3 (exactly two crates):**
+- `walkdir 2`: DirectoryTree filesystem traversal — BurntSushi crate with built-in symlink loop detection, depth limits, cross-platform sorted iteration
+- `serde_json 1` (preserve_order feature): Pretty widget structured output — `Value` tree as "any Rust object" equivalent; hand-written 80-line JSON tokenizer produces colored ratatui Spans; no syntect needed
+
+**What to avoid:**
+- `notify` (filesystem watcher): DirectoryTree only needs manual `reload()`, not live watching
+- `syntect`: 4MB embedded syntax definitions for a use case solved by a 6-color hand-written tokenizer
+- `figlet-rs`: Digits only needs a 17-char static lookup table, not a full font renderer
 
 ### Expected Features
 
-textual-rs is a framework library, not an application. Its "features" are the capabilities it
-exposes to application developers, organized by what Textual provides and what Rust's ecosystem
-needs to bridge to get there.
+All 13 widget specs sourced directly from https://textual.textualize.io/widgets/. See [FEATURES.md](FEATURES.md) for full behavioral specifications and the dependency graph.
 
-**Must have (table stakes — without these textual-rs is not a Textual port):**
-- CSS-like stylesheet loading and cascade (`.tcss` files with type, class, id, pseudo-class selectors)
-- Retained widget tree with mount/unmount lifecycle (`on_mount`, `on_unmount`, `on_ready`)
-- Reactive properties — `RwSignal<T>` on widget fields; mutations trigger watch callbacks and re-render
-- Flexbox and Grid layout via Taffy — including `dock`, `fr` units, `align-items`, `gap`
-- Event routing: keyboard/mouse events bubble up the widget tree; widgets declare handlers
-- Focus management: tab order, programmatic focus, focus ring, `:focus` pseudo-class
-- Async workers: background tasks that post results to the UI without blocking the event loop
-- Built-in widgets: Button, Label, Input, TextArea, Checkbox, RadioSet, Select, ProgressBar, DataTable, Tree
-- Dark/light theme support and `:dark`/`:light` TCSS pseudo-classes
-- TestApp harness for headless testing with event injection and snapshot assertions
+**Must have (table stakes — P1, core parity):**
+- Static — base display widget; essentially a formalization of what Label already provides
+- Rule — horizontal/vertical separator; pure render, no state
+- OptionList — scrollable single-select list; hard prerequisite for SelectionList
+- SelectionList — multi-select with checkboxes; requires OptionList first
+- ContentSwitcher — show exactly one of N children; pairs with existing Tabs widget
+- Screen Stack — push/pop/switch_screen, ModalScreen with input blocking, focus save/restore, dismiss/callback
 
-**Should have (competitive differentiators in the Rust ecosystem):**
-- CSS selector query API: `app.query_one::<Button>()`, `app.query("#submit")`
-- Hot-reload of `.tcss` stylesheets in development builds
-- Screen stack: push/pop named screens with animated transitions
-- Scrollable containers with automatic scrollbar management
-- Rich text / Markdown display widget
-- Reactive lists (`MutableVec`-backed list views that update incrementally)
-- Terminal capability detection: graceful color degradation for terminals without true color
-- Mouse hit-testing: click events delivered to the widget at the clicked cell
+**Should have (competitive differentiators — P2):**
+- RichLog — styled real-time log; upgrade from existing text-only Log widget; `max_lines` eviction important for long-running processes
+- Link — clickable URL opener; trivial extension of Static
+- Toast + App.notify() — overlay notifications with auto-dismiss and stacking; `notify()` API must be callable from workers
+- LoadingIndicator — animated spinner; the `widget.loading = true` base-class overlay integration is the key feature, not just the standalone widget
 
-**Defer to v2+:**
-- Image rendering (Sixel/kitty protocols)
-- CSS animations and `tachyonfx`-style visual effects
-- Custom fonts / big-text block rendering
-- WebAssembly target
-- Plugin/extension system
+**Complete parity (P3):**
+- Digits — large block-character numbers; visually distinctive clock/counter widget
+- Pretty — structured data display with syntax coloring; developer tooling differentiator
+- DirectoryTree — filesystem browser with lazy loading; highest implementation complexity of all widgets
+- MaskedInput — structured input with template masks (credit cards, dates, phone numbers); highest cursor logic complexity
+
+**Explicitly defer:**
+- Modes system (independent screen stacks per section): significant complexity multiplier; most applications do not need it; implement basic push/pop first
 
 ### Architecture Approach
 
-textual-rs sits between ratatui (immediate-mode rendering engine) and application code,
-providing the retained-mode abstraction layer that ratatui deliberately omits. The
-architecture separates concerns into four parallel trees: the widget tree (slotmap arena of
-`Box<dyn Widget>`), the computed style tree (parallel `SecondaryMap` with resolved CSS values
-after cascade), the Taffy layout tree (mapped from computed styles, produces `Rect` per node),
-and the reactive graph (signals on widget fields, effects that post render requests). All
-widget tree manipulation runs on a single-threaded Tokio `LocalSet`, so widget state can use
-`Rc<RefCell<T>>` rather than `Arc<Mutex<T>>`. Background I/O tasks use `tokio::spawn` on the
-thread pool and communicate results back via `flume` or `tokio::sync::mpsc`.
+textual-rs uses a single-threaded arena-based widget system with deferred mutation. Widgets receive `&AppContext` (not `&mut`) in callbacks; all structural changes are enqueued into `RefCell`-wrapped fields on `AppContext` and drained by the event loop after each callback returns. This pattern prevents borrow-checker conflicts between arena access and context mutation. Five key patterns govern v1.3 widget implementations. See [ARCHITECTURE.md](ARCHITECTURE.md) for full component diagram, data flow diagrams, and code examples for each pattern.
 
 **Major components:**
-1. **EventLoop** — crossterm `EventStream` polled via `tokio::select!`; events normalized and dispatched via `flume` channel to the App; Windows key-release events filtered here
-2. **WidgetArena** — `SlotMap<WidgetId, Box<dyn Widget>>` with `SecondaryMap` for parent/children, dirty flags, layout rects, and z-order; event bubbling walks the parent chain until `EventPropagation::Consumed`
-3. **StyleEngine** — `cssparser`-based tokenizer feeds a hand-rolled `SelectorParser` and `PropertyParser`; `CascadeResolver` computes per-widget `ComputedStyle` sorted by specificity then source order; invalidated by structural changes or class/pseudo-class changes
-4. **LayoutEngine** — `TaffyBridge` maps `ComputedStyle` to `taffy::Style`; `TaffyTree` computes geometry; results stored as `Rect` per widget in `SecondaryMap`; converts Taffy pixel coords to ratatui `Rect` for the render pass
-5. **ReactiveGraph** — `RwSignal<T>` per reactive widget property; `Effect` nodes post `RenderRequest` to the event loop on change; dirty-flag gate prevents redundant draws within a tick
-6. **RenderPass** — traverses `WidgetArena` in layout order; calls each widget's `render(&self, Rect, &mut Buffer)` which delegates to ratatui primitives; hands the completed `Buffer` to `Terminal::draw`
-7. **TestApp** — `TestBackend`-backed harness exposing `press()`, `type_text()`, `click()`, `settle()`, `assert_text()`, `assert_snapshot()`
+1. `AppContext` — shared world state: SlotMap widget arena, screen_stack, active_overlay, message_queue, pending_screen_pushes/pops, pending_recompose, CSS computed style cache
+2. `widget/tree.rs` — all structural mutations: mount_widget, unmount_widget, push_screen, pop_screen, advance_focus, recompose_widget; widgets never mutate the arena directly
+3. Event loop (tokio LocalSet) — crossterm events dispatched through flume channel; pending_* queues drained in order; CSS cascade + Taffy layout + ratatui render triggered after drains
+4. `active_overlay` — single floating widget slot above all content (Select, CommandPalette); NOT for Toast
+5. `screen_stack: Vec<WidgetId>` — only top element renders and receives focus; push/pop implemented; missing: focus_history save/restore and advance_focus on push/pop drain
+
+**Key architectural patterns for v1.3 (all confirmed by codebase inspection):**
+- ContentSwitcher: `request_recompose` + `compose()` returning only the active child; do NOT use CSS display toggling
+- DirectoryTree: `Rc<Tree>` shared between parent DirectoryTree and arena entry; lazy loads via `run_worker` on NodeExpanded message; same Rc sharing pattern as TabbedContent
+- Toast: dedicated `Vec<ToastEntry>` on AppContext, rendered as a separate bottom-right anchored layer; worker-based timers so auto-dismiss cancels automatically on unmount
+- LoadingIndicator: frame-skip animation using existing AppEvent::Tick at 33ms; `skip_animations` flag for deterministic snapshot tests (same gating as Switch/Tabs)
+- OptionList/SelectionList: extend ListView cursor/scroll pattern; OptionList emits OptionSelected message; SelectionList adds `Vec<bool>` per-item selection state
 
 ### Critical Pitfalls
 
-1. **Retained widget tree vs. borrow checker** — You cannot hold `&mut Widget` from the arena and simultaneously pass `&mut Arena` to the widget's method. Solution: design `handle_event` and `render` to take an `AppContext` struct that does not contain a borrow to the current widget; access peers only via `WidgetId` lookups through `AppContext`. Never use `Rc<RefCell<dyn Widget>>` for deep trees — runtime borrow panics when a child handler tries to access its parent.
+11 pitfalls identified across all research files. See [PITFALLS.md](PITFALLS.md) for prevention strategies, warning signs, and recovery costs for each.
 
-2. **`async fn` in trait objects is not object-safe** — Widget lifecycle methods (`on_mount`, `on_unmount`) that are naturally async cannot appear as `async fn` in the `Widget` trait without `async_trait` (which boxes every future). Solution: make widget handler methods synchronous; background work posts to the `flume` app channel and the result arrives as a subsequent message. Only the top-level application runner uses `async fn`.
+**Top 5 highest-impact pitfalls:**
 
-3. **`reactive_graph` requires runtime executor initialization** — Without calling `Executor::init_tokio()` at startup, effects silently fail to schedule. This is a one-time setup call but easy to forget. Add it as the first line of `App::run()` and document it clearly in the framework's initialization path.
+1. **Screen stack pop loses focus** — Design `focus_history: Vec<Option<WidgetId>>` into AppContext before writing any screen stack consumer code. Push before `push_screen`, pop after `pop_screen`. If restored id is no longer in the arena, fall back to `advance_focus`. Without this, Tab navigation silently breaks after every modal dismiss.
 
-4. **Mouse hit-testing requires explicit cell-to-widget mapping** — Ratatui gives `Rect` per widget render call, but does not maintain a mouse map. textual-rs must maintain a `HashMap<(col, row), WidgetId>` updated after every layout pass. This is straightforward but must be designed upfront; retrofitting it after the fact is disruptive.
+2. **Events routed to wrong screen layer** — After draining `pending_screen_pushes`, immediately call `advance_focus` to redirect focus to the new screen before processing further events. Add debug assertion: focused widget must be in the subtree of `screen_stack.last()`.
 
-5. **Terminal color capability detection is not provided by crossterm** — If true color is rendered into a terminal that only supports 256 colors (some CI, older macOS Terminal.app), output is unpredictable. Solution: implement `$COLORTERM=truecolor`/`$TERM_PROGRAM` detection at startup and configure the style engine to emit 256-color fallbacks when true color is unavailable.
+3. **Multiple toasts overlap via active_overlay reuse** — Never use `active_overlay` for toasts. That slot supports exactly one widget at a time. Toast requires a separate `toast_queue: Vec<ToastEntry>` on AppContext with a dedicated render pass. Two rapid `notify()` calls must both be visible and stacked.
 
-6. **Windows crossterm emits both KeyPress and KeyRelease** — On Windows, crossterm sends `KeyEventKind::Press` AND `KeyEventKind::Release` for every key. The EventLoop normalization step must filter to `Press` only (or expose both to handlers that explicitly opt in), or all key handlers will fire twice on Windows.
+4. **MaskedInput cursor drift on Backspace** — Maintain cursor position in raw-value space only. Display cursor is always computed from raw position by counting separators during render. Storing cursor in display space causes position drift on every delete. Property-test all cursor positions before integrating with the render pipeline.
 
----
+5. **DirectoryTree blocks event loop** — Never call `fs::read_dir` in `on_event` or `compose`. Always use `ctx.run_worker`. On NFS mounts or directories with thousands of entries, synchronous I/O on the LocalSet thread freezes the entire UI including the 33ms render tick.
+
+**Additional pitfalls to address per phase:**
+- Render artifacts after screen pop: render `ratatui::widgets::Clear` over the former modal area in the same frame that removes the overlay
+- Toast timer firing on unmounted widget: use worker-based timers so `cancel_workers` in `unmount_widget` handles cancellation automatically
+- DirectoryTree symlink loops: `walkdir` handles this by default; never enable `follow_links(true)` without loop detection
+- crates.io README path: `cargo package --list` must include `README.md`; `../../README.md` paths do not package correctly
+- Accidental Widget trait semver breaks: every new trait method must have a default implementation; run `cargo semver-checks` before every publish
 
 ## Implications for Roadmap
 
-The dependency graph between components is clear. The rendering pipeline (ratatui + crossterm +
-Tokio event loop) is the foundation everything else builds on. Layout (Taffy) and styling
-(cssparser) are parallel but layout must precede per-widget rendering work since widgets must
-receive their computed `Rect` before they can render. Reactivity integrates into the widget
-trait after the widget tree itself is stable. Built-in widgets cannot be tested meaningfully
-until the TestApp harness exists. This ordering translates naturally into phases.
+Based on combined research across all four files, the 6-tier build order from ARCHITECTURE.md is the correct phase structure. Pitfall prevention work is front-loaded into the phases that introduce the highest-risk patterns.
 
-### Phase 1: Foundation — Rendering Pipeline and Event Loop
+### Phase 1: Screen Stack Wiring
+**Rationale:** Infrastructure that unblocks modal workflows needed in demos for every subsequent phase. Already partially implemented — `push_screen`/`pop_screen` exist in `tree.rs`. What is missing: `focus_history` data structure, `advance_focus` after push/pop drain, `ModalScreen` input blocking, dismiss/callback pattern, and public `App::push_screen`/`App::pop_screen` API. Design `focus_history` into AppContext before writing any consumer code — retrofitting it later breaks every demo.
+**Delivers:** Working push_screen / pop_screen / switch_screen, ModalScreen with input blocking, dismiss/callback data passing, focus save/restore on push/pop, screen lifecycle events (suspend/resume), snapshot tests for focus and render-artifact invariants
+**Features from FEATURES.md:** Screen Stack (all sub-items except Modes system)
+**Avoids:** Pitfalls 1 (focus loss), 2 (wrong screen routing), 3 (render artifacts) — all designed in from the start
+**Research flag:** `push_screen_wait` async variant (await a modal screen's result) needs explicit design for tokio LocalSet integration. Screen suspend/resume lifecycle events: decide whether to include in v1.3 scope.
 
-**Rationale:** Everything else depends on this. The ratatui + crossterm + Tokio plumbing must
-work before any widget or CSS work can be tested end-to-end.
-**Delivers:** A running event loop that renders a static ratatui widget to the terminal, handles
-keyboard input, and quits cleanly. The project compiles and `cargo run` produces visible output.
-**Key work:** Tokio `LocalSet` setup, crossterm `EventStream` integration via `flume`, ratatui
-`Terminal::draw` loop, alternate screen + raw mode lifecycle, panic hook + terminal restore.
-**Avoids:** Windows key-release doubling (filter in this phase, once, rather than in every widget).
-**Research flag:** Standard patterns — well-documented in ratatui async tutorial. Skip research-phase.
+### Phase 2: Render-Only Foundation Widgets
+**Rationale:** No complex state or interactions; high confidence; accumulates widget count quickly. All are under ~120 LOC each. Static and Link are prerequisites if any downstream work builds on them.
+**Delivers:** Static, Rule, Link, Pretty, Digits
+**Features from FEATURES.md:** Static (P1), Rule (P1), Link (P2), Pretty (P3), Digits (P3)
+**Stack from STACK.md:** `serde_json` Value tree + hand-written tokenizer for Pretty; static Unicode lookup table for Digits/Rule; `std::process::Command` with `#[cfg(target_os)]` for Link
+**Avoids:** No significant pitfalls in this tier; all are straightforward render implementations
+**Research flag:** Standard patterns — skip additional research
 
-### Phase 2: Widget Tree and Trait System
+### Phase 3: List and Selection Widgets
+**Rationale:** OptionList is a hard prerequisite for SelectionList. ContentSwitcher is a prerequisite for meaningful Tabs-panel demos. These three are the highest-value interactive widgets that application authors will reach for first.
+**Delivers:** OptionList, SelectionList, ContentSwitcher
+**Features from FEATURES.md:** OptionList (P1), SelectionList (P1), ContentSwitcher (P1)
+**Implements:** `recompose_widget` pattern for ContentSwitcher; new cursor+scroll+selection pattern for OptionList extending ListView; multi-select `Vec<bool>` state for SelectionList
+**Avoids:** ContentSwitcher must use `recompose_widget`, not CSS display toggling (Taffy does not support display:none)
+**Research flag:** Standard patterns — recompose_widget and ListView cursor patterns already established in codebase
 
-**Rationale:** The slotmap arena and `Widget` trait shape every subsequent decision. Lock this
-down before building CSS or reactive systems on top of an interface that might change.
-**Delivers:** A `WidgetArena` (SlotMap), a `Widget` trait with `render`, `handle_event`,
-`on_mount`, and `on_unmount`, basic parent/child relationships via `SecondaryMap`, event
-bubbling up the parent chain, and a skeletal focus system.
-**Key work:** `WidgetId` type, `Box<dyn Widget>` storage, `AppContext` pattern for arena access
-during event handling, `EventPropagation` enum, tab-order focus traversal.
-**Avoids:** `async fn` in trait objects (keep handlers sync; document this constraint explicitly).
-**Research flag:** The `SlotMap` remove-reinsert-same-key limitation needs a concrete solution
-(HopSlotMap or `std::mem::replace` pattern) before this phase starts. Verify in a spike.
+### Phase 4: Enhanced Display and Async Loading Widgets
+**Rationale:** RichLog upgrades the existing Log widget used in real applications. LoadingIndicator's `widget.loading = true` base-class integration is the most impactful async UX feature. Both are independently deliverable.
+**Delivers:** RichLog, LoadingIndicator
+**Features from FEATURES.md:** RichLog (P2) with max_lines eviction, LoadingIndicator (P2) with base Widget `loading` integration
+**Avoids:** LoadingIndicator animation must gate on `skip_animations` for deterministic snapshot tests; timer via AppEvent::Tick at 33ms (frame-skip, no new timer infrastructure)
+**Research flag:** The `widget.loading = true` overlay integration requires changes to the Widget trait or AppContext — decide scope (full Widget trait integration vs. standalone widget only) before implementation
 
-### Phase 3: Layout Engine (Taffy Integration)
+### Phase 5: Complex Widgets — DirectoryTree, MaskedInput, Toast
+**Rationale:** These three share the characteristic of requiring novel patterns not yet established in the codebase. Group together so the novel patterns can be reviewed as a batch. Each has a design decision that must be made before writing code.
+**Delivers:** DirectoryTree (with lazy loading and symlink protection), MaskedInput (with raw-space cursor tracking), Toast + App.notify() (with Vec<ToastEntry> stacking layer)
+**Features from FEATURES.md:** DirectoryTree (P3), MaskedInput (P3), Toast (P2)
+**Stack from STACK.md:** `walkdir 2` for DirectoryTree; `Rc<Tree>` sharing pattern; worker-based Toast timers
+**Avoids:** Pitfall 4 (Toast timer on unmounted widget — use worker API), Pitfall 5 (multiple toasts overlapping — Vec<ToastEntry> not active_overlay), Pitfall 6 (DirectoryTree symlink loop — walkdir default behavior), Pitfall 7 (DirectoryTree blocking event loop — run_worker), Pitfalls 8+9 (MaskedInput cursor drift and separator skip — raw-space cursor invariant)
+**Research flag:** DirectoryTree symlink loop detection on Windows (no `same_file` inodes on NTFS); MaskedInput cursor round-trip property tests; Toast Vec<ToastEntry> render layer z-order relative to active_overlay
 
-**Rationale:** Widgets cannot render at the right position or size without a layout pass.
-Taffy integration must come before CSS (CSS drives Taffy style inputs) to establish the
-data flow: `ComputedStyle` -> `taffy::Style` -> `Rect` -> ratatui render call.
-**Delivers:** A `TaffyBridge` that maps widget tree structure and hard-coded styles to a Taffy
-tree; `compute_layout` produces a `Rect` per widget; the render pass uses these rects.
-Basic Flexbox column/row layouts work. Fixed, percentage, and fill/fr sizing work.
-**Key work:** `TaffyTree` lifecycle (add/remove nodes in sync with WidgetArena), `Rect`
-conversion from Taffy's pixel space to terminal cells, absolute positioning for `dock`.
-**Avoids:** Attempting to use ratatui's Cassowary solver for anything beyond 1D splits inside
-individual widget render methods.
-**Research flag:** Standard patterns — Taffy docs are HIGH confidence and iocraft demonstrates
-the Taffy+terminal integration. Skip research-phase.
-
-### Phase 4: CSS/TCSS Styling Engine
-
-**Rationale:** With Taffy integration established, CSS properties have a clear destination.
-The style engine produces `ComputedStyle` structs that feed directly into the Taffy bridge
-and the ratatui `Style` passed to widget render calls.
-**Delivers:** `.tcss` file parsing (cssparser tokenizer + hand-rolled property/selector
-matching), `ComputedStyle` struct, cascade resolver with specificity-ordered rule application,
-`:focus`/`:hover`/`:dark`/`:light` pseudo-classes, CSS custom properties (variables),
-invalidation on structural or state changes.
-**Key work:** `SelectorParser` (~200 lines), `PropertyParser` (~500 lines for full TCSS property
-set), `CascadeResolver`, `ComputedStyleTree` (parallel `SecondaryMap`), dirty-flag invalidation.
-**Avoids:** `lightningcss` (overkill for TCSS); `selectors` crate from Servo (excessive boilerplate
-for a small selector surface).
-**Research flag:** Selector matching for descendant combinators (`Screen Button`) requires
-walking the parent chain during matching — confirm the performance characteristics are
-acceptable at widget tree sizes of 100-500 nodes before optimizing.
-
-### Phase 5: Reactive Property System
-
-**Rationale:** Reactivity is the "magic" of Textual. It should come after the static rendering
-pipeline is solid so the reactive layer can be verified against a known-good baseline.
-**Delivers:** `RwSignal<T>` fields on widgets, `Effect` nodes that post `RenderRequest` to the
-event loop, `Memo<T>` for derived state, dirty-flag batching to prevent multiple redraws per
-tick, `watch_` callback pattern for custom side effects on property change.
-**Key work:** `Executor::init_tokio()` at startup, `RenderRequest` message in the `flume`
-event bus, debounce/batch multiple signal changes into a single render tick.
-**Avoids:** Per-property `tokio::sync::watch` channels (scales poorly); direct terminal I/O
-from effect closures (effects must only post messages, not render).
-**Research flag:** This phase needs a proof-of-concept spike to validate `reactive_graph`
-v0.1+ + Tokio `LocalSet` integration before committing. The `any_spawner` API needs
-verification against the current published crate version. Mark this phase as needing a
-research-phase during planning.
-
-### Phase 6: TestApp Harness and Test Infrastructure
-
-**Rationale:** By Phase 6 the core architecture is stable enough to lock in a test API that
-other phases will rely on. Every widget built in Phase 7 should be driven by TestApp.
-**Delivers:** `TestApp<A>` struct with `TestBackend`, event injection (`press`, `type_text`,
-`click`), `settle()` for async event draining, `assert_text()`, `assert_snapshot()` via insta,
-`assert_cell_fg/bg()` for color assertions. `proptest` integration for CSS parser and layout
-engine property tests.
-**Key work:** `TestApp` struct, `settle()` draining loop, `BufferAssertExt` trait, `rstest`
-parameterized tests for CSS color parsing, `proptest` layout overflow invariants.
-**Avoids:** PTY-based testing (`ratatui-testlib`) for unit/integration tests — TestBackend is
-sufficient and faster. Reserve `ratatui-testlib` for end-to-end smoke tests only.
-**Research flag:** Standard patterns — HIGH confidence across all testing decisions. Skip
-research-phase.
-
-### Phase 7: Built-in Widget Library
-
-**Rationale:** With stable architecture, reactive system, CSS, layout, and test harness in
-place, widget development is straightforward and highly parallelizable.
-**Delivers:** Core widgets: `Label`, `Button`, `Input`, `TextArea`, `Checkbox`, `RadioSet`,
-`Select`, `ProgressBar`, `DataTable`, `Tree`, `Log`, `Markdown`. Each widget has unit rendering
-tests (TestBackend), behavior tests (TestApp event injection), and insta snapshots.
-**Key work:** Each widget implements the `Widget` trait, declares reactive signals for its
-mutable state, maps TCSS properties to ratatui `Style` and Taffy layout constraints.
-**Avoids:** Wrapping third-party crates like `ratatui-textarea` or `tui-tree-widget` directly —
-wrap them behind the textual-rs `Widget` trait so they participate in the CSS and reactive
-systems rather than being opaque ratatui widgets.
-**Research flag:** DataTable and Tree widgets have significant state complexity (virtual
-scrolling, lazy loading). Flag these two specific widgets for research-phase during planning.
-
-### Phase 8: Application Developer Experience (DX Polish)
-
-**Rationale:** A framework is only as good as its ergonomics. This phase addresses the
-developer-facing API surface that is hard to change after initial adoption.
-**Delivers:** `#[derive(Widget)]` macro for boilerplate reduction, screen stack API
-(`app.push_screen`/`pop_screen`), worker API (`self.run_worker(async_fn)`), CSS hot-reload
-in debug builds, terminal color capability detection with graceful degradation, comprehensive
-documentation and examples.
-**Key work:** Proc-macro crate for `#[derive(Widget)]`, `ScreenStack` type, `WorkerHandle`
-abstraction, `$COLORTERM` + `$TERM_PROGRAM` detection at startup.
-**Avoids:** Shipping the hot-reload file watcher in production builds (feature-gate it).
-**Research flag:** Proc-macro development for `#[derive(Widget)]` has known complexity around
-span hygiene and IDE tooling. Flag for research-phase during planning.
+### Phase 6: Cross-Platform Verification and crates.io Publish
+**Rationale:** Publish prerequisites must be verified before the first public release. `cargo package --list` catches the README omission. `cargo semver-checks` catches breaking Widget trait changes. CI matrix catches platform-specific rendering differences.
+**Delivers:** CI matrix on macOS + Linux; crates.io package with `README.md` inside crate directory, license headers, keywords, categories, description; CHANGELOG.md; `cargo semver-checks` passing
+**Avoids:** Pitfall 10 (README missing from package — `cargo package --list` before publish), Pitfall 11 (semver break — default implementations on all new Widget trait methods)
+**Research flag:** Standard checklist — no additional research needed
 
 ### Phase Ordering Rationale
 
-- **Phases 1-2 before everything else:** The rendering pipeline and widget trait are load-bearing
-  for all other work. No CSS, reactive, or test work is possible without them.
-- **Phase 3 (Layout) before Phase 4 (CSS):** CSS properties are meaningless without a layout
-  engine to receive them. Establishing the `ComputedStyle` -> Taffy data flow first makes CSS
-  a clean additive step.
-- **Phase 5 (Reactive) after Phase 4 (CSS):** Reactive signals must trigger style invalidation
-  and re-layout. The invalidation pipeline must exist before signals can be tested end-to-end.
-- **Phase 6 (Testing) after Phase 5:** TestApp needs the reactive system to correctly drain
-  async events in `settle()`. Tests written before Phase 5 would be incomplete.
-- **Phase 7 (Widgets) last in core sequence:** Widgets are the consumer of every prior system.
-  Building them last validates the entire stack and is highly parallelizable across contributors.
-- **Phase 8 (DX) separate:** Developer experience work (macros, hot-reload) improves the API
-  but does not block widget or application development. Keeps earlier phases focused.
+- Screen stack first: focus scoping and modal overlay semantics are required for demos in every subsequent phase. Building widget demos without correct focus is a dead end.
+- Render-only widgets second: zero new patterns, high confidence, immediately visible; clears the low-complexity widget backlog before tackling harder widgets.
+- List widgets before complex widgets: OptionList establishes the cursor+scroll pattern that SelectionList reuses, and deeply understanding it informs MaskedInput's cursor design in Phase 5.
+- Toast deferred to Phase 5 despite being P2: its Vec<ToastEntry> architecture decision is cheap to get right when focused on it, expensive to retrofit if rushed into an earlier phase.
+- Publish last: premature publishing with a broken semver or missing README is recoverable (yank + republish) but creates friction for any early adopters.
 
 ### Research Flags
 
-Phases likely needing `/gsd:research-phase` during planning:
+Phases likely needing deeper design review or research during planning:
+- **Phase 1 (Screen Stack):** `push_screen_wait` async variant design; `focus_history` data structure; screen suspend/resume scope decision
+- **Phase 4 (LoadingIndicator):** `widget.loading = true` base-class overlay integration scope — whether to change the Widget trait or implement a separate mechanism
+- **Phase 5 (DirectoryTree):** Symlink loop detection on Windows without `same_file` inode comparison; async worker pattern for cross-platform path canonicalization
+- **Phase 5 (MaskedInput):** Raw-space cursor property testing coverage; edge cases with multi-byte Unicode in mask positions
+- **Phase 5 (Toast):** Vec<ToastEntry> render layer interaction with active_overlay z-order; worker-based timer cancellation verification
 
-- **Phase 2 (Widget Tree):** The `SlotMap` borrow problem (cannot hold `&mut Widget` and
-  `&mut Arena` simultaneously) needs a concrete verified pattern before API design is locked.
-  A 1-day spike is warranted.
-- **Phase 5 (Reactive):** `reactive_graph` + Tokio `LocalSet` integration has MEDIUM confidence.
-  The `any_spawner` initialization API must be verified against the current published version.
-  Effect batching for render debounce needs a proof-of-concept. Flag for research-phase.
-- **Phase 7 (Widgets — DataTable and Tree specifically):** Virtual scrolling and lazy loading
-  in a retained widget tree with reactive signals needs design research. The ratatui ecosystem
-  has `tui-tree-widget` and `ratatui-textarea` to learn from but not directly reuse.
-- **Phase 8 (DX — proc-macro):** `#[derive(Widget)]` macro design needs research into span
-  hygiene, field attribute parsing, and IDE (rust-analyzer) compatibility.
-
-Phases with well-established patterns (skip research-phase unless a blocker surfaces):
-
-- **Phase 1 (Event Loop):** Ratatui async tutorial is definitive. Tokio + crossterm EventStream
-  + flume channel is a well-trodden pattern.
-- **Phase 3 (Taffy Integration):** Taffy docs are HIGH confidence. iocraft demonstrates
-  terminal-specific Taffy integration. The data flow is clear.
-- **Phase 6 (Testing):** All testing decisions are HIGH confidence. TestBackend + insta +
-  rstest + proptest is a well-understood combination.
-
----
+Phases with standard patterns (skip additional research):
+- **Phase 2 (render-only widgets):** All are Unicode lookups + ratatui primitives; well-understood
+- **Phase 3 (list widgets):** OptionList/SelectionList follow the ListView pattern; ContentSwitcher uses the recompose_widget path already verified
+- **Phase 4 (RichLog):** Straightforward extension of existing Log widget
+- **Phase 6 (publish):** Standard Cargo workspace publishing checklist
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Rendering stack (ratatui + crossterm) | HIGH | 19k stars, 73.7M downloads, official docs verified |
-| Async runtime (Tokio + LocalSet) | HIGH | async-std discontinued; ecosystem consensus; crossterm EventStream Tokio-native |
-| Widget tree ownership (slotmap) | HIGH | Multiple frameworks use this pattern; Raph Levien's Xilem research validates arena approach |
-| Layout engine (Taffy) | HIGH | Used by Servo, Bevy, Zed, Slint; v0.9 docs verified; iocraft demonstrates TUI use |
-| CSS parsing (cssparser + hand-rolled) | HIGH (tokenizer) / MEDIUM (selector/cascade) | cssparser API is stable and verified; selector matching pattern is well-documented but ~300 lines of new code |
-| Reactive signals (reactive_graph) | MEDIUM | Leptos org crate with sparse docs; `any_spawner` + Tokio integration needs POC; pattern is sound |
-| Message channels (flume) | HIGH | Official docs; battle-tested; sync+async bridge is the right choice |
-| Testing strategy | HIGH | All major decisions verified against official ratatui docs, insta docs, Tokio testing docs |
+| Stack | HIGH | All existing crate choices verified by direct codebase audit; only 2 new deps identified; both are battle-tested with hundreds of millions of downloads |
+| Features | HIGH | All 13 widget specs sourced directly from Python Textual official documentation; behavioral requirements are unambiguous |
+| Architecture | HIGH | Based on direct code inspection of widget/tree.rs, widget/context.rs, widget/mod.rs, widget/select.rs, widget/tree_view.rs; patterns are concrete, tested in existing widgets |
+| Pitfalls | HIGH | 11 pitfalls identified with specific prevention strategies grounded in actual borrow rules, ratatui diff behavior, and codebase-specific DenseSlotMap WidgetId lifetime rules |
 
-**Overall confidence:** HIGH — all major technology choices are backed by official documentation or high-star production projects. The one MEDIUM area (reactive_graph integration) is de-risked by building it as Phase 5 with an explicit proof-of-concept requirement before committing.
+**Overall confidence:** HIGH — all four research areas are grounded in direct codebase inspection and official documentation. No MEDIUM or LOW areas. The existing codebase is the primary source of truth and was inspected directly.
 
 ### Gaps to Address
 
-- **`reactive_graph` + `LocalSet` + batching:** No existing Rust TUI framework has published
-  a reference implementation combining these three. A 1-2 day spike to verify
-  `Executor::init_tokio()` works with `LocalSet` and that effects can be debounced into a
-  single render tick should happen at the start of Phase 5 planning.
+- **push_screen_wait async variant:** Python Textual supports `await app.push_screen_wait(screen)` for getting a result from a modal without a callback. Implementing this requires a oneshot channel or similar pattern within the tokio LocalSet runtime. Design this explicitly in Phase 1 planning — it is optional for v1.3 scope but worth deciding early.
 
-- **SlotMap borrow ergonomics:** The standard `SlotMap` does not support reinserting a value
-  with the same key after removal. Determine whether `HopSlotMap` solves this or whether the
-  `AppContext` pattern (arena access through a context object, never holding `&mut Widget`
-  and `&mut Arena` simultaneously) is sufficient. Resolve this in a spike before Phase 2 API
-  design.
+- **widget.loading base-class integration:** The `loading: bool` reactive on the Widget base class that auto-overlays a LoadingIndicator on any widget (not just a standalone LoadingIndicator) requires changes to the Widget trait or AppContext. This is the feature that distinguishes LoadingIndicator from "just another widget." Confirm scope in Phase 4 planning.
 
-- **Windows crossterm EventStream latency:** crossterm's `event-stream` feature uses
-  `tokio::io::unix` on Unix but a blocking thread on Windows. Verify that this produces
-  acceptable input latency on Windows (the dev platform) before shipping. Check if upgrading
-  to crossterm 0.29 resolves any known Windows async input issues.
+- **DirectoryTree on Windows symlinks:** Windows NTFS symlinks require elevated permissions to create in most configurations. The test fixture for symlink loop detection (Pitfall 6) will need to be conditionally compiled or skipped on Windows CI. Evaluate during Phase 5 planning.
 
-- **Color capability detection:** No well-maintained Rust crate exists for this. The
-  `$COLORTERM`/`$TERM_PROGRAM`/terminfo detection must be hand-rolled. Budget this work
-  explicitly in Phase 8 rather than treating it as free.
+- **Screen suspend/resume lifecycle events:** Python Textual fires `on_screen_suspend` and `on_screen_resume` when screens are pushed below or become topmost. Not currently present in textual-rs. Useful for pausing background workers on suspended screens. Decide in Phase 1 whether to include in v1.3 or defer.
 
-- **`assert_snapshot!` captures characters only, not colors:** insta snapshots via
-  `terminal.backend()` do not capture ANSI style attributes. The `assert_cell_fg/bg`
-  API in TestApp partially addresses this, but there is no color-aware snapshot format
-  for TUI tests in the ecosystem yet. Document this limitation explicitly in the test harness.
-
----
+- **Toast z-ordering vs. active_overlay:** The Vec<ToastEntry> render layer must paint above the current screen but below active_overlay (which is for interactive overlays). The exact render pass ordering needs explicit design in Phase 5.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-- [Ratatui GitHub](https://github.com/ratatui/ratatui) — star count, version, modular workspace, what ratatui does and does not provide
-- [Ratatui FAQ](https://ratatui.rs/faq/) — explicit missing features list
-- [Ratatui 0.30.0 Highlights](https://ratatui.rs/highlights/v030/) — ratatui-core separation, no_std
-- [crossterm GitHub](https://github.com/crossterm-rs/crossterm) — 73.7M downloads, 0.29.0, Windows support
-- [DioxusLabs/taffy GitHub](https://github.com/DioxusLabs/taffy) — v0.9.2, Style struct, Grid support
-- [taffy docs.rs](https://docs.rs/taffy/latest/taffy/) — Style fields, compute_layout API
-- [servo/rust-cssparser GitHub](https://github.com/servo/rust-cssparser) — CSS Syntax Level 3 tokenizer
-- [reactive_graph docs.rs](https://docs.rs/reactive_graph/latest/reactive_graph/) — RwSignal, Memo, Effect, any_spawner
-- [tokio::sync::watch docs](https://docs.rs/tokio/latest/tokio/sync/watch/index.html) — channel API
-- [flume docs.rs](https://docs.rs/flume) — sync+async unified channel API
-- [slotmap docs.rs](https://docs.rs/slotmap/latest/slotmap/) — SlotMap, SecondaryMap API
-- [ratatui TestBackend docs](https://docs.rs/ratatui/latest/ratatui/backend/struct.TestBackend.html) — assert_buffer_lines, assert_cursor_position
-- [ratatui Buffer docs](https://docs.rs/ratatui/latest/ratatui/buffer/struct.Buffer.html) — cell access, diff API
-- [insta.rs](https://insta.rs/) — snapshot macros, inline snapshot syntax, cargo-insta workflow
-- [Tokio testing docs](https://tokio.rs/tokio/topics/testing) — #[tokio::test], time::pause, yield_now
-- [ratatui async event stream tutorial](https://ratatui.rs/tutorials/counter-async-app/async-event-stream/) — crossterm EventStream + tokio::select!
-- [ryhl.io actors with Tokio](https://ryhl.io/blog/actors-with-tokio/) — actor/mailbox pattern
-- [Raphlinus UI architecture](https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html) — arena vs Rc<RefCell> analysis
+- Official Python Textual docs (fetched 2026-03-26): https://textual.textualize.io/widgets/ — all 13 widget behavioral specifications
+- Official Python Textual docs: https://textual.textualize.io/guide/screens/ — screen stack behavior, ModalScreen, dismiss/callback pattern
+- Codebase audit (2026-03-26): `widget/tree.rs`, `widget/context.rs`, `widget/mod.rs`, `widget/select.rs`, `widget/tree_view.rs`, `app.rs`, `event/timer.rs`, `widget/log.rs` — all architectural patterns verified against actual implementation
+- walkdir crate: https://docs.rs/walkdir — symlink loop detection via same_file, depth limits, cross-platform path sorting; 291M+ downloads
+- serde_json crate: https://docs.rs/serde_json — Value tree, to_string_pretty, preserve_order feature
 
 ### Secondary (MEDIUM confidence)
+- Ratatui rendering internals: https://ratatui.rs/concepts/rendering/under-the-hood/ — diff engine behavior, why Clear is required after overlay removal
+- Ratatui artifact issue: https://forum.ratatui.rs/t/list-tabs-widgets-switching-keeps-character-artifact-upon-rendering/256 — confirms Clear widget is the correct fix
+- Python Textual screen stack bug: https://github.com/Textualize/textual/issues/1632 — focus restore pattern, informed focus_history design
+- cargo-semver-checks: https://crates.io/crates/cargo-semver-checks — breaking change detection tool
+- crates.io publishing guide: https://doc.rust-lang.org/cargo/reference/publishing.html — README path requirements and package verification
 
-- [corrode.dev async guide](https://corrode.dev/blog/async/) — Tokio vs smol comparison, 2025
-- [book.leptos.dev reactive_graph appendix](https://book.leptos.dev/appendix_reactive_graph.html) — signal/effect model
-- [Ratatui component architecture](https://ratatui.rs/concepts/application-patterns/component-architecture/) — message dispatch patterns
-- [Vizia styling docs](https://book.vizia.dev/quickstart/styling.html) — CSS-stylesheet-to-widget architecture lessons
-- [telex-tui blog](https://telex-tui.github.io/blog/designing-a-tui-framework-in-rust.html) — Rc<RefCell> post-mortem, borrow pitfalls
-- [ratatui snapshot testing guide](https://ratatui.rs/recipes/testing/snapshots/) — insta integration
-- [Robinson browser engine: Style chapter](https://limpet.net/mbrubeck/2014/08/23/toy-layout-engine-4-style.html) — cascade/specificity implementation pattern
-- [Textual CSS guide](https://textual.textualize.io/guide/CSS/) — TCSS property reference
-- [Textual testing guide](https://textual.textualize.io/guide/testing/) — Pilot API reference model
-- [RUSTSEC-2023-0049](https://rustsec.org/advisories/RUSTSEC-2023-0049.html) — tui-rs abandoned
-
-### Tertiary (LOW confidence — informational, needs validation)
-
-- [iocraft GitHub](https://github.com/ccbrown/iocraft) — Taffy + terminal rendering POC (no published design doc)
-- [weeklyrust.substack.com — goodbye async-std](https://weeklyrust.substack.com/p/goodbye-async-std-welcome-smol) — async-std discontinuation announcement
-- [kanal GitHub](https://github.com/fereidani/kanal) — faster channel alternative to flume (benchmarks not independently verified)
-- [ratatui-testlib GitHub](https://github.com/raibid-labs/ratatui-testlib) — PTY integration test harness (MEDIUM adoption, use for smoke tests only)
+### Tertiary (LOW confidence — validate during implementation)
+- Masked input cursor position sync: https://giacomocerquone.com/blog/keep-input-cursor-still/ — raw-space cursor invariant pattern; informed MaskedInput pitfall analysis
+- Textual toast positioning: https://github.com/Textualize/textual/discussions/3541 — Python Textual's ToastRack stacking behavior; confirms Vec<ToastEntry> approach
+- crossterm Windows KeyEventKind: https://github.com/ratatui/ratatui/issues/347 — confirms key-release filtering is required; already handled in app.rs line 338
+- tokio task cancellation: https://cybernetist.com/2024/04/19/rust-tokio-task-cancellation-patterns/ — informed worker-based timer design for Toast
 
 ---
-
-*Research completed: 2026-03-24*
+*Research completed: 2026-03-26*
 *Ready for roadmap: yes*
