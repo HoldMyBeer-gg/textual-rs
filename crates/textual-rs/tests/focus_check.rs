@@ -22,15 +22,7 @@ fn focus_highlight_test() {
     let css = "TestScreen { layout-direction: vertical; background: rgb(10,10,15); } Button { border: rounded; height: 3; color: rgb(224,224,224); } Input { border: rounded; height: 3; }";
     let mut app = App::new(|| Box::new(TestScreen)).with_css(css);
 
-    // First render — Tab to first focusable widget
-    let _buf = app.render_to_test_backend(40, 8);
-
-    // Simulate Tab to focus the first widget
-    app.handle_key_event(crossterm::event::KeyEvent::new(
-        crossterm::event::KeyCode::Tab,
-        crossterm::event::KeyModifiers::NONE,
-    ));
-
+    // push_screen auto-focuses the first focusable widget (Button) on initial render
     let buf = app.render_to_test_backend(40, 8);
     for y in 0..8u16 {
         let mut line = String::new();

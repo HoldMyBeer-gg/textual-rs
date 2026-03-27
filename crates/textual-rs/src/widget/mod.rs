@@ -1,5 +1,6 @@
 pub mod button;
 pub mod checkbox;
+pub mod screen;
 pub mod collapsible;
 pub mod context;
 pub mod context_menu;
@@ -100,6 +101,14 @@ pub trait Widget: 'static {
     /// Returns `false` by default. Override to return `true` for interactive widgets.
     /// When focused, `key_bindings()` are active and a focus indicator is rendered.
     fn can_focus(&self) -> bool {
+        false
+    }
+
+    /// Whether this screen blocks all keyboard and mouse input to screens beneath it.
+    ///
+    /// Returns `false` by default. Implement `is_modal() -> bool { true }` on any
+    /// screen widget to make it behave as a modal dialog. See also [`screen::ModalScreen`].
+    fn is_modal(&self) -> bool {
         false
     }
 

@@ -23,6 +23,9 @@ pub struct AppContext {
     /// Currently hovered widget (under mouse cursor). Updated by MouseMove events.
     pub hovered_widget: Option<WidgetId>,
     pub screen_stack: Vec<WidgetId>,
+    /// Saved focus state for each screen push. Parallel to screen_stack.
+    /// `push_screen` saves `focused_widget` here; `pop_screen` restores it.
+    pub focus_history: Vec<Option<WidgetId>>,
     pub pending_mounts: Vec<WidgetId>,
     /// Temporary input buffer for demo purposes (Phase 3 replaces with proper reactive state).
     pub input_buffer: String,
@@ -92,6 +95,7 @@ impl AppContext {
             focused_widget: None,
             hovered_widget: None,
             screen_stack: Vec::new(),
+            focus_history: Vec::new(),
             pending_mounts: Vec::new(),
             input_buffer: String::new(),
             event_tx: None,

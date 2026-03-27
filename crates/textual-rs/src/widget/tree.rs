@@ -155,17 +155,51 @@ fn mark_subtree_dirty(id: WidgetId, ctx: &mut AppContext) {
 }
 
 /// Push a new screen onto the screen stack and compose its entire subtree.
+/// Saves the current focus so it can be restored when the screen is popped.
 pub fn push_screen(screen: Box<dyn Widget>, ctx: &mut AppContext) -> WidgetId {
+    // Save focused widget before switching screens
+    ctx.focus_history.push(ctx.focused_widget);
+
+    // Clear Focus pseudo-class from the widget losing focus
+    if let Some(old_focused) = ctx.focused_widget {
+        if let Some(ps) = ctx.pseudo_classes.get_mut(old_focused) {
+            ps.remove(&crate::css::types::PseudoClass::Focus);
+        }
+    }
+    ctx.focused_widget = None;
+
     let id = mount_widget(screen, None, ctx);
     ctx.screen_stack.push(id);
     compose_subtree(id, ctx);
+
+    // Focus the first focusable widget on the new screen
+    advance_focus(ctx);
+
     id
 }
 
-/// Pop the top screen from the stack and unmount its entire subtree.
+/// Pop the top screen from the stack, unmount its subtree, and restore focus
+/// to the widget that had focus before the screen was pushed.
 pub fn pop_screen(ctx: &mut AppContext) -> Option<WidgetId> {
     if let Some(id) = ctx.screen_stack.pop() {
         unmount_widget(id, ctx);
+
+        // Restore focus from history
+        let restored = ctx.focus_history.pop().flatten();
+        if let Some(restored_id) = restored {
+            if ctx.arena.contains_key(restored_id) {
+                ctx.focused_widget = Some(restored_id);
+                if let Some(ps) = ctx.pseudo_classes.get_mut(restored_id) {
+                    ps.insert(crate::css::types::PseudoClass::Focus);
+                }
+            } else {
+                // Restored widget was removed while modal was open — advance to next available
+                advance_focus(ctx);
+            }
+        } else {
+            ctx.focused_widget = None;
+        }
+
         Some(id)
     } else {
         None
@@ -448,9 +482,7 @@ mod tests {
         let f2 = children[2];
         let f3 = children[3];
 
-        assert!(ctx.focused_widget.is_none());
-
-        advance_focus(&mut ctx);
+        // push_screen auto-focuses the first focusable widget
         assert_eq!(ctx.focused_widget, Some(f1));
 
         advance_focus(&mut ctx);
@@ -488,8 +520,7 @@ mod tests {
         let f1 = children[0];
         let f2 = children[1];
 
-        // Start at f1
-        advance_focus(&mut ctx);
+        // push_screen auto-focuses f1
         assert_eq!(ctx.focused_widget, Some(f1));
 
         // Backward from f1 should wrap to f2
@@ -561,5 +592,90 @@ mod tests {
         clear_dirty_subtree(root_id, &mut ctx);
         assert_eq!(ctx.dirty[root_id], false);
         assert_eq!(ctx.dirty[child_id], false);
+    }
+
+    #[test]
+    fn push_screen_auto_focuses_first_focusable() {
+        let mut ctx = AppContext::new();
+
+        struct FocusableScreen;
+        impl Widget for FocusableScreen {
+            fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn compose(&self) -> Vec<Box<dyn Widget>> {
+                vec![Box::new(SimpleWidget::new(true))]
+            }
+        }
+
+        push_screen(Box::new(FocusableScreen), &mut ctx);
+        let screen_id = ctx.screen_stack[0];
+        let focusable = ctx.children[screen_id][0];
+
+        assert_eq!(ctx.focused_widget, Some(focusable));
+    }
+
+    #[test]
+    fn pop_screen_restores_focus_to_previous_screen() {
+        let mut ctx = AppContext::new();
+
+        struct BaseScreen;
+        impl Widget for BaseScreen {
+            fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn compose(&self) -> Vec<Box<dyn Widget>> {
+                vec![Box::new(SimpleWidget::new(true))]
+            }
+        }
+
+        struct ModalScreenWidget;
+        impl Widget for ModalScreenWidget {
+            fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+            fn widget_type_name(&self) -> &'static str { "Modal" }
+            fn is_modal(&self) -> bool { true }
+            fn compose(&self) -> Vec<Box<dyn Widget>> {
+                vec![Box::new(SimpleWidget::new(true))]
+            }
+        }
+
+        // Push base screen — focus goes to its focusable child
+        push_screen(Box::new(BaseScreen), &mut ctx);
+        let base_screen_id = ctx.screen_stack[0];
+        let base_focusable = ctx.children[base_screen_id][0];
+        assert_eq!(ctx.focused_widget, Some(base_focusable));
+
+        // Push modal — focus moves to modal's child; base focus is saved
+        push_screen(Box::new(ModalScreenWidget), &mut ctx);
+        let modal_id = ctx.screen_stack[1];
+        let modal_focusable = ctx.children[modal_id][0];
+        assert_eq!(ctx.focused_widget, Some(modal_focusable));
+        assert_ne!(ctx.focused_widget, Some(base_focusable));
+
+        // Pop modal — focus restored to exactly the base widget
+        pop_screen(&mut ctx);
+        assert_eq!(ctx.screen_stack.len(), 1);
+        assert_eq!(ctx.focused_widget, Some(base_focusable));
+    }
+
+    #[test]
+    fn push_screen_saves_focus_history() {
+        let mut ctx = AppContext::new();
+
+        struct AnyScreen;
+        impl Widget for AnyScreen {
+            fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+            fn widget_type_name(&self) -> &'static str { "Screen" }
+        }
+
+        push_screen(Box::new(AnyScreen), &mut ctx);
+        assert_eq!(ctx.focus_history.len(), 1);
+
+        push_screen(Box::new(AnyScreen), &mut ctx);
+        assert_eq!(ctx.focus_history.len(), 2);
+
+        pop_screen(&mut ctx);
+        assert_eq!(ctx.focus_history.len(), 1);
+
+        pop_screen(&mut ctx);
+        assert_eq!(ctx.focus_history.len(), 0);
     }
 }

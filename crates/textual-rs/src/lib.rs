@@ -116,6 +116,7 @@ pub use widget::select::Select;
 pub use widget::sparkline::Sparkline;
 pub use widget::switch::Switch;
 pub use widget::tabs::{TabbedContent, Tabs};
+pub use widget::screen::ModalScreen;
 pub use widget::text_area::TextArea;
 pub use widget::tree_view::{Tree, TreeNode};
 pub use worker::{WorkerProgress, WorkerResult};
