@@ -10,6 +10,7 @@ use ratatui::style::Style;
 use slotmap::{DenseSlotMap, SecondaryMap};
 use std::any::Any;
 use std::cell::{Cell, RefCell};
+use super::toast::{ToastEntry, ToastSeverity, push_toast};
 
 pub struct AppContext {
     pub arena: DenseSlotMap<WidgetId, Box<dyn Widget>>,
@@ -81,6 +82,8 @@ pub struct AppContext {
     /// Global spinner tick counter. Incremented once per full_render_pass.
     /// All loading overlays and LoadingIndicator widgets use this for synchronized animation.
     pub spinner_tick: Cell<u8>,
+    /// Stacked toast notifications, rendered bottom-right. Max 5 visible.
+    pub toast_entries: RefCell<Vec<ToastEntry>>,
 }
 
 impl Default for AppContext {
@@ -123,6 +126,7 @@ impl AppContext {
             pending_mouse_pops: Cell::new(0),
             loading_widgets: RefCell::new(SecondaryMap::new()),
             spinner_tick: Cell::new(0),
+            toast_entries: RefCell::new(Vec::new()),
         }
     }
 
@@ -363,6 +367,22 @@ impl AppContext {
         } else {
             map.remove(id);
         }
+    }
+
+    /// Display a toast notification in the bottom-right corner.
+    ///
+    /// `severity` controls the border color: Info=$primary, Warning=$warning, Error=$error.
+    /// `timeout_ms` controls auto-dismiss: 0 = persistent (never dismissed automatically).
+    ///
+    /// Maximum 5 toasts are shown simultaneously; adding a 6th drops the oldest.
+    pub fn toast(&self, message: impl Into<String>, severity: ToastSeverity, timeout_ms: u64) {
+        let mut toasts = self.toast_entries.borrow_mut();
+        push_toast(&mut toasts, message.into(), severity, timeout_ms);
+    }
+
+    /// Display an Info toast with default 3000ms timeout.
+    pub fn toast_info(&self, message: impl Into<String>) {
+        self.toast(message, ToastSeverity::Info, 3000);
     }
 
     /// Cancel all workers associated with a widget. Called automatically during unmount.
