@@ -18,7 +18,7 @@ use textual_rs::widget::context::AppContext;
 use textual_rs::{
     App, Button, ButtonVariant, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header,
     Horizontal, Input, Label, ListView, Markdown, Placeholder, ProgressBar, RadioSet, Select,
-    Sparkline, Switch, TabbedContent, Tree, TreeNode, Vertical, Widget,
+    Sparkline, Switch, TabbedContent, Tree, TreeNode, Widget,
 };
 
 // ---- Inputs tab ----
