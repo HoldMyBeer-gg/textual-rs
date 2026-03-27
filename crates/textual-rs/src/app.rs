@@ -317,6 +317,13 @@ impl App {
         // Main event loop — select! between app events, worker results, and CSS poll
         loop {
             tokio::select! {
+                // Render tick — drives animations and CSS hot-reload checks.
+                // 30fps is sufficient for smooth tweens while keeping CPU usage low.
+                // ratatui's diff engine means unchanged frames have near-zero terminal I/O.
+                _ = tokio::time::sleep(std::time::Duration::from_millis(33)) => {
+                    self.full_render_pass(&mut terminal)?;
+                }
+
                 event = rx.recv_async() => {
                     match event {
                         // Ignore non-press key events (release, repeat on some platforms)
