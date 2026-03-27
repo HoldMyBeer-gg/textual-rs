@@ -5,7 +5,7 @@ use crate::css::render_style;
 use crate::css::theme::{self, Theme};
 use crate::css::types::{ComputedStyle, Declaration, PseudoClassSet};
 use crate::event::AppEvent;
-use crate::terminal::TerminalCaps;
+use crate::terminal::{MouseCaptureStack, TerminalCaps};
 use ratatui::style::Style;
 use slotmap::{DenseSlotMap, SecondaryMap};
 use std::any::Any;
@@ -64,6 +64,13 @@ pub struct AppContext {
     /// When true, animations snap to their target value instead of interpolating.
     /// Set by TestApp to ensure deterministic rendering in tests.
     pub skip_animations: bool,
+    /// Stack-based mouse capture state. Screens/widgets push/pop to temporarily
+    /// enable or disable mouse capture without competing callers clobbering each other.
+    pub mouse_capture_stack: MouseCaptureStack,
+    /// Deferred mouse capture pushes from widgets (drained by event loop).
+    pub pending_mouse_push: RefCell<Vec<bool>>,
+    /// Deferred mouse capture pop count from widgets (drained by event loop).
+    pub pending_mouse_pops: Cell<usize>,
 }
 
 impl Default for AppContext {
@@ -100,6 +107,9 @@ impl AppContext {
             pending_overlay_dismiss: Cell::new(false),
             terminal_caps: crate::terminal::detect_capabilities(),
             skip_animations: false,
+            mouse_capture_stack: MouseCaptureStack::new(),
+            pending_mouse_push: RefCell::new(Vec::new()),
+            pending_mouse_pops: Cell::new(0),
         }
     }
 
@@ -240,6 +250,19 @@ impl AppContext {
         // Create the main future using the progress sender
         let fut = progress_fn(progress_sender);
         self.run_worker(source_id, fut)
+    }
+
+    /// Schedule a mouse capture push deferred to the next event loop tick.
+    /// Use from `on_action(&self, ...)` or `on_event(&self, ...)` where only &self is available.
+    pub fn push_mouse_capture(&self, enabled: bool) {
+        self.pending_mouse_push.borrow_mut().push(enabled);
+    }
+
+    /// Schedule a mouse capture pop deferred to the next event loop tick.
+    /// Use from `on_action(&self, ...)` or `on_event(&self, ...)` where only &self is available.
+    pub fn pop_mouse_capture(&self) {
+        self.pending_mouse_pops
+            .set(self.pending_mouse_pops.get() + 1);
     }
 
     /// Cancel all workers associated with a widget. Called automatically during unmount.
