@@ -105,42 +105,34 @@ impl Widget for LayoutPane {
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
-            // Three side-by-side panels with different content
-            Box::new(Horizontal::with_children(vec![
-                Box::new(LayoutPanel::new("Status", vec![
-                    "CPU: 42%",
-                    "Memory: 1.2 GB",
-                    "Disk: 78%",
-                    "Network: 12 Mbps",
-                ])),
-                Box::new(LayoutPanel::new("Events", vec![
-                    "08:31 Deploy started",
-                    "08:32 Build complete",
-                    "08:33 Tests passed",
-                    "08:34 Deploy live",
-                ])),
-                Box::new(LayoutPanel::new("Config", vec![
-                    "Region: us-east-1",
-                    "Env: production",
-                    "Version: v1.1.0",
-                    "Replicas: 3",
-                ])),
+            // Three side-by-side panels showing layout system
+            Box::new(Label::new("Three panels (Horizontal container):")),
+            Box::new(LayoutPanel::new("Status", vec![
+                "CPU: 42%",
+                "Memory: 1.2 GB",
+                "Disk: 78%",
+                "Network: 12 Mbps",
             ])),
-            // Nested vertical inside horizontal
-            Box::new(Horizontal::with_children(vec![
-                Box::new(Vertical::with_children(vec![
-                    Box::new(Label::new("Nested vertical → horizontal")),
-                    Box::new(ProgressBar::new(0.82)),
-                    Box::new(Sparkline::new(vec![4.0, 7.0, 2.0, 9.0, 5.0, 8.0, 3.0, 6.0])),
-                ])),
-                Box::new(Placeholder::with_label("Flex area")),
+            Box::new(LayoutPanel::new("Events", vec![
+                "08:31 Deploy started",
+                "08:32 Build complete",
+                "08:33 Tests passed",
+                "08:34 Deploy live",
             ])),
+            Box::new(LayoutPanel::new("Config", vec![
+                "Region: us-east-1",
+                "Env: production",
+                "Version: v1.1.0",
+                "Replicas: 3",
+            ])),
+            Box::new(Label::new("Progress + Sparkline:")),
+            Box::new(ProgressBar::new(0.82)),
+            Box::new(Sparkline::new(vec![4.0, 7.0, 2.0, 9.0, 5.0, 8.0, 3.0, 6.0, 4.0, 7.0, 2.0, 9.0, 5.0, 8.0])),
             // Collapsible with real content
             Box::new(Collapsible::new("Advanced Options", vec![
                 Box::new(Checkbox::new("Enable debug logging", false)),
                 Box::new(Checkbox::new("Verbose output", false)),
                 Box::new(Switch::new(true)),
-                Box::new(Label::new("Trace level: INFO")),
             ])),
         ]
     }

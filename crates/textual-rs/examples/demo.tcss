@@ -55,10 +55,9 @@ LayoutPanel {
     layout-direction: vertical;
     border: inner;
     flex-grow: 1;
-    min-height: 6;
+    min-height: 7;
     background: $panel;
     color: $foreground;
-    padding: 0 1;
 }
 
 InteractivePane {
