@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: planning
-stopped_at: Defining requirements
-last_updated: "2026-03-26T23:30:00Z"
+stopped_at: Roadmap created, ready for phase planning
+last_updated: "2026-03-26T23:45:00Z"
 last_activity: 2026-03-26
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** v1.3 Widget Parity & Ship — defining requirements
+**Current focus:** v1.3 Widget Parity & Ship — Phase 5: Screen Stack
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 5 — Screen Stack (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-26 — Milestone v1.3 started
+Status: Ready for phase planning
+Last activity: 2026-03-26 — Roadmap created for v1.3
+
+### Progress
+
+```
+v1.3: [          ] 0% (0/6 phases)
+```
+
+Phase 5  [ ] Screen Stack
+Phase 6  [ ] Render-Only Foundation Widgets
+Phase 7  [ ] List and Selection Widgets
+Phase 8  [ ] Enhanced Display Widgets
+Phase 9  [ ] Complex Widgets
+Phase 10 [ ] Platform Verification and Publish
 
 ### History
 - v1.0 MVP: 5 phases, 22 plans — shipped 2026-03-26
@@ -41,8 +54,27 @@ Last activity: 2026-03-26 — Milestone v1.3 started
 |---|-------------|------|--------|-----------|
 | 260326-uwc | Mouse capture push/pop stack and Shift modifier bypass | 2026-03-27 | 2674edb | [260326-uwc](./quick/260326-uwc-mouse-capture-push-pop-stack-and-shift-m/) |
 
+## Accumulated Context
+
+### Key Decisions (v1.3)
+- `focus_history: Vec<Option<WidgetId>>` must be added to AppContext before any screen stack consumer code is written
+- Toast uses `Vec<ToastEntry>` on AppContext — NOT `active_overlay` (that slot is single-instance only)
+- MaskedInput cursor tracked in raw-value space only; display cursor derived per render
+- ContentSwitcher uses `recompose_widget` pattern, not CSS display toggling (Taffy has no display:none)
+- DirectoryTree filesystem I/O always via `ctx.run_worker`, never in `on_event` or `compose`
+
+### Research Flags (resolve during phase planning)
+- Phase 5: `push_screen_wait` async variant scope decision; screen suspend/resume lifecycle events scope
+- Phase 8: `widget.loading = true` base-class overlay integration scope vs. standalone widget only
+- Phase 9: DirectoryTree symlink detection on Windows NTFS; Toast z-order vs. active_overlay
+
+### Dependencies
+- walkdir 2 (new dep) — DirectoryTree filesystem traversal
+- serde_json 1 with preserve_order feature (new dep) — Pretty widget
+
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Milestone v1.3 started, defining requirements
+Stopped at: Roadmap written for v1.3, all 20 requirements mapped to Phases 5-10
 Resume file: None
+Next action: `/gsd:plan-phase 5`
