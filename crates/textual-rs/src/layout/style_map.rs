@@ -10,6 +10,16 @@ pub fn taffy_style_from_computed(s: &ComputedStyle) -> taffy::Style {
         return dock_style(dock, s);
     }
 
+    // If width or height uses fr units, promote to flex_grow so the widget
+    // expands in its parent's flex container instead of collapsing to zero.
+    let mut flex_grow = s.flex_grow;
+    if let TcssDimension::Fraction(n) = s.width {
+        if flex_grow == 0.0 { flex_grow = n; }
+    }
+    if let TcssDimension::Fraction(n) = s.height {
+        if flex_grow == 0.0 { flex_grow = n; }
+    }
+
     taffy::Style {
         display: match s.display {
             TcssDisplay::Flex => Display::Flex,
@@ -21,7 +31,7 @@ pub fn taffy_style_from_computed(s: &ComputedStyle) -> taffy::Style {
             LayoutDirection::Vertical => FlexDirection::Column,
             LayoutDirection::Horizontal => FlexDirection::Row,
         },
-        flex_grow: s.flex_grow,
+        flex_grow,
         size: taffy::geometry::Size {
             width: tcss_dim_to_dimension(s.width),
             height: tcss_dim_to_dimension(s.height),
