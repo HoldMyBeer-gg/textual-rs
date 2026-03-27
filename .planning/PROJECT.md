@@ -43,7 +43,7 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 
 ### Active
 
-- [ ] Full Python Textual widget parity: ContentSwitcher, Digits, DirectoryTree, Link, LoadingIndicator, MaskedInput, OptionList, Pretty, RichLog, Rule, SelectionList, Static, Toast
+- [ ] Full Python Textual widget parity: ContentSwitcher, Digits, DirectoryTree, Link, MaskedInput, OptionList, Pretty, Rule, SelectionList, Static, Toast
 - [ ] Screen stack for modal dialogs and navigation
 - [ ] Cross-platform verification: macOS, Linux (Windows confirmed)
 - [ ] crates.io publish
@@ -111,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v1.3 milestone started*
+*Last updated: 2026-03-27 — Phase 8 complete: RichLog + LoadingIndicator widgets added*
