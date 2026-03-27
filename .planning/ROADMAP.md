@@ -90,7 +90,10 @@
   1. `RichLog` accepts styled `Line` objects, scrolls to the bottom on new entries, and evicts old lines when `max_lines` is reached
   2. Setting `widget.loading = true` on any widget overlays a spinner animation on that widget; setting it back to `false` removes the spinner and restores the widget
   3. `LoadingIndicator` as a standalone widget also renders the spinner, gated by `skip_animations` for deterministic snapshot tests
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 08-01-PLAN.md — RichLog widget with styled Line storage, auto-scroll, max_lines eviction
+- [ ] 08-02-PLAN.md — LoadingIndicator standalone widget + per-widget loading overlay system
 **UI hint**: yes
 
 #### Phase 9: Complex Widgets
@@ -132,6 +135,6 @@
 | 5. Screen Stack | v1.3 | 0/? | Not started | - |
 | 6. Render-Only Foundation Widgets | v1.3 | 0/? | Not started | - |
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
-| 8. Enhanced Display Widgets | v1.3 | 0/? | Not started | - |
+| 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
 | 9. Complex Widgets | v1.3 | 0/? | Not started | - |
 | 10. Platform Verification and Publish | v1.3 | 0/? | Not started | - |
