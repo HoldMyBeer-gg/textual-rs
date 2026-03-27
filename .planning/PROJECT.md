@@ -43,9 +43,20 @@ Developers can build Textual-quality TUI applications in Rust with the same ease
 
 ### Active
 
+- [ ] Full Python Textual widget parity: ContentSwitcher, Digits, DirectoryTree, Link, LoadingIndicator, MaskedInput, OptionList, Pretty, RichLog, Rule, SelectionList, Static, Toast
 - [ ] Screen stack for modal dialogs and navigation
 - [ ] Cross-platform verification: macOS, Linux (Windows confirmed)
 - [ ] crates.io publish
+
+## Current Milestone: v1.3 Widget Parity & Ship
+
+**Goal:** Achieve full Python Textual widget parity, add screen stack navigation, verify cross-platform, and publish to crates.io.
+
+**Target features:**
+- 13 missing widgets matching Python Textual docs/screenshots at https://textual.textualize.io/widgets/
+- Screen stack for modal dialogs and navigation
+- Cross-platform verification (macOS, Linux)
+- crates.io publish
 
 ### Out of Scope
 
@@ -82,5 +93,22 @@ Shipped through v1.2 with ~17,400 LOC Rust across 25+ widgets, CSS engine, react
 | arboard for clipboard | Cross-platform clipboard access | Adopted v1.2 |
 | MouseCaptureStack push/pop | Prevents competing enable/disable clobber | Adopted v1.2 |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-27 after v1.2 milestone*
+*Last updated: 2026-03-26 after v1.3 milestone started*
