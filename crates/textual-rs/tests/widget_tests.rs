@@ -17,8 +17,8 @@ use textual_rs::widget::tree_view::messages::{NodeCollapsed, NodeExpanded, NodeS
 use textual_rs::widget::{EventPropagation, Widget};
 use textual_rs::{
     Button, Checkbox, Collapsible, ColumnDef, DataTable, Footer, Header, Input, Label, ListView,
-    Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, ScrollView, Select, Sparkline,
-    Switch, TabbedContent, Tabs, TextArea, Tree, TreeNode,
+    LoadingIndicator, Log, Markdown, Placeholder, ProgressBar, RadioButton, RadioSet, ScrollView,
+    Select, Sparkline, Switch, TabbedContent, Tabs, TextArea, Tree, TreeNode,
 };
 
 #[test]
@@ -2352,5 +2352,171 @@ fn markdown_link_renders_url() {
         trimmed.contains("click here") && trimmed.contains("https://example.com"),
         "Markdown link should render as 'click here [https://example.com]', got: {:?}",
         trimmed
+    );
+}
+
+// ---------------------------------------------------------------------------
+// LoadingIndicator widget tests
+// ---------------------------------------------------------------------------
+
+fn collect_buffer_text(buf: &ratatui::buffer::Buffer) -> String {
+    let mut out = String::new();
+    for row in 0..buf.area.height {
+        for col in 0..buf.area.width {
+            out.push_str(buf[(col, row)].symbol());
+        }
+    }
+    out
+}
+
+/// LoadingIndicator renders static "Loading..." when skip_animations=true.
+/// TestApp always sets skip_animations=true, so this verifies deterministic mode.
+#[test]
+fn loading_indicator_skip_animations() {
+    let test_app = TestApp::new(20, 5, || Box::new(LoadingIndicator::new()));
+    let all_text = collect_buffer_text(test_app.buffer());
+    assert!(
+        all_text.contains("Loading..."),
+        "LoadingIndicator with skip_animations should render 'Loading...', got: {:?}",
+        all_text.trim()
+    );
+}
+
+/// LoadingIndicator renders a braille spinner character when skip_animations=false.
+#[test]
+fn loading_indicator_animated_spinner() {
+    use textual_rs::widget::context::AppContext;
+    use ratatui::layout::Rect;
+
+    let mut ctx = AppContext::new();
+    ctx.skip_animations = false;
+    // spinner_tick=0 → frame_idx = 0/2 % 8 = 0 → first spinner char ⣾ (U+28FE)
+    let widget = LoadingIndicator::new();
+    let area = Rect { x: 0, y: 0, width: 10, height: 3 };
+    let mut buf = Buffer::empty(area);
+    widget.render(&ctx, area, &mut buf);
+
+    // With tick=0, frame_idx=0, char is SPINNER_FRAMES[0] = U+28FE (⣾)
+    let all_text = collect_buffer_text(&buf);
+    assert!(
+        all_text.contains('\u{28FE}'),
+        "LoadingIndicator without skip_animations should render a braille spinner char (⣾), got: {:?}",
+        all_text.trim()
+    );
+}
+
+/// ctx.set_loading(id, true) causes a loading overlay to appear on the widget's area.
+/// ctx.set_loading(id, false) removes the overlay.
+#[test]
+fn loading_overlay_set_and_clear() {
+    use textual_rs::AppEvent;
+
+    // Create a test app with a Label widget
+    let mut test_app = TestApp::new(20, 5, || Box::new(Label::new("Hello World")));
+
+    // Find the Label widget ID in the arena
+    let label_id = test_app
+        .ctx()
+        .arena
+        .iter()
+        .find(|(_, w)| w.widget_type_name() == "Label")
+        .map(|(id, _)| id)
+        .expect("Label widget not found in arena");
+
+    // Set loading on the label and trigger re-render via RenderRequest event
+    test_app.ctx().set_loading(label_id, true);
+    test_app.process_event(AppEvent::RenderRequest);
+
+    // With skip_animations=true, overlay should show "Loading..."
+    let buf_with_overlay = collect_buffer_text(test_app.buffer());
+    assert!(
+        buf_with_overlay.contains("Loading..."),
+        "After set_loading(true), overlay should render 'Loading...', got: {:?}",
+        buf_with_overlay.trim()
+    );
+
+    // Clear loading and trigger re-render
+    test_app.ctx().set_loading(label_id, false);
+    test_app.process_event(AppEvent::RenderRequest);
+
+    // Now "Loading..." should be gone, and "Hello World" should appear
+    let buf_without_overlay = collect_buffer_text(test_app.buffer());
+    assert!(
+        !buf_without_overlay.contains("Loading..."),
+        "After set_loading(false), overlay should be gone, got: {:?}",
+        buf_without_overlay.trim()
+    );
+    assert!(
+        buf_without_overlay.contains("Hello World"),
+        "After set_loading(false), original widget content should be visible, got: {:?}",
+        buf_without_overlay.trim()
+    );
+}
+
+/// Two widgets can be in loading state simultaneously.
+#[test]
+fn loading_overlay_multiple_widgets() {
+    // Use a screen that composes two Labels — compose() is how children are mounted.
+    struct TwoLabelScreen;
+    impl Widget for TwoLabelScreen {
+        fn widget_type_name(&self) -> &'static str { "TwoLabelScreen" }
+        fn default_css() -> &'static str where Self: Sized {
+            "TwoLabelScreen { layout: vertical; width: 100%; height: 100%; }"
+        }
+        fn compose(&self) -> Vec<Box<dyn Widget>> {
+            vec![
+                Box::new(Label::new("Widget A")),
+                Box::new(Label::new("Widget B")),
+            ]
+        }
+        fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
+    }
+
+    let mut test_app = TestApp::new_styled(30, 10, "TwoLabelScreen { layout: vertical; width: 100%; height: 100%; } Label { height: 1; width: 100%; }", || Box::new(TwoLabelScreen));
+
+    // Find both Label widget IDs
+    let label_ids: Vec<_> = test_app
+        .ctx()
+        .arena
+        .iter()
+        .filter(|(_, w)| w.widget_type_name() == "Label")
+        .map(|(id, _)| id)
+        .collect();
+
+    assert!(
+        label_ids.len() >= 2,
+        "Expected at least 2 Label widgets, found {}",
+        label_ids.len()
+    );
+
+    // Set both loading
+    test_app.ctx().set_loading(label_ids[0], true);
+    test_app.ctx().set_loading(label_ids[1], true);
+
+    // Verify both are in loading_widgets map simultaneously
+    {
+        let loading = test_app.ctx().loading_widgets.borrow();
+        assert!(
+            loading.contains_key(label_ids[0]),
+            "First label should be in loading_widgets"
+        );
+        assert!(
+            loading.contains_key(label_ids[1]),
+            "Second label should be in loading_widgets"
+        );
+    }
+
+    // Re-render — both overlays should draw
+    test_app.process_event(textual_rs::AppEvent::RenderRequest);
+
+    // Verify both IDs are still in loading_widgets after re-render
+    let loading_count = test_app.ctx().loading_widgets.borrow().len();
+    assert_eq!(loading_count, 2, "Both loading states should persist after render");
+
+    let buf_text = collect_buffer_text(test_app.buffer());
+    assert!(
+        buf_text.contains("Loading..."),
+        "With two widgets loading, at least one 'Loading...' overlay should appear, got: {:?}",
+        buf_text.trim()
     );
 }
