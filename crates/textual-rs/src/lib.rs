@@ -1,9 +1,28 @@
-//! textual-rs — a Rust port of the Textual Python TUI framework.
+//! textual-rs — a Rust port of the [Textual](https://textual.textualize.io) Python TUI framework.
 //!
 //! Build beautiful terminal UIs in Rust: declare widgets, style with CSS,
 //! react to events, and get a polished result on any terminal.
 //!
-//! # Quick start
+//! # Features
+//!
+//! - **22+ built-in widgets** — buttons, inputs, tables, trees, tabs, markdown, and more
+//! - **CSS styling engine** — TCSS stylesheets with selectors, pseudo-classes, and specificity cascade
+//! - **Theme system** — 7 built-in themes with `$variable` support and lighten/darken modifiers
+//! - **Reactive state** — `Reactive<T>` signals with automatic re-rendering
+//! - **Flexbox & grid layout** — powered by [Taffy](https://github.com/DioxusLabs/taffy)
+//! - **Async workers** — background tasks with progress streaming
+//! - **Headless testing** — `TestApp` + `Pilot` for automated UI tests
+//!
+//! # Quick Start
+//!
+//! Add to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! textual-rs = "0.2"
+//! ```
+//!
+//! Create a minimal application:
 //!
 //! ```no_run
 //! use textual_rs::{App, Widget, Label, Header, Footer};
@@ -27,6 +46,32 @@
 //!     App::new(|| Box::new(MyScreen)).run()
 //! }
 //! ```
+//!
+//! Add CSS styling with theme variables:
+//!
+//! ```no_run
+//! # use textual_rs::{App, Widget, Label, Header, Footer};
+//! # use textual_rs::widget::context::AppContext;
+//! # use ratatui::{buffer::Buffer, layout::Rect};
+//! # struct MyScreen;
+//! # impl Widget for MyScreen {
+//! #     fn widget_type_name(&self) -> &'static str { "MyScreen" }
+//! #     fn render(&self, _: &AppContext, _: Rect, _: &mut Buffer) {}
+//! # }
+//! let mut app = App::new(|| Box::new(MyScreen))
+//!     .with_css("
+//!         MyScreen { background: $background; color: $foreground; }
+//!         Header { background: $panel; color: $primary; }
+//!     ");
+//! // app.run()?;
+//! ```
+//!
+//! Press **Ctrl+T** at runtime to cycle through built-in themes (textual-dark,
+//! textual-light, tokyo-night, nord, gruvbox, dracula, catppuccin).
+//!
+//! See the [User Guide](https://github.com/user/textual-rs/blob/main/docs/guide.md)
+//! and [CSS Reference](https://github.com/user/textual-rs/blob/main/docs/css-reference.md)
+//! for full documentation.
 
 pub mod animation;
 pub mod app;
