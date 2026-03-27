@@ -66,10 +66,9 @@
 //! // app.run()?;
 //! ```
 //!
-//! Press **Ctrl+T** at runtime to cycle through built-in themes (textual-dark,
+//! Press **F5** at runtime to cycle through built-in themes (textual-dark,
 //! textual-light, tokyo-night, nord, gruvbox, dracula, catppuccin).
-//! Note: some terminal emulators intercept Ctrl+T (Windows Terminal opens a new tab).
-//! Use [`App::with_theme_cycle_key`] to rebind it, e.g. to `F5`.
+//! Use [`App::with_theme_cycle_key`] to rebind it.
 //!
 //! See the [User Guide](https://github.com/user/textual-rs/blob/main/docs/guide.md)
 //! and [CSS Reference](https://github.com/user/textual-rs/blob/main/docs/css-reference.md)

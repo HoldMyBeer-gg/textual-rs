@@ -92,16 +92,15 @@ pub struct App {
     needs_full_sync: bool,
     /// Timestamp of last Ctrl+C press for double-tap quit detection.
     last_ctrl_c: Option<std::time::Instant>,
-    /// Current theme index in the builtin_themes list (for Ctrl+T cycling).
+    /// Current theme index in the builtin_themes list (for theme cycling).
     theme_index: usize,
     /// CSS files being watched for hot-reload. Polled every 2 seconds.
     watched_css: Vec<WatchedCss>,
     /// Tracks the last mouse-capture state sent to the terminal.
     /// Initialized to `true` because TerminalGuard enables mouse capture on creation.
     mouse_capture_active: bool,
-    /// Key binding for cycling themes. Default: Ctrl+T.
-    /// Override with [`App::with_theme_cycle_key`] if your terminal intercepts Ctrl+T
-    /// (e.g. Windows Terminal opens a new tab on Ctrl+T by default).
+    /// Key binding for cycling themes. Default: F5.
+    /// Override with [`App::with_theme_cycle_key`] if needed.
     theme_cycle_key: (KeyCode, KeyModifiers),
     /// Optional callback invoked whenever the active theme changes.
     /// Receives the new theme name (e.g. `"tokyo-night"`).
@@ -157,7 +156,7 @@ impl App {
             theme_index: 0,
             watched_css: Vec::new(),
             mouse_capture_active: true,
-            theme_cycle_key: (KeyCode::Char('t'), KeyModifiers::CONTROL),
+            theme_cycle_key: (KeyCode::F(5), KeyModifiers::NONE),
             theme_changed_cb: None,
         }
     }
@@ -188,7 +187,7 @@ impl App {
             theme_index: 0,
             watched_css: Vec::new(),
             mouse_capture_active: true,
-            theme_cycle_key: (KeyCode::Char('t'), KeyModifiers::CONTROL),
+            theme_cycle_key: (KeyCode::F(5), KeyModifiers::NONE),
             theme_changed_cb: None,
         }
     }
@@ -258,10 +257,12 @@ impl App {
 
     /// Override the key binding used to cycle through built-in themes.
     ///
-    /// The default is **Ctrl+T**, but some terminal emulators intercept this key
-    /// before the application sees it. For example, **Windows Terminal** binds
-    /// Ctrl+T to "Open new tab" by default — if you use Windows Terminal, rebind
-    /// this to a key your terminal doesn't intercept:
+    /// The default is **F5** (`KeyCode::F(5)`, no modifiers). The previous default
+    /// of Ctrl+T was changed because it is intercepted at the OS/terminal level on
+    /// two common platforms before the application ever sees the keypress:
+    /// - **macOS**: Ctrl+T is the `stty status` character — the terminal driver
+    ///   sends `SIGINFO` to the process instead of forwarding the key.
+    /// - **Windows Terminal**: Ctrl+T opens a new tab.
     ///
     /// ```no_run
     /// # use textual_rs::App;
@@ -272,7 +273,7 @@ impl App {
     /// #     fn widget_type_name(&self) -> &'static str { "MyScreen" }
     /// # }
     /// let app = App::new(|| Box::new(MyScreen))
-    ///     .with_theme_cycle_key(KeyCode::F(5), KeyModifiers::NONE);
+    ///     .with_theme_cycle_key(KeyCode::Char('t'), crossterm::event::KeyModifiers::CONTROL);
     /// ```
     pub fn with_theme_cycle_key(mut self, code: KeyCode, modifiers: KeyModifiers) -> Self {
         self.theme_cycle_key = (code, modifiers);
@@ -440,7 +441,7 @@ impl App {
                                 continue;
                             }
 
-                            // 0b. theme cycle key (default Ctrl+T, configurable via with_theme_cycle_key)
+                            // 0b. theme cycle key (default F5, configurable via with_theme_cycle_key)
                             if k.code == self.theme_cycle_key.0
                                 && k.modifiers.contains(self.theme_cycle_key.1)
                             {
@@ -928,7 +929,7 @@ impl App {
             return true;
         }
 
-        // 0b. theme cycle key (default Ctrl+T, configurable via with_theme_cycle_key)
+        // 0b. theme cycle key (default F5, configurable via with_theme_cycle_key)
         if k.code == self.theme_cycle_key.0 && k.modifiers.contains(self.theme_cycle_key.1) {
             self.cycle_theme();
             return true;
