@@ -106,6 +106,7 @@ pub use widget::input::Input;
 pub use widget::label::Label;
 pub use widget::layout::{Horizontal, Vertical};
 pub use widget::list_view::ListView;
+pub use widget::loading_indicator::LoadingIndicator;
 pub use widget::log::Log;
 pub use widget::markdown::Markdown;
 pub use widget::placeholder::Placeholder;
