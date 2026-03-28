@@ -818,14 +818,26 @@ impl App {
         let dfs_ids = collect_subtree_dfs(screen_id, &self.ctx);
         self.hit_map = Some(MouseHitMap::build(&dfs_ids, self.bridge.layout_cache()));
 
-        // f. Render all screens bottom-to-top for correct modal layering.
-        //    Background screens are frozen (no re-layout) but still rendered so modals
-        //    appear visually overlaid on the content behind them.
-        let all_screens: Vec<WidgetId> = self.ctx.screen_stack.clone();
+        // f. Render screens bottom-to-top.
+        //    Only render the full stack when the top screen is a modal — that's when
+        //    we intentionally want background content to show through.
+        //    For regular (non-modal) sub-screens, render only the top screen so it
+        //    fully replaces the previous one and background content doesn't bleed through.
+        let top_is_modal = self
+            .ctx
+            .arena
+            .get(screen_id)
+            .map(|s| s.is_modal())
+            .unwrap_or(false);
+        let screens_to_render: Vec<WidgetId> = if top_is_modal {
+            self.ctx.screen_stack.clone()
+        } else {
+            vec![screen_id]
+        };
         let ctx_ref = &self.ctx;
         let bridge_ref = &self.bridge;
         terminal.draw(|frame| {
-            for &sid in &all_screens {
+            for &sid in &screens_to_render {
                 render_widget_tree(sid, ctx_ref, bridge_ref, frame);
             }
         })?;
