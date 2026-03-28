@@ -437,3 +437,120 @@ fn screen_stack_is_modal_returns_true_for_modal_screen() {
     let modal = ModalScreen::new(Box::new(FocusableWidget));
     assert!(modal.is_modal(), "ModalScreen must report is_modal() == true");
 }
+
+// ---------------------------------------------------------------------------
+// push_screen_wait / pop_screen_with tests (D-03)
+// ---------------------------------------------------------------------------
+
+/// A modal content widget that pops with a bool result when 'y' or 'n' is pressed.
+struct ResultDialog;
+
+impl Widget for ResultDialog {
+    fn widget_type_name(&self) -> &'static str {
+        "ResultDialog"
+    }
+
+    fn can_focus(&self) -> bool {
+        true
+    }
+
+    fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
+
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> EventPropagation {
+        if let Some(key) = event.downcast_ref::<KeyEvent>() {
+            if key.kind == KeyEventKind::Press {
+                match key.code {
+                    KeyCode::Char('y') => {
+                        ctx.pop_screen_with(true);
+                        return EventPropagation::Stop;
+                    }
+                    KeyCode::Char('n') => {
+                        ctx.pop_screen_with(false);
+                        return EventPropagation::Stop;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        EventPropagation::Continue
+    }
+}
+
+#[test]
+fn test_push_screen_wait_returns_result_true() {
+    // push_screen_wait pushes a modal; pop_screen_with delivers the result
+    let mut app = TestApp::new(80, 24, || Box::new(SingleFocusScreen));
+    assert_eq!(app.ctx().screen_stack.len(), 1);
+
+    // Push a modal via push_screen_wait; capture the receiver
+    let mut rx = app
+        .ctx()
+        .push_screen_wait(Box::new(ModalScreen::new(Box::new(ResultDialog))));
+
+    // Trigger process_deferred_screens to push the modal and register the sender
+    app.process_event(AppEvent::RenderRequest);
+    assert_eq!(app.ctx().screen_stack.len(), 2, "modal should be on stack");
+
+    // Before pop, result should not yet be available
+    assert!(
+        rx.try_recv().is_err(),
+        "result should not be available before pop"
+    );
+
+    // Press 'y' — ResultDialog calls pop_screen_with(true)
+    app.process_event(key_event(KeyCode::Char('y')));
+    assert_eq!(app.ctx().screen_stack.len(), 1, "modal should be popped");
+
+    // Result should now be available through the oneshot receiver
+    let boxed = rx
+        .try_recv()
+        .expect("result should be delivered after pop_screen_with");
+    let confirmed: bool = *boxed.downcast::<bool>().expect("result should be bool");
+    assert!(confirmed, "pop_screen_with(true) should yield true");
+}
+
+#[test]
+fn test_push_screen_wait_cancel_returns_false() {
+    // Same as above but press 'n' — result should be false
+    let mut app = TestApp::new(80, 24, || Box::new(SingleFocusScreen));
+
+    let mut rx = app
+        .ctx()
+        .push_screen_wait(Box::new(ModalScreen::new(Box::new(ResultDialog))));
+
+    app.process_event(AppEvent::RenderRequest);
+    assert_eq!(app.ctx().screen_stack.len(), 2);
+
+    // Press 'n' — ResultDialog calls pop_screen_with(false)
+    app.process_event(key_event(KeyCode::Char('n')));
+    assert_eq!(app.ctx().screen_stack.len(), 1, "modal should be popped");
+
+    let boxed = rx
+        .try_recv()
+        .expect("result should be delivered after pop_screen_with(false)");
+    let confirmed: bool = *boxed.downcast::<bool>().expect("result should be bool");
+    assert!(!confirmed, "pop_screen_with(false) should yield false");
+}
+
+#[test]
+fn test_pop_screen_with_no_wait_is_noop() {
+    // Calling pop_screen_with on a screen pushed via push_screen_deferred (not push_screen_wait)
+    // should simply pop the screen without error — result is discarded, no panic.
+    let mut app = TestApp::new(80, 24, || Box::new(SingleFocusScreen));
+
+    // Push a normal modal (not via push_screen_wait)
+    app.ctx()
+        .push_screen_deferred(Box::new(ModalScreen::new(Box::new(ResultDialog))));
+    app.process_event(AppEvent::RenderRequest);
+    assert_eq!(app.ctx().screen_stack.len(), 2);
+
+    // Press 'y' — ResultDialog calls pop_screen_with(true), but nobody is waiting for the result
+    app.process_event(key_event(KeyCode::Char('y')));
+
+    // Should pop cleanly without panic; result is silently dropped
+    assert_eq!(
+        app.ctx().screen_stack.len(),
+        1,
+        "modal should be popped even when no wait receiver exists"
+    );
+}
