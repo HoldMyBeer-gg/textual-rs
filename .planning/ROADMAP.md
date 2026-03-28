@@ -56,7 +56,11 @@
   2. Calling `ctx.pop_screen()` removes the top screen and restores focus to the exact widget that had focus before the push
   3. A `ModalScreen` blocks all keyboard and mouse input to screens below it while it is on top
   4. When a modal screen is dismissed, the screen below repaints cleanly with no render artifacts from the removed overlay
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 05-01-PLAN.md — Multi-screen rendering with modal dimming + integration tests for all 4 success criteria
+- [ ] 05-02-PLAN.md — push_screen_wait / pop_screen_with typed async result API
+- [ ] 05-03-PLAN.md — tutorial_06_screens example + human verification
 **UI hint**: yes
 
 #### Phase 6: Render-Only Foundation Widgets
@@ -141,7 +145,7 @@ Plans:
 | 2. Interactive States & Rendering | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 3. Widget Visual Polish & Demos | v1.1 | 2/2 | Complete | 2026-03-27 |
 | 4. Production Readiness | v1.2 | 5/5 | Complete | 2026-03-27 |
-| 5. Screen Stack | v1.3 | 0/? | Not started | - |
+| 5. Screen Stack | v1.3 | 0/3 | Not started | - |
 | 6. Render-Only Foundation Widgets | v1.3 | 0/? | Not started | - |
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
 | 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
