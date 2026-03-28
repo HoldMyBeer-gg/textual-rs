@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-03-28
+
+### Changed
+- Removed hardcoded `q` → quit global key intercept from the event loop — quit behaviour is now the application's responsibility
+- Removed hardcoded `q Quit` hint from the `Footer` widget
+
 ## [0.3.2] - 2026-03-28
 
 ### Fixed
