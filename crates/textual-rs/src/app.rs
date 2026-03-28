@@ -728,6 +728,7 @@ impl App {
                             while let Ok(AppEvent::RenderRequest) = rx.try_recv() {}
                             self.full_render_pass(&mut terminal)?;
                         }
+                        Ok(AppEvent::Quit) => break,
                         Ok(_) => {}
                         Err(_) => break, // channel closed
                     }

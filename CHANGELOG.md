@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-03-28
+
+### Added
+- `AppContext::quit()` — request a clean exit from any widget or screen `on_action` handler
+- `AppEvent::Quit` variant consumed by the event loop
+
+### Migration
+0.3.3 removed the hardcoded `q` global quit. To restore quit behaviour, add a key binding on your root screen and call `ctx.quit()` from `on_action`:
+```rust
+KeyBinding { key: KeyCode::Char('q'), modifiers: KeyModifiers::NONE, action: "quit", ... }
+
+fn on_action(&self, action: &str, ctx: &AppContext) {
+    if action == "quit" { ctx.quit(); }
+}
+```
+
 ## [0.3.4] - 2026-03-28
 
 ### Fixed

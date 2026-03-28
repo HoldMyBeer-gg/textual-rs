@@ -466,6 +466,13 @@ impl AppContext {
         self.toast(message, ToastSeverity::Info, 3000);
     }
 
+    /// Request a clean application exit. The event loop will break after the current frame.
+    pub fn quit(&self) {
+        if let Some(tx) = &self.event_tx {
+            let _ = tx.send(AppEvent::Quit);
+        }
+    }
+
     /// Cancel all workers associated with a widget. Called automatically during unmount.
     pub fn cancel_workers(&self, widget_id: WidgetId) {
         if let Some(handles) = self.worker_handles.borrow_mut().remove(widget_id) {

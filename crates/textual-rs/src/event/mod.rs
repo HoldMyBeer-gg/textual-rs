@@ -25,4 +25,6 @@ pub enum AppEvent {
     Tick,
     /// Reactive signal change detected — triggers a render pass.
     RenderRequest,
+    /// Application has requested a clean exit.
+    Quit,
 }
