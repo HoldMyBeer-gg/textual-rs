@@ -94,9 +94,9 @@
 
 ### Navigation
 
-- [ ] **NAV-01**: Developer can push a new screen onto the stack with `ctx.push_screen()`
-- [ ] **NAV-02**: Developer can pop the top screen and restore focus to the underlying screen
-- [ ] **NAV-03**: Developer can create modal screens that block input to screens below
+- [x] **NAV-01**: Developer can push a new screen onto the stack with `ctx.push_screen()`
+- [x] **NAV-02**: Developer can pop the top screen and restore focus to the underlying screen
+- [x] **NAV-03**: Developer can create modal screens that block input to screens below
 
 ### Platform
 
@@ -172,9 +172,9 @@
 | PROD-17 | Phase 4 | Pending |
 | PROD-18 | Phase 4 | Pending |
 | PROD-19 | Phase 4 | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
+| NAV-01 | TBD | Complete |
+| NAV-02 | TBD | Complete |
+| NAV-03 | TBD | Complete |
 | WIDGET-01 | TBD | Pending |
 | WIDGET-02 | TBD | Pending |
 | WIDGET-03 | TBD | Pending |
