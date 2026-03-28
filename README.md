@@ -4,7 +4,7 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 
 ## Features
 
-### Widgets (25+)
+### Widgets (28+)
 
 | Widget | Description |
 |--------|-------------|
@@ -31,6 +31,9 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 | `ContextMenu` | Right-click floating overlay menus |
 | `CommandPalette` | Ctrl+P command discovery overlay |
 | `Label` | Static text display |
+| `RichLog` | Scrollable rich-text log with styled lines |
+| `LoadingIndicator` | Animated spinner overlay on any widget |
+| `Toast` | Stacked transient notifications with severity levels |
 
 ### Styling
 
@@ -94,9 +97,15 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 
 ## Quick Start
 
+```bash
+cargo add textual-rs
+```
+
+Or add manually to `Cargo.toml`:
+
 ```toml
 [dependencies]
-textual-rs = "0.1"
+textual-rs = "0.3"
 ```
 
 ```rust
