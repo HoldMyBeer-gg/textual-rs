@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: completed
-stopped_at: Completed 10-01-PLAN.md (Fix CI action references, add docs and lint jobs)
-last_updated: "2026-03-27T21:18:00.000Z"
-last_activity: 2026-03-27
+stopped_at: Completed 10-02-PLAN.md (Add rustdoc to core infrastructure modules)
+last_updated: "2026-03-28T00:00:00.000Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 10
-Plan: 01 complete
+Plan: 02 complete
 Status: Phase 10 in progress
-Last activity: 2026-03-27
+Last activity: 2026-03-28
 
 ### Progress
 
@@ -61,6 +61,8 @@ Phase 10 [ ] Platform Verification and Publish
 - CI uses dtolnay/rust-toolchain@stable (not dtolnay/rust-action/setup@v1 which returns 404) (10-01)
 - Docs CI job added with RUSTDOCFLAGS=-D warnings; will fail until Plan 02 adds rustdoc — expected (10-01)
 - #![deny(missing_docs)] belongs in Plan 02 alongside the full doc pass, not Plan 01 (10-01)
+- #![allow(missing_docs)] added to widget/mod.rs suppresses all widget subtree lint — allows deny at crate level while deferring widget docs to 10-04 (10-02)
+- All core infrastructure (31 files) fully documented; widget docs deferred to plan 10-04 (10-02)
 - LoadingIndicator uses ctx.spinner_tick (not own tick) for synchronized overlay animation across all instances (08-02)
 - set_loading() uses SecondaryMap<WidgetId,bool> — supports multiple simultaneous loading widgets (08-02)
 - Loading overlay drawn over full rect (including borders) for visual continuity (08-02)
@@ -85,7 +87,6 @@ Phase 10 [ ] Platform Verification and Publish
 
 ## Session Continuity
 
-Last session: 2026-03-28T00:38:21.971Z
-Stopped at: Session resumed — mid-UAT for phase 09 (test 1 of 13, implementation 100% complete)
-Resume file: .planning/phases/09-complex-widgets/.continue-here.md
-Next action: Resume /gsd:verify-work 9 — 13 UAT tests pending
+Last session: 2026-03-28T00:00:00.000Z
+Stopped at: Completed 10-02-PLAN.md — core infrastructure rustdoc complete
+Next action: Continue phase 10 — plan 10-03
