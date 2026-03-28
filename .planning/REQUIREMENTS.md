@@ -105,7 +105,7 @@
 ### Publish
 
 - [x] **PUBLISH-01**: Library is published to crates.io with correct README, docs, and semver metadata
-- [ ] **PUBLISH-02**: All public API items have rustdoc documentation
+- [x] **PUBLISH-02**: All public API items have rustdoc documentation
 - [x] **PUBLISH-03**: `cargo package --list` produces a clean, complete package with no broken paths
 
 ## Future Requirements
@@ -190,5 +190,5 @@
 | WIDGET-13 | TBD | Complete |
 | PLATFORM-01 | TBD | Complete |
 | PUBLISH-01 | TBD | Complete |
-| PUBLISH-02 | TBD | Pending |
+| PUBLISH-02 | TBD | Complete |
 | PUBLISH-03 | TBD | Complete |

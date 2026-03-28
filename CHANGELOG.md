@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-03-28
+
+### Fixed
+- Corrected `repository` URL in crates.io metadata (both crates)
+
 ## [0.3.0] - 2026-03-28 (v1.3 milestone)
 
 ### Added
