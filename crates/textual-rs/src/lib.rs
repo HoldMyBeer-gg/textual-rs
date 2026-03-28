@@ -1,3 +1,4 @@
+#![deny(missing_docs)]
 //! textual-rs — a Rust port of the [Textual](https://textual.textualize.io) Python TUI framework.
 //!
 //! Build beautiful terminal UIs in Rust: declare widgets, style with CSS,

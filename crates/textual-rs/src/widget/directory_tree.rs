@@ -1,3 +1,4 @@
+//! Filesystem directory browser widget backed by a lazy-loading Tree.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use std::cell::{Cell, RefCell};
@@ -94,12 +95,14 @@ pub mod messages {
 
     /// Emitted when a file node is selected (Enter key).
     pub struct FileSelected {
+        /// Absolute path of the selected file.
         pub path: PathBuf,
     }
     impl Message for FileSelected {}
 
     /// Emitted when a directory node is selected (Enter key).
     pub struct DirectorySelected {
+        /// Absolute path of the selected directory.
         pub path: PathBuf,
     }
     impl Message for DirectorySelected {}

@@ -1,3 +1,5 @@
+//! Async worker tasks: background computation with progress streaming and result delivery.
+
 use crate::widget::WidgetId;
 
 /// Result message delivered to a widget when its spawned worker completes.

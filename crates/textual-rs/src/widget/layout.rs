@@ -1,3 +1,4 @@
+//! Layout container widgets for vertical and horizontal child arrangement.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 
@@ -6,16 +7,19 @@ use super::Widget;
 
 /// A container that lays out children vertically (top to bottom).
 pub struct Vertical {
+    /// Child widgets arranged top to bottom.
     pub children: Vec<Box<dyn Widget>>,
 }
 
 impl Vertical {
+    /// Create a new empty Vertical container.
     pub fn new() -> Self {
         Self {
             children: Vec::new(),
         }
     }
 
+    /// Create a Vertical container pre-populated with the given children.
     pub fn with_children(children: Vec<Box<dyn Widget>>) -> Self {
         Self { children }
     }
@@ -56,16 +60,19 @@ impl Widget for Vertical {
 
 /// A container that lays out children horizontally (left to right).
 pub struct Horizontal {
+    /// Child widgets arranged left to right.
     pub children: Vec<Box<dyn Widget>>,
 }
 
 impl Horizontal {
+    /// Create a new empty Horizontal container.
     pub fn new() -> Self {
         Self {
             children: Vec::new(),
         }
     }
 
+    /// Create a Horizontal container pre-populated with the given children.
     pub fn with_children(children: Vec<Box<dyn Widget>>) -> Self {
         Self { children }
     }

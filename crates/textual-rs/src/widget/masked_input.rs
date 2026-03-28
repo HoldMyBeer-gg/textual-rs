@@ -1,3 +1,4 @@
+//! Format-constrained input widget using a mask template (e.g. date, phone number).
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -14,12 +15,14 @@ pub mod messages {
 
     /// Emitted on each keystroke with the current raw value.
     pub struct Changed {
+        /// Current raw value (user-typed characters only, no separator literals).
         pub value: String,
     }
     impl Message for Changed {}
 
     /// Emitted when the user presses Enter.
     pub struct Submitted {
+        /// Raw value at the time of submission.
         pub value: String,
     }
     impl Message for Submitted {}

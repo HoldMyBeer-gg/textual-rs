@@ -1,3 +1,4 @@
+//! Right-click context menu overlay widget and supporting types.
 use crossterm::event::{KeyCode, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -11,12 +12,16 @@ use crate::event::keybinding::KeyBinding;
 /// A single item in a context menu.
 #[derive(Clone, Debug)]
 pub struct ContextMenuItem {
+    /// Display label shown in the menu.
     pub label: String,
+    /// Action string dispatched to the source widget when this item is activated.
     pub action: String,
+    /// Optional keyboard shortcut hint shown right-aligned in the menu.
     pub shortcut: Option<String>,
 }
 
 impl ContextMenuItem {
+    /// Create a new ContextMenuItem with a label and action, no shortcut.
     pub fn new(label: &str, action: &str) -> Self {
         Self {
             label: label.to_string(),
@@ -25,6 +30,7 @@ impl ContextMenuItem {
         }
     }
 
+    /// Set the optional shortcut hint displayed on the right side of the item.
     pub fn with_shortcut(mut self, shortcut: &str) -> Self {
         self.shortcut = Some(shortcut.to_string());
         self

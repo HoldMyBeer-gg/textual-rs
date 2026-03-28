@@ -1,3 +1,4 @@
+//! Radio button and radio set widgets for single-selection from a group.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -17,14 +18,18 @@ pub mod messages {
     /// Emitted by a RadioButton when it is selected.
     /// Includes the source widget ID so RadioSet can identify which button fired.
     pub struct RadioButtonChanged {
+        /// Whether the button is now checked (always `true` for radio buttons).
         pub checked: bool,
+        /// The widget ID of the RadioButton that was selected.
         pub source_id: super::WidgetId,
     }
     impl Message for RadioButtonChanged {}
 
     /// Emitted by a RadioSet when the selection changes.
     pub struct RadioSetChanged {
+        /// Zero-based index of the newly selected button.
         pub index: usize,
+        /// Label of the newly selected button.
         pub value: String,
     }
     impl Message for RadioSetChanged {}
@@ -34,7 +39,9 @@ pub mod messages {
 ///
 /// Renders as `(●) label` when checked and `( ) label` when unchecked.
 pub struct RadioButton {
+    /// Whether this radio button is currently selected.
     pub checked: Reactive<bool>,
+    /// Label text rendered after the indicator.
     pub label: String,
     /// Shared ArcRwSignal used by RadioSet to uncheck this button without downcasting.
     pub(crate) signal: ArcRwSignal<bool>,
@@ -177,6 +184,7 @@ pub struct RadioSet {
     signals: Vec<ArcRwSignal<bool>>,
     /// Labels corresponding to each button.
     labels: Vec<String>,
+    /// Index of the currently selected button.
     pub selected: Reactive<usize>,
     own_id: Cell<Option<WidgetId>>,
 }

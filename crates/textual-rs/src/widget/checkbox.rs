@@ -1,3 +1,4 @@
+//! Focusable checkbox widget that toggles a boolean state.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -14,6 +15,7 @@ pub mod messages {
 
     /// Emitted when the checkbox is toggled.
     pub struct Changed {
+        /// New checked state after the toggle.
         pub checked: bool,
     }
 
@@ -22,12 +24,15 @@ pub mod messages {
 
 /// A focusable checkbox that toggles a boolean state and emits `messages::Changed`.
 pub struct Checkbox {
+    /// Whether the checkbox is currently checked.
     pub checked: Reactive<bool>,
+    /// Label text rendered to the right of the checkbox indicator.
     pub label: String,
     own_id: Cell<Option<WidgetId>>,
 }
 
 impl Checkbox {
+    /// Create a new checkbox with the given label and initial checked state.
     pub fn new(label: impl Into<String>, checked: bool) -> Self {
         Self {
             checked: Reactive::new(checked),

@@ -1,3 +1,6 @@
+//! Widget trait, widget ID type, and all built-in widget implementations.
+// Widget documentation is deferred to plan 10-04 — suppress the lint here until then.
+#![allow(missing_docs)]
 pub mod button;
 pub mod checkbox;
 pub mod screen;

@@ -1,3 +1,4 @@
+//! Development placeholder widget that shows a cross-hatch fill and dimensions.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 
@@ -6,14 +7,17 @@ use super::Widget;
 
 /// A placeholder widget for development use that shows its type name and area dimensions.
 pub struct Placeholder {
+    /// Optional custom label text; defaults to `"Placeholder"` when `None`.
     pub label: Option<String>,
 }
 
 impl Placeholder {
+    /// Create a new Placeholder with no custom label.
     pub fn new() -> Self {
         Self { label: None }
     }
 
+    /// Create a Placeholder with a custom label string.
     pub fn with_label(label: impl Into<String>) -> Self {
         Self {
             label: Some(label.into()),

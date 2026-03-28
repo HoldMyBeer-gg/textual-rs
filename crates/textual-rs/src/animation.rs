@@ -43,10 +43,15 @@ pub fn ease_out_cubic(t: f64) -> f64 {
 /// // tween.value() returns a value between 0.0 and 1.0 based on elapsed time
 /// ```
 pub struct Tween {
+    /// The starting value of the animation.
     pub from: f64,
+    /// The ending value of the animation.
     pub to: f64,
+    /// The total duration of the animation.
     pub duration: Duration,
+    /// The easing function applied to normalize time.
     pub easing: EasingFn,
+    /// The instant when the animation was created and started.
     pub start_time: Instant,
 }
 

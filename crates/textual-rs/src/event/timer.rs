@@ -1,3 +1,5 @@
+//! Timer utilities for scheduling periodic tick events in the application event loop.
+
 use crate::event::AppEvent;
 use std::time::Duration;
 

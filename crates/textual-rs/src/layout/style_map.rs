@@ -1,3 +1,5 @@
+//! Maps ComputedStyle values to Taffy style objects for layout computation.
+
 use crate::css::types::*;
 use taffy::prelude::*;
 

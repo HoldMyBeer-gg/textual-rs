@@ -1,3 +1,5 @@
+//! TCSS stylesheet parser built on cssparser.
+
 use cssparser::{
     AtRuleParser, ParseError, Parser, ParserInput, QualifiedRuleParser, StyleSheetParser,
 };
@@ -9,15 +11,20 @@ use crate::css::types::Declaration;
 /// A parsed TCSS rule: a selector list + declaration block.
 #[derive(Debug, Clone)]
 pub struct Rule {
+    /// The list of selectors this rule applies to.
     pub selectors: Vec<Selector>,
+    /// The property declarations to apply when the selectors match.
     pub declarations: Vec<Declaration>,
 }
 
 /// Custom parse error for TCSS.
 #[derive(Debug, Clone)]
 pub enum TcssParseError {
+    /// The selector string could not be parsed.
     InvalidSelector(String),
+    /// An unrecognized CSS property was encountered.
     InvalidProperty(String),
+    /// A property value could not be parsed.
     InvalidValue(String),
 }
 

@@ -1,3 +1,4 @@
+//! Toast notification system: severity levels, entry type, and rendering helpers.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
@@ -5,15 +6,20 @@ use ratatui::style::{Color, Style};
 /// Severity level of a toast notification.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ToastSeverity {
+    /// Informational notification, styled with the primary theme color.
     Info,
+    /// Warning notification, styled with the warning theme color.
     Warning,
+    /// Error notification, styled with the error theme color.
     Error,
 }
 
 /// A single toast notification entry.
 #[derive(Debug, Clone)]
 pub struct ToastEntry {
+    /// Notification message text displayed inside the toast.
     pub message: String,
+    /// Severity level controlling the border color.
     pub severity: ToastSeverity,
     /// Auto-dismiss after this many milliseconds. 0 = persistent (never auto-dismiss).
     pub timeout_ms: u64,

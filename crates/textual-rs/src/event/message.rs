@@ -1,3 +1,5 @@
+//! Typed message trait and dynamic dispatch support for widget communication.
+
 use std::any::Any;
 
 /// Marker trait for typed messages in textual-rs.

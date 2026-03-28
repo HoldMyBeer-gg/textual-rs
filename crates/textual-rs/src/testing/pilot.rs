@@ -1,3 +1,5 @@
+//! Pilot: simulates user input (keyboard, mouse, focus) for headless UI tests.
+
 use crossterm::event::{
     KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent, MouseEventKind,
 };

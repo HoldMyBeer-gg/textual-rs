@@ -1,3 +1,4 @@
+//! Hierarchical tree view widget with expand/collapse and guide characters.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -12,13 +13,18 @@ use crate::reactive::Reactive;
 /// A single node in the tree hierarchy.
 #[derive(Clone)]
 pub struct TreeNode {
+    /// Display label shown in the tree.
     pub label: String,
+    /// Optional application-defined data string associated with this node.
     pub data: Option<String>,
+    /// Child nodes nested under this node.
     pub children: Vec<TreeNode>,
+    /// Whether this node's children are currently visible.
     pub expanded: bool,
 }
 
 impl TreeNode {
+    /// Create a leaf node (no children) with the given label.
     pub fn new(label: &str) -> Self {
         Self {
             label: label.to_string(),
@@ -28,6 +34,7 @@ impl TreeNode {
         }
     }
 
+    /// Create a branch node with the given label and children.
     pub fn with_children(label: &str, children: Vec<TreeNode>) -> Self {
         Self {
             label: label.to_string(),
@@ -57,6 +64,7 @@ pub mod messages {
 
     /// Emitted when a tree node is selected (Enter key).
     pub struct NodeSelected {
+        /// Index path from the root to the selected node.
         pub path: Vec<usize>,
     }
 
@@ -64,6 +72,7 @@ pub mod messages {
 
     /// Emitted when a tree node is expanded.
     pub struct NodeExpanded {
+        /// Index path from the root to the expanded node.
         pub path: Vec<usize>,
     }
 
@@ -71,6 +80,7 @@ pub mod messages {
 
     /// Emitted when a tree node is collapsed.
     pub struct NodeCollapsed {
+        /// Index path from the root to the collapsed node.
         pub path: Vec<usize>,
     }
 
@@ -82,8 +92,11 @@ pub mod messages {
 /// Renders nodes with guide characters (`├── `, `└── `, `│   `) for visual hierarchy.
 /// Space toggles expand/collapse. Enter emits NodeSelected.
 pub struct Tree {
+    /// Root node of the tree.
     pub root: RefCell<TreeNode>,
+    /// Zero-based index of the highlighted node in the flattened visible list.
     pub cursor: Reactive<usize>,
+    /// Vertical scroll offset in rows.
     pub scroll_offset: Reactive<usize>,
     flat_entries: RefCell<Vec<FlatEntry>>,
     viewport_height: Cell<u16>,
@@ -94,6 +107,7 @@ pub struct Tree {
 }
 
 impl Tree {
+    /// Create a new Tree with the given root node.
     pub fn new(root: TreeNode) -> Self {
         let tree = Self {
             root: RefCell::new(root),

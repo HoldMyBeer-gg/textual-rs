@@ -1,3 +1,4 @@
+//! Tab bar widget and TabbedContent container for multi-pane navigation.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -17,7 +18,9 @@ pub mod messages {
 
     /// Emitted when the active tab changes.
     pub struct TabChanged {
+        /// Zero-based index of the newly active tab.
         pub index: usize,
+        /// Label of the newly active tab.
         pub label: String,
     }
 
@@ -29,7 +32,9 @@ pub mod messages {
 /// Key bindings: Left → previous tab, Right → next tab.
 /// Emits `messages::TabChanged` when the active tab changes.
 pub struct Tabs {
+    /// Labels for each tab rendered in the bar.
     pub tab_labels: Vec<String>,
+    /// Zero-based index of the currently active tab.
     pub active: Reactive<usize>,
     own_id: Cell<Option<WidgetId>>,
     /// Tween for the underline x-position when switching tabs.
@@ -37,6 +42,7 @@ pub struct Tabs {
 }
 
 impl Tabs {
+    /// Create a new Tabs bar with the given tab labels, initially selecting index 0.
     pub fn new(labels: Vec<String>) -> Self {
         Self {
             tab_labels: labels,
@@ -375,13 +381,16 @@ impl Widget for TabBar {
 /// Composes the active pane's children into the widget tree so they participate
 /// in focus cycling and event dispatch. Tab switching triggers recomposition.
 pub struct TabbedContent {
+    /// Tab label strings corresponding to each pane.
     pub labels: Vec<String>,
+    /// Content pane widgets, one per label.
     pub panes: Vec<Box<dyn Widget>>,
     /// Shared active tab index — both TabbedContent and TabBar read/write this.
     pub active: std::rc::Rc<Cell<usize>>,
 }
 
 impl TabbedContent {
+    /// Create a new TabbedContent with the given labels and panes, initially showing pane 0.
     pub fn new(labels: Vec<String>, panes: Vec<Box<dyn Widget>>) -> Self {
         let active = std::rc::Rc::new(Cell::new(0));
         Self {

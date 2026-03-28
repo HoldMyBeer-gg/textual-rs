@@ -1,3 +1,4 @@
+//! Loading spinner widget and overlay helper for showing async loading state.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
@@ -41,6 +42,7 @@ const SPINNER_FRAMES: [char; 8] = [
 pub struct LoadingIndicator;
 
 impl LoadingIndicator {
+    /// Create a new LoadingIndicator.
     pub fn new() -> Self {
         Self
     }

@@ -1,3 +1,4 @@
+//! Tabular data display widget with sorting, scrolling, and zebra striping.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -12,12 +13,14 @@ use crate::reactive::Reactive;
 
 /// Column definition for a DataTable.
 pub struct ColumnDef {
+    /// Column header label displayed in the first row.
     pub label: String,
     /// Fixed width for this column. None = auto-size to content.
     pub width: Option<u16>,
 }
 
 impl ColumnDef {
+    /// Create a new auto-sized column with the given header label.
     pub fn new(label: impl Into<String>) -> Self {
         Self {
             label: label.into(),
@@ -25,6 +28,7 @@ impl ColumnDef {
         }
     }
 
+    /// Set a fixed character width for this column.
     pub fn with_width(mut self, width: u16) -> Self {
         self.width = Some(width);
         self
@@ -37,6 +41,7 @@ pub mod messages {
 
     /// Emitted when the user selects a row by pressing Enter.
     pub struct RowSelected {
+        /// Zero-based index of the selected row.
         pub row: usize,
     }
 
@@ -44,7 +49,9 @@ pub mod messages {
 
     /// Emitted when the sort order changes.
     pub struct SortChanged {
+        /// Zero-based index of the column that was sorted.
         pub column: usize,
+        /// `true` if sorted ascending, `false` if descending.
         pub ascending: bool,
     }
 
@@ -56,12 +63,17 @@ pub mod messages {
 /// Renders a header row, separator, then data rows. The cursor highlights the current
 /// row. Pressing `s` sorts by the cursor column. Enter emits `messages::RowSelected`.
 pub struct DataTable {
+    /// Column definitions (labels and optional fixed widths).
     pub columns: Vec<ColumnDef>,
     /// Row-major data storage. Interior mutability so sort_by_column can mutate from &self.
     rows: RefCell<Vec<Vec<String>>>,
+    /// Zero-based row index of the cursor.
     pub cursor_row: Reactive<usize>,
+    /// Zero-based column index of the cursor.
     pub cursor_col: Reactive<usize>,
+    /// Vertical scroll offset in rows.
     pub scroll_offset_row: Reactive<usize>,
+    /// Horizontal scroll offset in columns.
     pub scroll_offset_col: Reactive<usize>,
     sort_column: Cell<Option<usize>>,
     sort_ascending: Cell<bool>,

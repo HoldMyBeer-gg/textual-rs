@@ -1,3 +1,5 @@
+//! Reactive state primitives: `Reactive<T>` signals that trigger re-renders on change.
+
 use reactive_graph::computed::ArcMemo;
 use reactive_graph::prelude::*;
 use reactive_graph::signal::ArcRwSignal;
@@ -35,6 +37,7 @@ pub struct Reactive<T: Clone + PartialEq + Send + Sync + 'static> {
 }
 
 impl<T: Clone + PartialEq + Send + Sync + 'static> Reactive<T> {
+    /// Create a new reactive signal with the given initial value.
     pub fn new(value: T) -> Self {
         Self {
             inner: ArcRwSignal::new(value),
@@ -74,16 +77,19 @@ pub struct ComputedReactive<T: Clone + PartialEq + Send + Sync + 'static> {
 }
 
 impl<T: Clone + PartialEq + Send + Sync + 'static> ComputedReactive<T> {
+    /// Create a new computed reactive value from a derivation closure.
     pub fn new(f: impl Fn(Option<&T>) -> T + Send + Sync + 'static) -> Self {
         Self {
             inner: ArcMemo::new(f),
         }
     }
 
+    /// Read the computed value, tracking this read as a dependency.
     pub fn get(&self) -> T {
         self.inner.get()
     }
 
+    /// Read the computed value without creating a tracking dependency.
     pub fn get_untracked(&self) -> T {
         self.inner.get_untracked()
     }

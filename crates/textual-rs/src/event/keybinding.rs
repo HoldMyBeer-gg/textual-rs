@@ -1,3 +1,5 @@
+//! Key binding declarations and matching for widget keyboard shortcut handling.
+
 use crossterm::event::{KeyCode, KeyModifiers};
 
 /// A key binding declaration on a widget.

@@ -1,3 +1,4 @@
+//! Markdown rendering widget powered by pulldown-cmark.
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -460,11 +461,13 @@ fn flush_word_buffer(
 ///
 /// Not supported: images, tables, HTML (per D-06).
 pub struct Markdown {
+    /// Raw Markdown source string.
     pub content: String,
     rendered_lines: RefCell<Vec<RenderedLine>>,
 }
 
 impl Markdown {
+    /// Create a new Markdown widget by parsing the given Markdown source string.
     pub fn new(content: &str) -> Self {
         let rendered = Self::parse_markdown(content);
         Self {

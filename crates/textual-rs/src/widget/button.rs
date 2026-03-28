@@ -1,3 +1,4 @@
+//! Focusable button widget that emits a message when activated.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -10,11 +11,16 @@ use crate::event::keybinding::KeyBinding;
 /// Visual variant of a Button — affects border/text color.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ButtonVariant {
+    /// Standard button with default theme colors.
     #[default]
     Default,
+    /// Primary action button, styled with the primary theme color.
     Primary,
+    /// Warning button, styled with the warning theme color.
     Warning,
+    /// Error/destructive button, styled with the error theme color.
     Error,
+    /// Success/confirmation button, styled with a green accent color.
     Success,
 }
 
@@ -25,6 +31,7 @@ pub mod messages {
     /// Emitted when the button is pressed (Enter or Space key).
     /// `label` carries the button's label so handlers can identify which button fired.
     pub struct Pressed {
+        /// The label text of the button that was pressed.
         pub label: String,
     }
 
@@ -33,7 +40,9 @@ pub mod messages {
 
 /// A focusable button widget that emits `messages::Pressed` on Enter/Space.
 pub struct Button {
+    /// Text displayed in the center of the button.
     pub label: String,
+    /// Visual style variant controlling border and text colors.
     pub variant: ButtonVariant,
     own_id: Cell<Option<WidgetId>>,
     /// Single-frame pressed state: set true on press action, cleared after render.
@@ -41,6 +50,7 @@ pub struct Button {
 }
 
 impl Button {
+    /// Create a new button with the given label and the default variant.
     pub fn new(label: impl Into<String>) -> Self {
         Self {
             label: label.into(),
@@ -50,6 +60,7 @@ impl Button {
         }
     }
 
+    /// Set the visual variant on this button.
     pub fn with_variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
         self

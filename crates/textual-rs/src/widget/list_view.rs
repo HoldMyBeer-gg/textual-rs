@@ -1,3 +1,4 @@
+//! Scrollable list widget with keyboard navigation and item selection.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -15,13 +16,16 @@ pub mod messages {
 
     /// Emitted when the user presses Enter on a highlighted item.
     pub struct Selected {
+        /// Zero-based index of the selected item.
         pub index: usize,
+        /// String value of the selected item.
         pub value: String,
     }
     impl Message for Selected {}
 
     /// Emitted when the highlighted item changes (cursor moves).
     pub struct Highlighted {
+        /// Zero-based index of the newly highlighted item.
         pub index: usize,
     }
     impl Message for Highlighted {}
@@ -33,8 +37,11 @@ pub mod messages {
 /// The viewport scrolls automatically to keep the selected item visible.
 /// A visual scrollbar is drawn in the rightmost column when content exceeds the viewport.
 pub struct ListView {
+    /// List items to display.
     pub items: Vec<String>,
+    /// Zero-based index of the currently highlighted/selected item.
     pub selected: Reactive<usize>,
+    /// Vertical scroll offset in lines from the top.
     pub scroll_offset: Reactive<usize>,
     viewport_height: Cell<u16>,
     own_id: Cell<Option<WidgetId>>,
@@ -42,6 +49,7 @@ pub struct ListView {
 }
 
 impl ListView {
+    /// Create a new ListView with the given items and initial selection at index 0.
     pub fn new(items: Vec<String>) -> Self {
         Self {
             items,

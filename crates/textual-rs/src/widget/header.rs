@@ -1,3 +1,4 @@
+//! Header bar widget displaying a centered title and optional subtitle.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
@@ -9,11 +10,14 @@ use crate::reactive::Reactive;
 
 /// A header bar widget that displays a title (and optional subtitle) docked at the top.
 pub struct Header {
+    /// Main title text displayed centered in the header.
     pub title: Reactive<String>,
+    /// Optional subtitle appended after the title with `" -- "` separator.
     pub subtitle: Reactive<String>,
 }
 
 impl Header {
+    /// Create a new Header with the given title and no subtitle.
     pub fn new(title: &str) -> Self {
         Self {
             title: Reactive::new(title.to_string()),
@@ -21,6 +25,7 @@ impl Header {
         }
     }
 
+    /// Set a subtitle displayed after the title.
     pub fn with_subtitle(self, subtitle: &str) -> Self {
         self.subtitle.set(subtitle.to_string());
         self

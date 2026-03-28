@@ -1,3 +1,5 @@
+//! Mouse hit testing: maps screen coordinates to the widget under the cursor.
+
 use crate::widget::WidgetId;
 use ratatui::layout::Rect;
 use std::collections::HashMap;

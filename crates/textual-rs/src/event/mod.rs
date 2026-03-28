@@ -1,3 +1,5 @@
+//! Event system: application events, message passing, key bindings, and timers.
+
 pub mod dispatch;
 pub mod keybinding;
 pub mod message;

@@ -1,3 +1,5 @@
+//! Taffy layout bridge: synchronizes the widget tree into Taffy and maps results back to screen Rects.
+
 use super::style_map::taffy_style_from_computed;
 use crate::widget::context::AppContext;
 use crate::widget::WidgetId;
@@ -23,6 +25,7 @@ pub struct TaffyBridge {
 }
 
 impl TaffyBridge {
+    /// Create a new empty TaffyBridge with no nodes in its layout tree.
     pub fn new() -> Self {
         Self {
             tree: TaffyTree::new(),
