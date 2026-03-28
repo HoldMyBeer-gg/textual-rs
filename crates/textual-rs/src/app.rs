@@ -454,10 +454,6 @@ impl App {
                                 continue;
                             }
 
-                            // 1. Check global quit bindings
-                            if k.code == KeyCode::Char('q') {
-                                break;
-                            }
                             // Ctrl+C: route to copy if focused widget has text selection,
                             // otherwise use double-tap-to-quit pattern.
                             if k.code == KeyCode::Char('c')

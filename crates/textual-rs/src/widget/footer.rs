@@ -57,7 +57,6 @@ impl Widget for Footer {
         }
         bindings.push(("Tab".to_string(), "Focus".to_string()));
         bindings.push(("Ctrl+P".to_string(), "Palette".to_string()));
-        bindings.push(("q".to_string(), "Quit".to_string()));
 
         // Render each binding as: [key badge] description  [key badge] description ...
         let mut x = area.x + 1;
