@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: executing
-stopped_at: "10-03 Tasks 1+2 complete — stopped at Task 3 (human-action: crates.io publish requires token)"
-last_updated: "2026-03-28T04:29:54.536Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-28T06:44:57.158Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -20,27 +20,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** Phase 10 — platform-verification-and-publish
+**Current focus:** Phase 05 — screen-stack
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Ready to execute
+Phase: 05
+Plan: 01 complete
+Status: Phase 05 Plan 01 executed
 Last activity: 2026-03-28
 
 ### Progress
 
 ```
-v1.3: [          ] 0% (0/6 phases)
+v1.3: [██        ] 16% (1/6 phases)
 ```
 
-Phase 5  [ ] Screen Stack
+Phase 5  [x] Screen Stack (1/1 plans complete)
 Phase 6  [ ] Render-Only Foundation Widgets
 Phase 7  [ ] List and Selection Widgets
 Phase 8  [ ] Enhanced Display Widgets
 Phase 9  [ ] Complex Widgets
-Phase 10 [ ] Platform Verification and Publish
+Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ### History
 
@@ -58,6 +58,9 @@ Phase 10 [ ] Platform Verification and Publish
 
 ### Key Decisions (v1.3)
 
+- compute_layout clears only top-screen subtree entries from layout_cache; background entries preserved for layered render (05-01)
+- full_render_pass renders all screens bottom-to-top; CSS/layout/dirty-clear remain top-screen only for performance (05-01)
+- pop_screen_deferred no-op on last screen enforced in process_deferred_screens with len<=1 guard (05-01)
 - CI uses dtolnay/rust-toolchain@stable (not dtolnay/rust-action/setup@v1 which returns 404) (10-01)
 - Docs CI job added with RUSTDOCFLAGS=-D warnings; will fail until Plan 02 adds rustdoc — expected (10-01)
 - #![deny(missing_docs)] belongs in Plan 02 alongside the full doc pass, not Plan 01 (10-01)
@@ -89,6 +92,6 @@ Phase 10 [ ] Platform Verification and Publish
 
 ## Session Continuity
 
-Last session: 2026-03-28T04:16:00.000Z
-Stopped at: 10-03 Tasks 1+2 complete — stopped at Task 3 (human-action: crates.io publish requires token)
+Last session: 2026-03-28T06:44:57.154Z
+Stopped at: Completed 05-01-PLAN.md
 Next action: User publishes to crates.io (see 10-03-SUMMARY.md User Setup Required section)
