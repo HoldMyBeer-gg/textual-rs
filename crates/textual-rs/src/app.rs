@@ -1121,11 +1121,16 @@ impl App {
     /// Drain pending screen pushes and pops scheduled by widgets via
     /// push_screen_deferred() / pop_screen_deferred(). Called after each event cycle.
     pub fn process_deferred_screens(&mut self) {
-        // Process pops first, then pushes (pop old modal before pushing new one)
+        // Process pops first, then pushes (pop old modal before pushing new one).
+        // Guard: never pop the last screen (pop_screen_deferred is a no-op on last screen).
         let pops = self.ctx.pending_screen_pops.get();
         if pops > 0 {
             self.ctx.pending_screen_pops.set(0);
             for _ in 0..pops {
+                // Refuse to pop if only one screen remains
+                if self.ctx.screen_stack.len() <= 1 {
+                    break;
+                }
                 pop_screen(&mut self.ctx);
             }
         }
