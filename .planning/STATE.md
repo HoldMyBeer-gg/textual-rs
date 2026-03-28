@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
-status: completed
-stopped_at: Completed 10-04-PLAN.md (Add rustdoc to all widget modules)
-last_updated: "2026-03-28T00:00:00.000Z"
+status: executing
+stopped_at: Phase 09 UAT complete (13/13 passed) — HANDOFF.json cleared
+last_updated: "2026-03-28T04:07:32.059Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Developers can build Textual-quality TUI applications in Rust -- declare widgets, style with CSS, react to events, get a polished result on any terminal.
-**Current focus:** Phase 08 — enhanced-display-widgets
+**Current focus:** Phase 10 — platform-verification-and-publish
 
 ## Current Position
 
-Phase: 10
-Plan: 04 complete
-Status: Phase 10 in progress
+Phase: 10 (platform-verification-and-publish) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-03-28
 
 ### Progress
@@ -73,6 +73,8 @@ Phase 10 [ ] Platform Verification and Publish
 - MaskedInput cursor tracked in raw-value space only; display cursor derived per render
 - ContentSwitcher uses `recompose_widget` pattern, not CSS display toggling (Taffy has no display:none)
 - DirectoryTree filesystem I/O always via `ctx.run_worker`, never in `on_event` or `compose`
+- cargo publish --dry-run for textual-rs errors (not warns) when macros not on crates.io yet — expected, resolves after publishing macros first (10-03)
+- Publish order mandatory: textual-rs-macros first, ~60s propagation, then textual-rs (10-03)
 
 ### Research Flags (resolve during phase planning)
 
@@ -87,6 +89,6 @@ Phase 10 [ ] Platform Verification and Publish
 
 ## Session Continuity
 
-Last session: 2026-03-28T00:00:00.000Z
-Stopped at: Completed 10-02-PLAN.md — core infrastructure rustdoc complete
-Next action: Continue phase 10 — plan 10-03
+Last session: 2026-03-28T04:16:00.000Z
+Stopped at: 10-03 Tasks 1+2 complete — stopped at Task 3 (human-action: crates.io publish requires token)
+Next action: User publishes to crates.io (see 10-03-SUMMARY.md User Setup Required section)

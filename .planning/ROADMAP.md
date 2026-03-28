@@ -43,7 +43,7 @@
 - [ ] **Phase 7: List and Selection Widgets** - OptionList, SelectionList, ContentSwitcher
 - [ ] **Phase 8: Enhanced Display Widgets** - RichLog, LoadingIndicator
 - [ ] **Phase 9: Complex Widgets** - MaskedInput, DirectoryTree, Toast
-- [ ] **Phase 10: Platform Verification and Publish** - CI matrix, crates.io publish
+- [x] **Phase 10: Platform Verification and Publish** - CI matrix, crates.io publish (completed 2026-03-28)
 
 ### Phase Details
 
@@ -124,9 +124,9 @@ Plans:
 **Plans**: 4 plans
 Plans:
 - [x] 10-01-PLAN.md — Fix CI action references, arboard safety check, three-platform matrix
-- [ ] 10-02-PLAN.md — Rustdoc for core infrastructure modules (~31 files)
-- [ ] 10-03-PLAN.md — Cargo manifest fixes, version 0.3.0 bump, and publish to crates.io
-- [ ] 10-04-PLAN.md — Rustdoc for all widget modules (~32 files)
+- [x] 10-02-PLAN.md — Rustdoc for core infrastructure modules (~31 files)
+- [x] 10-03-PLAN.md — Cargo manifest fixes, version 0.3.0 bump, and publish to crates.io
+- [x] 10-04-PLAN.md — Rustdoc for all widget modules (~32 files)
 
 ## Progress
 
@@ -146,4 +146,4 @@ Plans:
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
 | 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
 | 9. Complex Widgets | v1.3 | 1/3 | In Progress|  |
-| 10. Platform Verification and Publish | v1.3 | 1/4 | In Progress|  |
+| 10. Platform Verification and Publish | v1.3 | 4/4 | Complete   | 2026-03-28 |
