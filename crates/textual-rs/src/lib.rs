@@ -115,6 +115,7 @@ pub use widget::placeholder::Placeholder;
 pub use widget::progress_bar::ProgressBar;
 pub use widget::radio::{RadioButton, RadioSet};
 pub use widget::rich_log::RichLog;
+pub use widget::scroll_region::{ScrollContent, ScrollRegion};
 pub use widget::scroll_view::ScrollView;
 pub use widget::select::Select;
 pub use widget::sparkline::Sparkline;
