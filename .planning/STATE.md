@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
-status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-28T07:14:00.000Z"
+status: Phase 05 Plan 02 executed
+stopped_at: 05-03 complete — tutorial_06_screens example created and committed
+last_updated: "2026-03-28T07:05:57.138Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 05
-Plan: 02 complete
-Status: Phase 05 Plan 02 executed
+Plan: 03 complete
+Status: Phase 05 complete (3/3 plans)
 Last activity: 2026-03-28
 
 ### Progress
@@ -35,7 +35,7 @@ Last activity: 2026-03-28
 v1.3: [██        ] 16% (1/6 phases)
 ```
 
-Phase 5  [x] Screen Stack (2/2 plans complete so far)
+Phase 5  [x] Screen Stack (3/3 plans complete — completed 2026-03-28)
 Phase 6  [ ] Render-Only Foundation Widgets
 Phase 7  [ ] List and Selection Widgets
 Phase 8  [ ] Enhanced Display Widgets
@@ -58,6 +58,7 @@ Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ### Key Decisions (v1.3)
 
+- push_screen_wait + run_worker + WorkerResult<T> is the canonical pattern for typed modal result delivery (05-03)
 - push_screen_wait uses single-slot pending_pop_result (not HashMap): at most one pop-with-result per event cycle (05-02)
 - pop_screen_with on non-wait screen silently discards result — safe no-op (05-02)
 - tokio sync feature added for oneshot channel support in push_screen_wait (05-02)
@@ -95,6 +96,6 @@ Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:14:00.000Z
-Stopped at: Completed 05-02-PLAN.md
-Next action: Execute 05-03-PLAN.md (tutorial_06_screens demo)
+Last session: 2026-03-28T07:05:57.134Z
+Stopped at: 05-03 complete — tutorial_06_screens example created and committed
+Next action: Phase 06 — Render-Only Foundation Widgets
