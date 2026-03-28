@@ -1,3 +1,5 @@
+//! Command palette widget: searchable popup for discovering and running commands.
+
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

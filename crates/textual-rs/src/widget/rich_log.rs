@@ -1,3 +1,4 @@
+//! Scrollable styled-text log widget that accepts ratatui `Line` objects.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

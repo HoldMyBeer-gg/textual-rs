@@ -1,3 +1,5 @@
+//! TCSS property value parser: converts raw CSS tokens into typed TcssValue variants.
+
 use cssparser::{ParseError, Parser, Token};
 use cssparser_color::Color as ParsedColor;
 
@@ -68,7 +70,9 @@ fn try_parse_variable<'i>(input: &mut Parser<'i, '_>) -> Option<String> {
 /// Error type for property parsing.
 #[derive(Debug, Clone)]
 pub enum PropertyParseError {
+    /// The property name is not recognized by the TCSS engine.
     UnknownProperty(String),
+    /// The property value could not be parsed into the expected type.
     InvalidValue(String),
 }
 

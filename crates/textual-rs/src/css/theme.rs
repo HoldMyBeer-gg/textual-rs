@@ -1,3 +1,5 @@
+//! Built-in themes and theme variable resolution for TCSS color values.
+
 use std::collections::HashMap;
 
 use super::types::TcssColor;
@@ -101,18 +103,31 @@ pub fn lighten_color(color: TcssColor, delta: f64) -> TcssColor {
 /// `"accent-darken-1"` to concrete `TcssColor::Rgb` values.
 #[derive(Debug, Clone)]
 pub struct Theme {
+    /// The unique identifier name for this theme (e.g., "textual-dark").
     pub name: String,
+    /// Primary brand color used for accented interactive elements.
     pub primary: (u8, u8, u8),
+    /// Secondary brand color for supporting UI elements.
     pub secondary: (u8, u8, u8),
+    /// Accent color for highlights and call-to-action elements.
     pub accent: (u8, u8, u8),
+    /// Surface color for widget backgrounds.
     pub surface: (u8, u8, u8),
+    /// Panel color for sidebars and container backgrounds.
     pub panel: (u8, u8, u8),
+    /// Main application background color.
     pub background: (u8, u8, u8),
+    /// Default text foreground color.
     pub foreground: (u8, u8, u8),
+    /// Color for success/positive state indicators.
     pub success: (u8, u8, u8),
+    /// Color for warning/caution state indicators.
     pub warning: (u8, u8, u8),
+    /// Color for error/danger state indicators.
     pub error: (u8, u8, u8),
+    /// Whether this is a dark theme; affects luminosity calculations.
     pub dark: bool,
+    /// Luminosity delta per shade step for lighten/darken operations.
     pub luminosity_spread: f64,
     /// User-defined variable overrides. Checked before computed shades.
     pub variables: HashMap<String, TcssColor>,

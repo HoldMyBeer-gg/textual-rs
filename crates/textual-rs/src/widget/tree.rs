@@ -1,3 +1,4 @@
+//! Internal widget-tree traversal and layout helpers.
 use super::context::AppContext;
 use super::{Widget, WidgetId};
 use crate::css::types::{ComputedStyle, PseudoClassSet};

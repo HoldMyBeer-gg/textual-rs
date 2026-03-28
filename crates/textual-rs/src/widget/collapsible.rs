@@ -1,3 +1,4 @@
+//! Collapsible container widget with an expandable/collapsible section.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -26,13 +27,17 @@ pub mod messages {
 /// The title row is always rendered. Children are rendered below it only when expanded.
 /// Uses render-time visibility (Pitfall 6) — does NOT use compose() for dynamic children.
 pub struct Collapsible {
+    /// Title text displayed in the header row with an expand/collapse arrow.
     pub title: String,
+    /// Whether the collapsible section is currently expanded.
     pub expanded: Reactive<bool>,
+    /// Child widgets rendered below the title row when expanded.
     pub children: Vec<Box<dyn Widget>>,
     own_id: Cell<Option<WidgetId>>,
 }
 
 impl Collapsible {
+    /// Create a new Collapsible with the given title and children, initially expanded.
     pub fn new(title: &str, children: Vec<Box<dyn Widget>>) -> Self {
         Self {
             title: title.to_string(),

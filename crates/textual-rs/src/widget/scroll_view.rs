@@ -1,3 +1,4 @@
+//! Scrollable container widget with virtual buffer rendering and scrollbars.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -16,8 +17,11 @@ use crate::reactive::Reactive;
 /// viewport height, and a horizontal scrollbar in the bottom row when content
 /// exceeds the viewport width.
 pub struct ScrollView {
+    /// Horizontal scroll offset in terminal columns.
     pub scroll_offset_x: Reactive<usize>,
+    /// Vertical scroll offset in terminal rows.
     pub scroll_offset_y: Reactive<usize>,
+    /// Child widgets rendered into the virtual canvas.
     pub children: Vec<Box<dyn Widget>>,
     /// Estimated content height — set by the caller. Defaults to sum of children (1 each for v1).
     pub content_height: usize,
@@ -28,6 +32,7 @@ pub struct ScrollView {
 }
 
 impl ScrollView {
+    /// Create a new ScrollView containing the given children.
     pub fn new(children: Vec<Box<dyn Widget>>) -> Self {
         let content_height = children.len().max(1);
         Self {

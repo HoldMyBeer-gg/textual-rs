@@ -1,3 +1,5 @@
+//! Command palette and registry for discoverable application actions.
+
 pub mod palette;
 pub mod registry;
 

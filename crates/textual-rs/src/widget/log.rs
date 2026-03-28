@@ -1,3 +1,4 @@
+//! Scrollable plain-text log display widget with auto-scroll support.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -14,14 +15,18 @@ use crate::reactive::Reactive;
 /// to the bottom on each new line. Pressing Up disables auto-scroll; pressing
 /// End or scrolling to the bottom re-enables it.
 pub struct Log {
+    /// All stored log lines.
     pub lines: Reactive<Vec<String>>,
+    /// Current vertical scroll offset in lines from the top.
     pub scroll_offset: Reactive<usize>,
     auto_scroll: Cell<bool>,
+    /// Last measured viewport height in terminal rows.
     pub viewport_height: Cell<u16>,
     own_id: Cell<Option<WidgetId>>,
 }
 
 impl Log {
+    /// Create a new empty Log with auto-scroll enabled.
     pub fn new() -> Self {
         Self {
             lines: Reactive::new(Vec::new()),

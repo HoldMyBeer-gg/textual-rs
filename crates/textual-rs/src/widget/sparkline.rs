@@ -1,3 +1,4 @@
+//! Sparkline widget that visualizes a series of data values using braille or block characters.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
@@ -12,10 +13,12 @@ use crate::reactive::Reactive;
 /// When height > 1, uses braille for smooth curves across multiple rows.
 /// When height == 1, falls back to eighth-block characters for maximum density.
 pub struct Sparkline {
+    /// Data series to visualize. Values are normalized to fill the widget area.
     pub data: Reactive<Vec<f64>>,
 }
 
 impl Sparkline {
+    /// Create a new Sparkline with the given data series.
     pub fn new(data: Vec<f64>) -> Self {
         Self {
             data: Reactive::new(data),

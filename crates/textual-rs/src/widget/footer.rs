@@ -1,3 +1,4 @@
+//! Footer widget that displays active key bindings for the focused widget.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 

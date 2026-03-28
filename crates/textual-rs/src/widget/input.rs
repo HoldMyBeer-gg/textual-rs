@@ -1,3 +1,4 @@
+//! Single-line text input widget with cursor, selection, validation, and clipboard support.
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -15,13 +16,16 @@ pub mod messages {
 
     /// Emitted on each keystroke with the current value.
     pub struct Changed {
+        /// Current text content after the change.
         pub value: String,
+        /// Whether the value passes the configured validator (always `true` if no validator set).
         pub valid: bool,
     }
     impl Message for Changed {}
 
     /// Emitted when the user presses Enter.
     pub struct Submitted {
+        /// The text content at the time of submission.
         pub value: String,
     }
     impl Message for Submitted {}
@@ -31,8 +35,11 @@ pub mod messages {
 ///
 /// Emits `messages::Changed` on each keystroke and `messages::Submitted` on Enter.
 pub struct Input {
+    /// Current text content.
     pub value: Reactive<String>,
+    /// Placeholder text shown when the input is empty and unfocused.
     pub placeholder: String,
+    /// When `true`, characters are rendered as `*` to hide password content.
     pub password: bool,
     validator: Option<Box<dyn Fn(&str) -> bool>>,
     valid: Cell<bool>,

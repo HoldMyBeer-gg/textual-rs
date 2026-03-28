@@ -1,3 +1,5 @@
+//! Test assertion helpers for verifying rendered buffer content.
+
 use ratatui::buffer::Buffer;
 
 /// Assert that specific rows of the buffer match expected strings.

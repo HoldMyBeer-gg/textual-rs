@@ -1,3 +1,4 @@
+//! Non-interactive label widget that renders a static text string.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use std::cell::Cell;
@@ -8,11 +9,13 @@ use crate::css::render_style::align_text;
 
 /// A widget that renders static text.
 pub struct Label {
+    /// The text string to display.
     pub text: String,
     own_id: Cell<Option<WidgetId>>,
 }
 
 impl Label {
+    /// Create a new Label with the given text.
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             text: text.into(),

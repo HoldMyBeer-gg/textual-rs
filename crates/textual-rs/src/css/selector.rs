@@ -1,3 +1,5 @@
+//! TCSS selector parsing and matching: type, class, ID, and pseudo-class selectors.
+
 use std::iter;
 
 use cssparser::{ParseError, Parser, Token};

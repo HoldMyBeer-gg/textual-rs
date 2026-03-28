@@ -1,3 +1,5 @@
+//! Core application runtime: event loop, widget tree management, and rendering.
+
 use anyhow::Result;
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind, KeyModifiers};
 use futures::StreamExt;

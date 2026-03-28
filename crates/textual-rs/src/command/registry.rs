@@ -1,3 +1,5 @@
+//! Command registry: stores and provides discoverable commands to the command palette.
+
 use crate::widget::context::AppContext;
 use crate::widget::WidgetId;
 

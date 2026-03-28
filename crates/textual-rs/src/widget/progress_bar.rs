@@ -1,3 +1,4 @@
+//! Progress bar widget with determinate and indeterminate (animated) modes.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
@@ -12,11 +13,13 @@ use crate::reactive::Reactive;
 /// Uses sub-cell block characters for smooth rendering (8 levels per cell).
 /// When progress is `None`, the bar renders in indeterminate (animated) mode.
 pub struct ProgressBar {
+    /// Current progress value. `Some(0.0..=1.0)` for determinate; `None` for indeterminate.
     pub progress: Reactive<Option<f64>>,
     tick: Cell<u8>,
 }
 
 impl ProgressBar {
+    /// Create a new determinate ProgressBar with the given progress value (clamped to `0.0..=1.0`).
     pub fn new(progress: f64) -> Self {
         Self {
             progress: Reactive::new(Some(progress.clamp(0.0, 1.0))),
@@ -24,6 +27,7 @@ impl ProgressBar {
         }
     }
 
+    /// Create an indeterminate ProgressBar that renders a bouncing animation.
     pub fn indeterminate() -> Self {
         Self {
             progress: Reactive::new(None),

@@ -1,3 +1,5 @@
+//! CSS cascade resolution: applies stylesheets in specificity order to compute final widget styles.
+
 use crate::css::parser::{parse_stylesheet, Rule};
 use crate::css::selector::{selector_matches, Specificity};
 use crate::css::theme::Theme;
@@ -41,6 +43,7 @@ fn resolve_variables(decls: &[Declaration], theme: &Theme) -> Vec<Declaration> {
 /// A parsed TCSS stylesheet with its rules.
 #[derive(Debug, Clone, Default)]
 pub struct Stylesheet {
+    /// The ordered list of CSS rules parsed from the stylesheet text.
     pub rules: Vec<Rule>,
 }
 

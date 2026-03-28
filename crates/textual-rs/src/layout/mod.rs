@@ -1,3 +1,5 @@
+//! Layout engine: Taffy-backed flexbox/grid bridge, hit testing, and style mapping.
+
 pub mod bridge;
 pub mod hit_map;
 pub mod style_map;

@@ -1,3 +1,5 @@
+//! TCSS (Textual CSS) styling engine: parsing, cascade, theming, and rendering.
+
 pub mod cascade;
 pub mod parser;
 pub mod property;

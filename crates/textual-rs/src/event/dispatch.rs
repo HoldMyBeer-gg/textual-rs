@@ -1,3 +1,5 @@
+//! Message dispatch: routes typed messages from the queue to matching widget handlers.
+
 use crate::widget::context::AppContext;
 use crate::widget::{EventPropagation, WidgetId};
 use std::any::Any;

@@ -1,3 +1,5 @@
+//! Terminal setup and teardown: raw mode, alternate screen, and mouse capture.
+
 use crossterm::cursor::{Hide, Show};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
@@ -27,6 +29,7 @@ pub fn init_panic_hook() {
 pub struct TerminalGuard;
 
 impl TerminalGuard {
+    /// Enter raw mode, alternate screen, and mouse capture. Returns error if terminal setup fails.
     pub fn new() -> io::Result<Self> {
         enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture, Hide)?;
@@ -60,6 +63,7 @@ pub struct MouseCaptureStack {
 }
 
 impl MouseCaptureStack {
+    /// Create a new empty stack. The effective state defaults to captured (true).
     pub fn new() -> Self {
         Self { stack: Vec::new() }
     }

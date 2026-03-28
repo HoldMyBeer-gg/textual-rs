@@ -1,3 +1,4 @@
+//! Dropdown selection widget that opens an overlay for option picking.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -15,7 +16,9 @@ pub mod messages {
 
     /// Emitted when a new option is chosen from the overlay.
     pub struct Changed {
+        /// String value of the newly selected option.
         pub value: String,
+        /// Zero-based index of the newly selected option.
         pub index: usize,
     }
 
@@ -25,7 +28,9 @@ pub mod messages {
 /// A dropdown selection widget that displays the current selection and opens an
 /// overlay on Enter to let the user pick from a list of options.
 pub struct Select {
+    /// Available options shown in the overlay.
     pub options: Vec<String>,
+    /// Zero-based index of the currently selected option.
     pub selected: Reactive<usize>,
     own_id: Cell<Option<WidgetId>>,
     last_area: Cell<(u16, u16, u16, u16)>, // x, y, w, h from last render

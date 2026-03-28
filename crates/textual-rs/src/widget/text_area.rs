@@ -1,3 +1,4 @@
+//! Multi-line text editor widget with cursor navigation, selection, and optional line numbers.
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -15,6 +16,7 @@ pub mod messages {
 
     /// Emitted when the text content changes. Contains the full text joined with "\n".
     pub struct Changed {
+        /// Full text content with lines joined by `"\n"`.
         pub value: String,
     }
 
@@ -23,7 +25,9 @@ pub mod messages {
 
 /// A multi-line text editor widget with cursor navigation and optional line numbers.
 pub struct TextArea {
+    /// Text content stored as a vector of lines.
     pub lines: Reactive<Vec<String>>,
+    /// When `true`, a line-number gutter is rendered on the left.
     pub show_line_numbers: bool,
     cursor_row: Cell<usize>,
     cursor_col: Cell<usize>,

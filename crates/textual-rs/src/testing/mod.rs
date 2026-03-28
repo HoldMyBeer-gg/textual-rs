@@ -1,3 +1,5 @@
+//! Headless testing infrastructure for automated UI tests.
+
 pub mod assertions;
 pub mod pilot;
 

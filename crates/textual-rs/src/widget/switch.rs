@@ -1,3 +1,4 @@
+//! Animated on/off toggle switch widget.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -17,6 +18,7 @@ pub mod messages {
 
     /// Emitted when the switch is toggled.
     pub struct Changed {
+        /// New on/off state after the toggle.
         pub value: bool,
     }
 
@@ -29,6 +31,7 @@ pub mod messages {
 /// On: green track with knob on right. Off: dim gray track with knob on left.
 /// The knob position is animated using a Tween for smooth transitions.
 pub struct Switch {
+    /// Current on/off state of the switch.
     pub value: Reactive<bool>,
     own_id: Cell<Option<WidgetId>>,
     /// Animation tween for knob position (0.0 = left/off, 1.0 = right/on).
@@ -36,6 +39,7 @@ pub struct Switch {
 }
 
 impl Switch {
+    /// Create a new Switch with the given initial on/off state.
     pub fn new(value: bool) -> Self {
         Self {
             value: Reactive::new(value),

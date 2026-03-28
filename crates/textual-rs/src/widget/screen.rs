@@ -1,3 +1,4 @@
+//! Screen types for the widget stack, including the modal screen wrapper.
 use std::cell::RefCell;
 
 use ratatui::{buffer::Buffer, layout::Rect};
@@ -60,6 +61,7 @@ pub struct ModalScreen {
 }
 
 impl ModalScreen {
+    /// Create a new ModalScreen wrapping the given inner widget.
     pub fn new(inner: Box<dyn Widget>) -> Self {
         Self {
             inner: RefCell::new(Some(inner)),

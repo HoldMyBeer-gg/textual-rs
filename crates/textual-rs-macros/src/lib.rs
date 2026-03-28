@@ -1,3 +1,6 @@
+#![deny(missing_docs)]
+//! Procedural macros for the textual-rs TUI framework.
+
 mod derive_widget;
 mod widget_impl;
 

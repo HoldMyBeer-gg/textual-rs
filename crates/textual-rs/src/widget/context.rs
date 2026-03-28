@@ -1,3 +1,4 @@
+//! Application context passed to every widget for state and service access.
 use super::Widget;
 use super::WidgetId;
 use crate::css::cascade::Stylesheet;
@@ -12,21 +13,35 @@ use std::any::Any;
 use std::cell::{Cell, RefCell};
 use super::toast::{ToastEntry, ToastSeverity, push_toast};
 
+/// Shared application state passed by reference to every widget callback.
+///
+/// Provides access to the widget arena, CSS computed styles, focus state, screen stack,
+/// event/message queues, and service methods (push_screen, post_message, run_worker, toast).
 pub struct AppContext {
+    /// Widget arena — all mounted widgets stored by their [`WidgetId`].
     pub arena: DenseSlotMap<WidgetId, Box<dyn Widget>>,
+    /// Parent-to-children mapping for the widget tree.
     pub children: SecondaryMap<WidgetId, Vec<WidgetId>>,
+    /// Child-to-parent mapping for the widget tree.
     pub parent: SecondaryMap<WidgetId, Option<WidgetId>>,
+    /// CSS-cascaded styles for each mounted widget.
     pub computed_styles: SecondaryMap<WidgetId, ComputedStyle>,
+    /// Per-widget inline style declarations (set via `Widget::inline_styles`).
     pub inline_styles: SecondaryMap<WidgetId, Vec<Declaration>>,
+    /// Per-widget dirty flag; set when the widget needs re-render.
     pub dirty: SecondaryMap<WidgetId, bool>,
+    /// CSS pseudo-class state (hover, focus, etc.) for each widget.
     pub pseudo_classes: SecondaryMap<WidgetId, PseudoClassSet>,
+    /// Currently focused widget, or `None` if nothing has focus.
     pub focused_widget: Option<WidgetId>,
     /// Currently hovered widget (under mouse cursor). Updated by MouseMove events.
     pub hovered_widget: Option<WidgetId>,
+    /// Stack of active screen widget IDs. Top of stack is the active screen.
     pub screen_stack: Vec<WidgetId>,
     /// Saved focus state for each screen push. Parallel to screen_stack.
     /// `push_screen` saves `focused_widget` here; `pop_screen` restores it.
     pub focus_history: Vec<Option<WidgetId>>,
+    /// Widgets scheduled to receive `on_mount` on the next event loop tick.
     pub pending_mounts: Vec<WidgetId>,
     /// Temporary input buffer for demo purposes (Phase 3 replaces with proper reactive state).
     pub input_buffer: String,
@@ -93,6 +108,7 @@ impl Default for AppContext {
 }
 
 impl AppContext {
+    /// Create a new empty `AppContext` with default state and the dark theme.
     pub fn new() -> Self {
         Self {
             arena: DenseSlotMap::with_key(),
