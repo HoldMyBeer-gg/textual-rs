@@ -38,7 +38,7 @@
 
 ### Phases
 
-- [ ] **Phase 5: Screen Stack** - Push/pop/modal screen navigation with focus save/restore
+- [x] **Phase 5: Screen Stack** - Push/pop/modal screen navigation with focus save/restore (completed 2026-03-28)
 - [ ] **Phase 6: Render-Only Foundation Widgets** - Static, Rule, Link, Pretty, Digits
 - [ ] **Phase 7: List and Selection Widgets** - OptionList, SelectionList, ContentSwitcher
 - [ ] **Phase 8: Enhanced Display Widgets** - RichLog, LoadingIndicator
@@ -141,7 +141,7 @@ Plans:
 | 2. Interactive States & Rendering | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 3. Widget Visual Polish & Demos | v1.1 | 2/2 | Complete | 2026-03-27 |
 | 4. Production Readiness | v1.2 | 5/5 | Complete | 2026-03-27 |
-| 5. Screen Stack | v1.3 | 0/? | Not started | - |
+| 5. Screen Stack | v1.3 | 1/1 | Complete | 2026-03-28 |
 | 6. Render-Only Foundation Widgets | v1.3 | 0/? | Not started | - |
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
 | 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
