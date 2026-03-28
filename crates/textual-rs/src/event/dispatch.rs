@@ -3,6 +3,12 @@
 use crate::widget::context::AppContext;
 use crate::widget::{EventPropagation, WidgetId};
 use std::any::Any;
+use std::sync::OnceLock;
+
+fn debug_dispatch() -> bool {
+    static ENABLED: OnceLock<bool> = OnceLock::new();
+    *ENABLED.get_or_init(|| std::env::var("TEXTUAL_RS_DEBUG").is_ok())
+}
 
 /// Collect the parent chain from `start` up to the screen root.
 /// Returns [start, parent, grandparent, ...] in bottom-up order.
@@ -21,12 +27,38 @@ pub fn collect_parent_chain(start: WidgetId, ctx: &AppContext) -> Vec<WidgetId> 
 /// Stops when a handler returns EventPropagation::Stop.
 pub fn dispatch_message(target: WidgetId, message: &dyn Any, ctx: &AppContext) -> EventPropagation {
     let chain = collect_parent_chain(target, ctx);
-    for &id in &chain {
+    let dbg = debug_dispatch();
+
+    if dbg {
+        let type_name = std::any::type_name_of_val(message);
+        let widget_names: Vec<&str> = chain
+            .iter()
+            .filter_map(|&id| ctx.arena.get(id).map(|w| w.widget_type_name()))
+            .collect();
+        eprintln!(
+            "[textual-rs dispatch] {} → [{}]",
+            type_name,
+            widget_names.join(", ")
+        );
+    }
+
+    for (i, &id) in chain.iter().enumerate() {
         if let Some(widget) = ctx.arena.get(id) {
             if widget.on_event(message, ctx) == EventPropagation::Stop {
+                if dbg {
+                    eprintln!(
+                        "[textual-rs dispatch]   stopped at {} (index {})",
+                        widget.widget_type_name(),
+                        i
+                    );
+                }
                 return EventPropagation::Stop;
             }
         }
+    }
+
+    if dbg {
+        eprintln!("[textual-rs dispatch]   no handler matched — message bubbled to root unhandled");
     }
     EventPropagation::Continue
 }
