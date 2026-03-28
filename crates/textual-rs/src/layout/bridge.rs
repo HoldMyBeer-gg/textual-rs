@@ -103,6 +103,10 @@ impl TaffyBridge {
     /// Compute layout for the entire tree rooted at `screen_id`.
     /// The available space is `cols` × `rows` terminal cells.
     /// After this call, `rect_for()` returns valid `Rect` values.
+    ///
+    /// Only the `screen_id` subtree is recalculated. Layout cache entries for
+    /// other screens (background screens in the stack) are preserved so that
+    /// layered multi-screen rendering works correctly.
     pub fn compute_layout(&mut self, screen_id: WidgetId, cols: u16, rows: u16, ctx: &AppContext) {
         let root = match self.node_map.get(&screen_id) {
             Some(&nid) => nid,
@@ -129,8 +133,13 @@ impl TaffyBridge {
 
         self.tree.compute_layout(root, available_space).unwrap();
 
-        // Update layout cache with absolute positions (Taffy positions are parent-relative)
-        self.layout_cache.clear();
+        // Update layout cache with absolute positions (Taffy positions are parent-relative).
+        // Only remove entries for widgets in this screen's subtree before repopulating —
+        // background screen entries are kept so layered rendering can paint them.
+        let subtree = collect_subtree_dfs(screen_id, ctx);
+        for &id in &subtree {
+            self.layout_cache.remove(&id);
+        }
         self.collect_absolute_rects(screen_id, 0.0, 0.0, ctx);
     }
 

@@ -776,10 +776,10 @@ impl App {
             None => return Ok(()),
         };
 
-        // a. Apply CSS cascade
+        // a. Apply CSS cascade (top screen only — background screens are frozen)
         apply_cascade_to_tree(screen_id, &self.stylesheets, &mut self.ctx);
 
-        // b. Sync layout tree
+        // b. Sync layout tree (top screen only)
         if self.needs_full_sync {
             self.bridge.sync_subtree(screen_id, &self.ctx);
             self.needs_full_sync = false;
@@ -787,23 +787,28 @@ impl App {
             self.bridge.sync_dirty_subtree(screen_id, &self.ctx);
         }
 
-        // c. Compute layout
+        // c. Compute layout (top screen only; background screen layouts are preserved in cache)
         let size = terminal.size()?;
         self.bridge
             .compute_layout(screen_id, size.width, size.height, &self.ctx);
 
-        // d. Clear dirty flags
+        // d. Clear dirty flags (top screen only)
         clear_dirty_subtree(screen_id, &mut self.ctx);
 
-        // e. Build hit map
+        // e. Build hit map from top screen only (ensures mouse is blocked from background screens)
         let dfs_ids = collect_subtree_dfs(screen_id, &self.ctx);
         self.hit_map = Some(MouseHitMap::build(&dfs_ids, self.bridge.layout_cache()));
 
-        // f. Render main screen + floating overlay (if any)
+        // f. Render all screens bottom-to-top for correct modal layering.
+        //    Background screens are frozen (no re-layout) but still rendered so modals
+        //    appear visually overlaid on the content behind them.
+        let all_screens: Vec<WidgetId> = self.ctx.screen_stack.clone();
         let ctx_ref = &self.ctx;
         let bridge_ref = &self.bridge;
         terminal.draw(|frame| {
-            render_widget_tree(screen_id, ctx_ref, bridge_ref, frame);
+            for &sid in &all_screens {
+                render_widget_tree(sid, ctx_ref, bridge_ref, frame);
+            }
         })?;
 
         // Advance spinner tick for next frame (all loading overlays animate in sync)
