@@ -97,7 +97,7 @@ impl Widget for Button {
     where
         Self: Sized,
     {
-        "Button { border: inner; min-width: 16; height: 3; }"
+        "Button { border: inner; min-width: 16; height: 3; min-height: 3; }"
     }
 
     fn on_mount(&self, id: WidgetId) {

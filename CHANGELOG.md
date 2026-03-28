@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-03-28
+
+### Fixed
+- `Button` no longer collapses to height=2 under vertical space pressure — `min-height: 3` is now set alongside `height: 3` so Taffy enforces the floor
+
 ## [0.3.3] - 2026-03-28
 
 ### Changed
