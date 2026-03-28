@@ -11,6 +11,7 @@ use ratatui::style::Style;
 use slotmap::{DenseSlotMap, SecondaryMap};
 use std::any::Any;
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use super::toast::{ToastEntry, ToastSeverity, push_toast};
 
 /// Shared application state passed by reference to every widget callback.
@@ -99,6 +100,15 @@ pub struct AppContext {
     pub spinner_tick: Cell<u8>,
     /// Stacked toast notifications, rendered bottom-right. Max 5 visible.
     pub toast_entries: RefCell<Vec<ToastEntry>>,
+    /// Deferred push_screen_wait requests: each entry is `(screen_box, oneshot_sender)`.
+    /// Drained by `process_deferred_screens`; the sender is stored keyed by the new screen's WidgetId.
+    pub pending_screen_wait_pushes: RefCell<Vec<(Box<dyn Widget>, tokio::sync::oneshot::Sender<Box<dyn Any + Send>>)>>,
+    /// Maps screen WidgetId -> oneshot sender for typed result delivery.
+    /// Populated when `push_screen_wait` processes a deferred push; consumed when `pop_screen_with` fires.
+    pub screen_result_senders: RefCell<HashMap<WidgetId, tokio::sync::oneshot::Sender<Box<dyn Any + Send>>>>,
+    /// Single-slot typed result for the next `pop_screen_with` call.
+    /// Set by `pop_screen_with`, consumed by `process_deferred_screens` when the pop fires.
+    pub pending_pop_result: RefCell<Option<Box<dyn Any + Send>>>,
 }
 
 impl Default for AppContext {
@@ -143,6 +153,9 @@ impl AppContext {
             loading_widgets: RefCell::new(SecondaryMap::new()),
             spinner_tick: Cell::new(0),
             toast_entries: RefCell::new(Vec::new()),
+            pending_screen_wait_pushes: RefCell::new(Vec::new()),
+            screen_result_senders: RefCell::new(HashMap::new()),
+            pending_pop_result: RefCell::new(None),
         }
     }
 
@@ -239,6 +252,58 @@ impl AppContext {
     pub fn pop_screen_deferred(&self) {
         self.pending_screen_pops
             .set(self.pending_screen_pops.get() + 1);
+    }
+
+    /// Push a modal screen and asynchronously await a typed result.
+    ///
+    /// Returns a [`tokio::sync::oneshot::Receiver`] that resolves when the modal screen
+    /// calls [`pop_screen_with`](AppContext::pop_screen_with). The caller downcasts the
+    /// `Box<dyn Any>` to the expected type.
+    ///
+    /// Because `on_action` is synchronous, the typical usage pattern is to capture the
+    /// receiver in a worker:
+    ///
+    /// ```ignore
+    /// let rx = ctx.push_screen_wait(Box::new(ModalScreen::new(Box::new(dialog))));
+    /// ctx.run_worker(self_id, async move {
+    ///     if let Ok(boxed) = rx.await {
+    ///         let confirmed: bool = *boxed.downcast::<bool>().unwrap();
+    ///         confirmed
+    ///     } else {
+    ///         false
+    ///     }
+    /// });
+    /// ```
+    pub fn push_screen_wait(
+        &self,
+        screen: Box<dyn Widget>,
+    ) -> tokio::sync::oneshot::Receiver<Box<dyn Any + Send>> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.pending_screen_wait_pushes.borrow_mut().push((screen, tx));
+        rx
+    }
+
+    /// Pop the top screen and deliver a typed result to the awaiting `push_screen_wait` caller.
+    ///
+    /// The value is boxed and stored; `process_deferred_screens` delivers it through the
+    /// oneshot channel when the pop is processed. If the top screen was not pushed via
+    /// `push_screen_wait`, the result is silently discarded and the pop still occurs normally.
+    ///
+    /// Call this from `on_action` in a modal's inner widget to dismiss and return a value.
+    ///
+    /// ```ignore
+    /// // Inside a dialog widget's on_action:
+    /// fn on_action(&self, action: &str, ctx: &AppContext) {
+    ///     match action {
+    ///         "ok"     => ctx.pop_screen_with(true),
+    ///         "cancel" => ctx.pop_screen_with(false),
+    ///         _ => {}
+    ///     }
+    /// }
+    /// ```
+    pub fn pop_screen_with<T: Any + Send + 'static>(&self, value: T) {
+        *self.pending_pop_result.borrow_mut() = Some(Box::new(value));
+        self.pop_screen_deferred();
     }
 
     /// Post a typed message from a widget.

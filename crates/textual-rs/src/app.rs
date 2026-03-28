@@ -1131,8 +1131,22 @@ impl App {
                 if self.ctx.screen_stack.len() <= 1 {
                     break;
                 }
+                // Grab the top screen id before popping so we can match its result sender.
+                let top_screen_id = self.ctx.screen_stack.last().copied();
+                // Take the result value (set by pop_screen_with, if any).
+                let result = self.ctx.pending_pop_result.borrow_mut().take();
+
                 pop_screen(&mut self.ctx);
+
+                // If there was a pending result and a registered sender for the popped screen,
+                // deliver the result through the oneshot channel now.
+                if let (Some(top_id), Some(value)) = (top_screen_id, result) {
+                    if let Some(sender) = self.ctx.screen_result_senders.borrow_mut().remove(&top_id) {
+                        let _ = sender.send(value);
+                    }
+                }
             }
+            self.needs_full_sync = true;
         }
 
         let pushes: Vec<Box<dyn Widget>> = self
@@ -1143,6 +1157,15 @@ impl App {
             .collect();
         for screen in pushes {
             push_screen(screen, &mut self.ctx);
+        }
+
+        // Process push_screen_wait requests: push the screen and record the sender keyed by the new screen id.
+        let wait_pushes: Vec<(Box<dyn Widget>, tokio::sync::oneshot::Sender<Box<dyn std::any::Any + Send>>)> =
+            self.ctx.pending_screen_wait_pushes.borrow_mut().drain(..).collect();
+        for (screen, sender) in wait_pushes {
+            let screen_id = push_screen(screen, &mut self.ctx);
+            self.ctx.screen_result_senders.borrow_mut().insert(screen_id, sender);
+            self.needs_full_sync = true;
         }
 
         // Process pending recompositions (e.g. tab switching)
