@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-28T06:44:57.158Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-28T07:14:00.000Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 05
-Plan: 01 complete
-Status: Phase 05 Plan 01 executed
+Plan: 02 complete
+Status: Phase 05 Plan 02 executed
 Last activity: 2026-03-28
 
 ### Progress
@@ -35,7 +35,7 @@ Last activity: 2026-03-28
 v1.3: [██        ] 16% (1/6 phases)
 ```
 
-Phase 5  [x] Screen Stack (1/1 plans complete)
+Phase 5  [x] Screen Stack (2/2 plans complete so far)
 Phase 6  [ ] Render-Only Foundation Widgets
 Phase 7  [ ] List and Selection Widgets
 Phase 8  [ ] Enhanced Display Widgets
@@ -58,6 +58,9 @@ Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ### Key Decisions (v1.3)
 
+- push_screen_wait uses single-slot pending_pop_result (not HashMap): at most one pop-with-result per event cycle (05-02)
+- pop_screen_with on non-wait screen silently discards result — safe no-op (05-02)
+- tokio sync feature added for oneshot channel support in push_screen_wait (05-02)
 - compute_layout clears only top-screen subtree entries from layout_cache; background entries preserved for layered render (05-01)
 - full_render_pass renders all screens bottom-to-top; CSS/layout/dirty-clear remain top-screen only for performance (05-01)
 - pop_screen_deferred no-op on last screen enforced in process_deferred_screens with len<=1 guard (05-01)
@@ -81,7 +84,7 @@ Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ### Research Flags (resolve during phase planning)
 
-- Phase 5: `push_screen_wait` async variant scope decision; screen suspend/resume lifecycle events scope
+- Phase 5: screen suspend/resume lifecycle events scope (push_screen_wait resolved in 05-02)
 - Phase 8: `widget.loading = true` base-class overlay integration scope vs. standalone widget only
 - Phase 9: DirectoryTree symlink detection on Windows NTFS; Toast z-order vs. active_overlay
 
@@ -92,6 +95,6 @@ Phase 10 [x] Platform Verification and Publish (completed 2026-03-28)
 
 ## Session Continuity
 
-Last session: 2026-03-28T06:44:57.154Z
-Stopped at: Completed 05-01-PLAN.md
-Next action: User publishes to crates.io (see 10-03-SUMMARY.md User Setup Required section)
+Last session: 2026-03-28T07:14:00.000Z
+Stopped at: Completed 05-02-PLAN.md
+Next action: Execute 05-03-PLAN.md (tutorial_06_screens demo)

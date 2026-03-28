@@ -38,7 +38,7 @@
 
 ### Phases
 
-- [x] **Phase 5: Screen Stack** - Push/pop/modal screen navigation with focus save/restore (completed 2026-03-28)
+- [ ] **Phase 5: Screen Stack** - Push/pop/modal screen navigation with focus save/restore (2/3 plans complete)
 - [ ] **Phase 6: Render-Only Foundation Widgets** - Static, Rule, Link, Pretty, Digits
 - [ ] **Phase 7: List and Selection Widgets** - OptionList, SelectionList, ContentSwitcher
 - [ ] **Phase 8: Enhanced Display Widgets** - RichLog, LoadingIndicator
@@ -56,7 +56,11 @@
   2. Calling `ctx.pop_screen()` removes the top screen and restores focus to the exact widget that had focus before the push
   3. A `ModalScreen` blocks all keyboard and mouse input to screens below it while it is on top
   4. When a modal screen is dismissed, the screen below repaints cleanly with no render artifacts from the removed overlay
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 05-01-PLAN.md — Multi-screen layered rendering, modal focus scoping, integration tests
+- [x] 05-02-PLAN.md — push_screen_wait / pop_screen_with typed async modal result API
+- [ ] 05-03-PLAN.md — tutorial_06_screens demo: full push/pop/modal/await round-trip
 **UI hint**: yes
 
 #### Phase 6: Render-Only Foundation Widgets
@@ -141,7 +145,7 @@ Plans:
 | 2. Interactive States & Rendering | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 3. Widget Visual Polish & Demos | v1.1 | 2/2 | Complete | 2026-03-27 |
 | 4. Production Readiness | v1.2 | 5/5 | Complete | 2026-03-27 |
-| 5. Screen Stack | v1.3 | 1/1 | Complete | 2026-03-28 |
+| 5. Screen Stack | v1.3 | 2/3 | In Progress | - |
 | 6. Render-Only Foundation Widgets | v1.3 | 0/? | Not started | - |
 | 7. List and Selection Widgets | v1.3 | 0/? | Not started | - |
 | 8. Enhanced Display Widgets | v1.3 | 0/2 | Not started | - |
