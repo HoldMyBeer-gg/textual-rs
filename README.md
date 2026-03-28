@@ -176,8 +176,8 @@ cargo run --example tutorial_05_workers   # Background workers
 
 ## Documentation
 
-- [User Guide](docs/guide.md) -- complete walkthrough
-- [CSS Reference](docs/css-reference.md) -- all properties, selectors, theme variables
+- [User Guide](https://github.com/jabberwock/textual-rs/blob/master/docs/guide.md) -- complete walkthrough
+- [CSS Reference](https://github.com/jabberwock/textual-rs/blob/master/docs/css-reference.md) -- all properties, selectors, theme variables
 
 ## License
 

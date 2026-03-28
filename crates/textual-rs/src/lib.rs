@@ -71,8 +71,8 @@
 //! textual-light, tokyo-night, nord, gruvbox, dracula, catppuccin).
 //! Use [`App::with_theme_cycle_key`] to rebind it.
 //!
-//! See the [User Guide](https://github.com/user/textual-rs/blob/main/docs/guide.md)
-//! and [CSS Reference](https://github.com/user/textual-rs/blob/main/docs/css-reference.md)
+//! See the [User Guide](https://github.com/jabberwock/textual-rs/blob/master/docs/guide.md)
+//! and [CSS Reference](https://github.com/jabberwock/textual-rs/blob/master/docs/css-reference.md)
 //! for full documentation.
 
 pub mod animation;

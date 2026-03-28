@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-03-28
+
+### Fixed
+- README doc links now use absolute GitHub URLs so they resolve correctly from crates.io
+- `lib.rs` rustdoc links pointed to `github.com/user/textual-rs` — corrected to `jabberwock/textual-rs`
+
 ## [0.3.7] - 2026-03-28
 
 ### Added
