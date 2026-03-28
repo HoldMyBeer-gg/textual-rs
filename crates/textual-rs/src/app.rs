@@ -349,9 +349,6 @@ impl App {
             push_screen(root_screen, &mut self.ctx);
         }
 
-        // Initial render
-        self.full_render_pass(&mut terminal)?;
-
         let (tx, rx) = flume::unbounded::<AppEvent>();
 
         // Store event sender on AppContext so widgets and effects can post events.
@@ -359,10 +356,15 @@ impl App {
 
         // Create dedicated worker result channel. The sender is stored on AppContext
         // so run_worker can send results; we poll the receiver in the select! loop.
+        // Must be initialized before the initial render so widgets can spawn workers
+        // from their first render() invocation.
         let (worker_tx, worker_rx) =
             flume::unbounded::<(WidgetId, Box<dyn std::any::Any + Send>)>();
         self.ctx.worker_tx = Some(worker_tx);
         self.worker_rx = Some(worker_rx);
+
+        // Initial render
+        self.full_render_pass(&mut terminal)?;
 
         // Spawn EventStream reader task on LocalSet (does not need Send)
         task::spawn_local(async move {
