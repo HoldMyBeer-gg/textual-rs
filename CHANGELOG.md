@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-03-28
+
+### Fixed
+- Screen-level key bindings (`key_bindings()` + `on_action`) now fire correctly in the live event loop — `run_async` was missing the screen-stack check present in `handle_key_event`, causing Esc/? and other screen bindings to be silently dropped unless screens also implemented `on_event`
+
 ## [0.3.1] - 2026-03-28
 
 ### Fixed
