@@ -100,7 +100,7 @@
 
 ### Platform
 
-- [ ] **PLATFORM-01**: Library builds and all tests pass on macOS and Linux (CI verified)
+- [x] **PLATFORM-01**: Library builds and all tests pass on macOS and Linux (CI verified)
 
 ### Publish
 
@@ -188,7 +188,7 @@
 | WIDGET-11 | TBD | Pending |
 | WIDGET-12 | TBD | Pending |
 | WIDGET-13 | TBD | Complete |
-| PLATFORM-01 | TBD | Pending |
+| PLATFORM-01 | TBD | Complete |
 | PUBLISH-01 | TBD | Pending |
 | PUBLISH-02 | TBD | Pending |
 | PUBLISH-03 | TBD | Pending |

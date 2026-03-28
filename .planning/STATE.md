@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Widget Parity & Ship
 status: completed
-stopped_at: Completed 09-03-PLAN.md (Toast notification system)
-last_updated: "2026-03-27T21:12:20.730Z"
+stopped_at: Completed 10-01-PLAN.md (Fix CI action references, add docs and lint jobs)
+last_updated: "2026-03-27T21:18:00.000Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 6
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Phase 08 complete
+Phase: 10
+Plan: 01 complete
+Status: Phase 10 in progress
 Last activity: 2026-03-27
 
 ### Progress
@@ -58,6 +58,9 @@ Phase 10 [ ] Platform Verification and Publish
 
 ### Key Decisions (v1.3)
 
+- CI uses dtolnay/rust-toolchain@stable (not dtolnay/rust-action/setup@v1 which returns 404) (10-01)
+- Docs CI job added with RUSTDOCFLAGS=-D warnings; will fail until Plan 02 adds rustdoc — expected (10-01)
+- #![deny(missing_docs)] belongs in Plan 02 alongside the full doc pass, not Plan 01 (10-01)
 - LoadingIndicator uses ctx.spinner_tick (not own tick) for synchronized overlay animation across all instances (08-02)
 - set_loading() uses SecondaryMap<WidgetId,bool> — supports multiple simultaneous loading widgets (08-02)
 - Loading overlay drawn over full rect (including borders) for visual continuity (08-02)
