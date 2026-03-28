@@ -709,6 +709,41 @@ app.register_command("Toggle Debug", "toggle-debug");
 
 ---
 
+## ScrollRegion — Direct Buffer Scrolling
+
+`ScrollView` is for composed child widgets. When your widget does its own buffer writes (custom styling, per-cell colors), use `ScrollRegion` + `ScrollContent` instead:
+
+```rust
+use textual_rs::{ScrollContent, ScrollRegion};
+use textual_rs::widget::context::AppContext;
+use ratatui::{buffer::Buffer, layout::Rect, style::{Color, Style}};
+
+struct MessagePane {
+    lines: Vec<(String, Color)>,
+}
+
+impl ScrollContent for MessagePane {
+    fn content_height(&self) -> usize {
+        self.lines.len()
+    }
+
+    fn render_content(&self, _ctx: &AppContext, buf: &mut Buffer, area: Rect, scroll_offset: usize) {
+        for (i, (text, color)) in self.lines.iter().enumerate().skip(scroll_offset).take(area.height as usize) {
+            let row = (i - scroll_offset) as u16;
+            let style = Style::default().fg(*color);
+            buf.set_string(area.x, area.y + row, text, style);
+        }
+    }
+}
+
+// In compose():
+Box::new(ScrollRegion::new(Box::new(MessagePane { lines: vec![] })))
+```
+
+`ScrollRegion` handles Up/Down/PageUp/PageDown/Home/End key bindings, mouse wheel, and draws a sub-cell vertical scrollbar automatically. The `render_content` callback receives the already-clipped viewport rect and the scroll offset — draw only what's visible.
+
+---
+
 ## Built-in Widgets
 
 textual-rs ships with 22+ ready-to-use widgets:
@@ -719,7 +754,8 @@ textual-rs ships with 22+ ready-to-use widgets:
 |--------|-------------|
 | `Vertical` | Stacks children vertically (default layout direction) |
 | `Horizontal` | Arranges children side-by-side horizontally |
-| `ScrollView` | Generic scrollable container with scrollbar gutter |
+| `ScrollView` | Scrollable container for composed child widgets |
+| `ScrollRegion` | Scrollable viewport for direct buffer rendering — implement `ScrollContent` |
 
 ### Display
 
@@ -782,6 +818,43 @@ These work everywhere in a textual-rs application:
 | `Ctrl+T` | Cycle through built-in themes |
 | `Ctrl+P` | Open command palette |
 | Right-click | Open context menu (if widget provides items) |
+
+### Quitting programmatically
+
+Call `ctx.quit()` from any `on_action` handler to exit cleanly:
+
+```rust
+KeyBinding { key: KeyCode::Char('q'), modifiers: KeyModifiers::NONE, action: "quit", description: "Quit", show: true },
+
+fn on_action(&self, action: &str, ctx: &AppContext) {
+    if action == "quit" {
+        ctx.quit();
+    }
+}
+```
+
+There is no global `q` binding — quit behaviour is the application's responsibility.
+
+---
+
+## Debugging
+
+### Dispatch tracing
+
+Set `TEXTUAL_RS_DEBUG=1` to log every message dispatch to stderr:
+
+```
+TEXTUAL_RS_DEBUG=1 cargo run
+```
+
+Output shows the message type, the full widget bubble chain, where `Stop` was returned, or a dead-letter warning when the message reaches the root unhandled:
+
+```
+[textual-rs dispatch] myapp::workers::RefreshResult → [DataTable, Screen]
+[textual-rs dispatch]   no handler matched — message bubbled to root unhandled
+```
+
+This is particularly useful when worker results go silent — the most common cause is a type mismatch in `downcast_ref` inside `on_event`.
 
 ---
 
