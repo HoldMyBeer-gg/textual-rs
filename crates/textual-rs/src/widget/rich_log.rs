@@ -246,7 +246,7 @@ impl Widget for RichLog {
         }
     }
 
-    fn render(&self, ctx: &AppContext, area: Rect, buf: &mut Buffer) {
+    fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
         if area.height == 0 || area.width == 0 {
             return;
         }
