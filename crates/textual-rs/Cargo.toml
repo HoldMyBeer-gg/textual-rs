@@ -1,6 +1,6 @@
 [package]
 name = "textual-rs"
-version = "0.3.5"
+version = "0.3.6"
 edition.workspace = true
 rust-version.workspace = true
 description = "A Rust port of the Textual TUI framework — build beautiful terminal UIs with CSS styling, reactive signals, and composable widgets"

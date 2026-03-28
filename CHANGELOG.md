@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-03-28
+
+### Added
+- `TEXTUAL_RS_DEBUG=1` enables dispatch tracing to stderr: logs the message type, the full widget bubble chain, where `Stop` was returned, or a dead-letter warning when no handler matched
+
 ## [0.3.5] - 2026-03-28
 
 ### Added
