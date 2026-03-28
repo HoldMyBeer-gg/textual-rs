@@ -87,7 +87,7 @@ impl Widget for LoadingIndicator {
         let ch = SPINNER_FRAMES[frame_idx];
         let x = area.x + area.width / 2;
         let y = area.y + area.height / 2;
-        buf.set_string(x, y, &ch.to_string(), style);
+        buf.set_string(x, y, ch.to_string(), style);
     }
 }
 
@@ -128,6 +128,6 @@ pub fn draw_loading_spinner_overlay(area: Rect, buf: &mut Buffer, tick: u8, skip
         let ch = SPINNER_FRAMES[frame_idx];
         let x = area.x + area.width / 2;
         let y = area.y + area.height / 2;
-        buf.set_string(x, y, &ch.to_string(), fg_style);
+        buf.set_string(x, y, ch.to_string(), fg_style);
     }
 }
