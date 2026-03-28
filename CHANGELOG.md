@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-03-28
+
+### Added
+- `ScrollRegion` widget + `ScrollContent` trait — scrollable viewport for direct buffer rendering. Implement `ScrollContent` (two methods: `content_height` and `render_content`) to get keyboard/mouse scrolling and a sub-cell scrollbar without losing per-cell style control. Fills the gap where `ScrollView` only works for composed child widgets.
+
 ## [0.3.6] - 2026-03-28
 
 ### Added
