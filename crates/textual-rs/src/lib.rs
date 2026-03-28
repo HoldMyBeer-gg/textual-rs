@@ -20,7 +20,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! textual-rs = "0.2"
+//! textual-rs = "0.3"
 //! ```
 //!
 //! Create a minimal application:

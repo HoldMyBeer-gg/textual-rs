@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-28 (v1.3 milestone)
+
 ### Added
 - GitHub Actions CI (test on Linux, Windows, macOS; clippy + fmt checks)
 - CSS unknown-property warnings in debug builds
 - CHANGELOG.md and crates.io metadata
+- **Widget parity** -- MaskedInput, DirectoryTree, Toast, RichLog, LoadingIndicator, OptionList, SelectionList, ContentSwitcher, Static, Rule, Link, Pretty, Digits
+- **Screen stack** -- push/pop/modal screen navigation with focus save/restore
+- **Rustdoc coverage** -- all public API items documented; `#![deny(missing_docs)]` enforced
+- **Cross-platform CI** -- test matrix on Linux, macOS, Windows with docs and lint jobs
 
 ## [0.2.0] - 2026-03-26 (v1.1 milestone)
 
