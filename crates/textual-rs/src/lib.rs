@@ -79,6 +79,7 @@ pub mod animation;
 pub mod app;
 pub mod canvas;
 pub mod command;
+pub mod hyperlink;
 pub mod css;
 pub mod event;
 pub mod layout;

@@ -5,6 +5,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use std::cell::RefCell;
 
+use crate::hyperlink::render_hyperlink;
 use super::context::AppContext;
 use super::Widget;
 
@@ -13,6 +14,8 @@ use super::Widget;
 struct StyledSpan {
     text: String,
     style: Style,
+    /// OSC 8 hyperlink URL. When set, this span is rendered as a clickable link.
+    url: Option<String>,
 }
 
 /// A single rendered line from parsed Markdown content.
@@ -20,8 +23,9 @@ struct RenderedLine {
     text: String,
     style: Style,
     indent: u16,
-    /// Optional multi-span rendering for syntax-highlighted code lines.
-    /// When present, `text` and `style` are ignored in favor of these spans.
+    /// Optional multi-span rendering — used for syntax-highlighted code blocks
+    /// and for lines that contain hyperlinks or mixed inline styles.
+    /// When present, `text` and `style` are ignored in favour of these spans.
     spans: Option<Vec<StyledSpan>>,
 }
 
@@ -37,7 +41,11 @@ struct MdParseState {
     list_item_counter: Vec<u64>,
     in_code_block: bool,
     code_block_lang: String,
+    /// URL of the current link (empty when not inside a link).
     link_url: String,
+    /// Inline spans accumulated for the current line (used when the line
+    /// contains links or other multi-style segments).
+    current_spans: Vec<StyledSpan>,
 }
 
 impl MdParseState {
@@ -53,18 +61,36 @@ impl MdParseState {
             in_code_block: false,
             code_block_lang: String::new(),
             link_url: String::new(),
+            current_spans: Vec::new(),
         }
     }
 
     fn flush_current(&mut self) {
-        if !self.current_text.is_empty() {
+        // If we have inline spans (links), merge any trailing plain text and flush
+        // the whole line as a multi-span RenderedLine.
+        if !self.current_spans.is_empty() {
+            if !self.current_text.is_empty() {
+                self.current_spans.push(StyledSpan {
+                    text: std::mem::take(&mut self.current_text),
+                    style: self.current_style,
+                    url: None,
+                });
+            }
+            let spans = std::mem::take(&mut self.current_spans);
+            let full_text: String = spans.iter().map(|s| s.text.as_str()).collect();
             self.lines.push(RenderedLine {
-                text: self.current_text.clone(),
+                text: full_text,
+                style: self.current_style,
+                indent: self.current_indent,
+                spans: Some(spans),
+            });
+        } else if !self.current_text.is_empty() {
+            self.lines.push(RenderedLine {
+                text: std::mem::take(&mut self.current_text),
                 style: self.current_style,
                 indent: self.current_indent,
                 spans: None,
             });
-            self.current_text.clear();
         }
     }
 
@@ -185,6 +211,14 @@ impl MdParseState {
             }
 
             Event::Start(Tag::Link { dest_url, .. }) => {
+                // Flush any plain text accumulated before this link as a span
+                if !self.current_text.is_empty() {
+                    self.current_spans.push(StyledSpan {
+                        text: std::mem::take(&mut self.current_text),
+                        style: self.current_style,
+                        url: None,
+                    });
+                }
                 self.link_url = dest_url.to_string();
                 self.style_stack.push(self.current_style);
                 self.current_style = self
@@ -193,7 +227,14 @@ impl MdParseState {
                     .add_modifier(Modifier::UNDERLINED);
             }
             Event::End(TagEnd::Link) => {
-                self.current_text.push_str(&format!(" [{}]", self.link_url));
+                // Emit the link text as a span with an OSC 8 URL attached
+                if !self.current_text.is_empty() {
+                    self.current_spans.push(StyledSpan {
+                        text: std::mem::take(&mut self.current_text),
+                        style: self.current_style,
+                        url: Some(std::mem::take(&mut self.link_url)),
+                    });
+                }
                 self.link_url.clear();
                 self.current_style = self.style_stack.pop().unwrap_or_default();
             }
@@ -326,6 +367,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
         return vec![StyledSpan {
             text: line.to_string(),
             style: comment_style,
+            url: None,
         }];
     }
 
@@ -333,6 +375,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
         return vec![StyledSpan {
             text: line.to_string(),
             style: default_style,
+            url: None,
         }];
     }
 
@@ -370,6 +413,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
             spans.push(StyledSpan {
                 text: s,
                 style: string_style,
+                url: None,
             });
             continue;
         }
@@ -384,6 +428,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
             spans.push(StyledSpan {
                 text: rest,
                 style: comment_style,
+                url: None,
             });
             return spans;
         }
@@ -398,6 +443,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
             spans.push(StyledSpan {
                 text: rest,
                 style: comment_style,
+                url: None,
             });
             return spans;
         }
@@ -411,6 +457,7 @@ fn highlight_code(line: &str, language: &str, bg: Color) -> Vec<StyledSpan> {
             spans.push(StyledSpan {
                 text: ch.to_string(),
                 style: default_style,
+                url: None,
             });
         } else {
             current.push(ch);
@@ -442,6 +489,7 @@ fn flush_word_buffer(
     spans.push(StyledSpan {
         text: word.to_string(),
         style,
+        url: None,
     });
 }
 
@@ -455,7 +503,7 @@ fn flush_word_buffer(
 /// - Code blocks (fenced): rendered with indent=2, dim style
 /// - Unordered lists (- item): bullet `  * ` prefix
 /// - Ordered lists (1. item): numbered `  N. ` prefix
-/// - Links (`[text](url)`): rendered as "text \[url\]"
+/// - Links (`[text](url)`): rendered as OSC 8 clickable hyperlinks (blue + underline)
 /// - Horizontal rules: "────────" line
 /// - Paragraphs and line breaks
 ///
@@ -485,13 +533,8 @@ impl Markdown {
         }
 
         // Flush any remaining text
-        if !state.current_text.is_empty() {
-            state.lines.push(RenderedLine {
-                text: state.current_text,
-                style: state.current_style,
-                indent: state.current_indent,
-                spans: None,
-            });
+        if !state.current_text.is_empty() || !state.current_spans.is_empty() {
+            state.flush_current();
         }
 
         state.lines
@@ -532,22 +575,34 @@ impl Widget for Markdown {
             }
 
             if let Some(ref spans) = line.spans {
-                // Render multi-span (syntax-highlighted) line
+                // Render multi-span line (syntax-highlighted code or inline links)
                 let mut col = x_start;
-                let mut chars_written = 0usize;
+                let mut cols_written: usize = 0;
+
                 for span in spans {
-                    for ch in span.text.chars() {
-                        if chars_written >= available_width {
-                            break;
-                        }
-                        if col < area.x + area.width {
-                            buf.set_string(col, y, ch.to_string(), span.style);
-                            col += 1;
-                            chars_written += 1;
-                        }
-                    }
-                    if chars_written >= available_width {
+                    if cols_written >= available_width {
                         break;
+                    }
+                    let remaining = available_width - cols_written;
+
+                    if let Some(ref url) = span.url {
+                        // Render as OSC 8 clickable hyperlink
+                        let label: String = span.text.chars().take(remaining).collect();
+                        let w = render_hyperlink(buf, col, y, url, &label, span.style);
+                        col += w;
+                        cols_written += w as usize;
+                    } else {
+                        // Plain or syntax-highlighted span
+                        for ch in span.text.chars() {
+                            if cols_written >= available_width {
+                                break;
+                            }
+                            if col < area.x + area.width {
+                                buf.set_string(col, y, ch.to_string(), span.style);
+                                col += 1;
+                                cols_written += 1;
+                            }
+                        }
                     }
                 }
             } else {
