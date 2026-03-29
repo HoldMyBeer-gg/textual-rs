@@ -5,7 +5,7 @@ use ratatui::layout::Rect;
 use std::cell::Cell;
 
 use super::context::AppContext;
-use super::{Widget, WidgetId};
+use super::{EventPropagation, Widget, WidgetId};
 use crate::event::keybinding::KeyBinding;
 
 /// Visual variant of a Button — affects border/text color.
@@ -112,8 +112,15 @@ impl Widget for Button {
         BUTTON_BINDINGS
     }
 
-    fn click_action(&self) -> Option<&str> {
-        Some("press")
+    fn on_event(&self, event: &dyn std::any::Any, ctx: &AppContext) -> EventPropagation {
+        use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
+        if let Some(m) = event.downcast_ref::<MouseEvent>() {
+            if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
+                self.on_action("press", ctx);
+                return EventPropagation::Stop;
+            }
+        }
+        EventPropagation::Continue
     }
 
     fn on_action(&self, action: &str, ctx: &AppContext) {
