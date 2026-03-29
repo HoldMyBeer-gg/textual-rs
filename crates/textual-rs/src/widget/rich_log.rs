@@ -1,4 +1,4 @@
-//! Scrollable styled-text log widget that accepts ratatui `Line` objects.
+//! Scrollable styled-text log widget that accepts ratatui `Line` objects or `LinkedLine` spans.
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -8,19 +8,21 @@ use std::cell::Cell;
 use super::context::AppContext;
 use super::{Widget, WidgetId};
 use crate::event::keybinding::KeyBinding;
+use crate::hyperlink::{linked_line_from, render_linked_line, LinkedLine, LinkedSpan};
 use crate::reactive::Reactive;
 
-/// A scrolling log display widget for styled [`ratatui::text::Line`] objects.
+/// A scrolling log display widget with full OSC 8 hyperlink support.
 ///
 /// Unlike [`super::log::Log`] which displays plain strings, `RichLog` accepts
-/// `Line<'static>` values carrying full ratatui span styling — colors, bold,
-/// italic, and other modifiers.
+/// styled lines — either ratatui `Line<'static>` (converted automatically) or
+/// `LinkedLine` (`Vec<LinkedSpan>`) for clickable hyperlinks.
 ///
-/// New lines are appended via [`RichLog::write_line`]. By default the view
+/// New lines are appended via [`RichLog::write_line`] (ratatui `Line`) or
+/// [`RichLog::write_linked_line`] (with hyperlinks). By default the view
 /// auto-scrolls to the bottom on each new line. Pressing Up disables
 /// auto-scroll; pressing End or scrolling to the bottom re-enables it.
 ///
-/// # Example
+/// # Example — plain styled line (unchanged API)
 ///
 /// ```no_run
 /// use textual_rs::RichLog;
@@ -33,9 +35,28 @@ use crate::reactive::Reactive;
 ///     Span::raw(" Server started"),
 /// ]));
 /// ```
+///
+/// # Example — line with hyperlinks
+///
+/// ```no_run
+/// use textual_rs::RichLog;
+/// use textual_rs::hyperlink::LinkedSpan;
+///
+/// let log = RichLog::new();
+/// log.write_linked_line(vec![
+///     LinkedSpan::plain("See "),
+///     LinkedSpan::linked("release notes", "https://github.com/owner/repo/releases"),
+/// ]);
+/// ```
+///
+/// # Breaking change (0.3.12)
+///
+/// `lines: Reactive<Vec<Line<'static>>>` is now `lines: Reactive<Vec<LinkedLine>>`.
+/// Code that reads `log.lines` directly will need to update. `write_line(Line)`
+/// still compiles — `Line` converts to `LinkedLine` automatically.
 pub struct RichLog {
-    /// The stored styled lines.
-    pub lines: Reactive<Vec<Line<'static>>>,
+    /// The stored lines (plain and linked spans).
+    pub lines: Reactive<Vec<LinkedLine>>,
     /// Current scroll offset in lines from the top.
     pub scroll_offset: Reactive<usize>,
     auto_scroll: Cell<bool>,
@@ -77,7 +98,13 @@ impl RichLog {
     /// and `scroll_offset` is decremented (to keep the view stable). Then the
     /// new line is pushed and, when auto-scroll is enabled, the offset is
     /// advanced to keep the last line visible.
+    /// Append a ratatui `Line<'static>`. Converts to `LinkedLine` automatically (no URLs).
     pub fn write_line(&self, line: Line<'static>) {
+        self.write_linked_line(linked_line_from(line));
+    }
+
+    /// Append a `LinkedLine` (`Vec<LinkedSpan>`), supporting OSC 8 hyperlinks.
+    pub fn write_linked_line(&self, line: LinkedLine) {
         // Evict oldest line if max_lines is set and at capacity
         if let Some(max) = self.max_lines {
             let len = self.lines.get_untracked().len();
@@ -261,12 +288,12 @@ impl Widget for RichLog {
         // Reserve last column for scrollbar when there is overflow
         let text_width = if area.width > 1 { area.width - 1 } else { area.width };
 
-        // Draw visible lines using buf.set_line for styled output
+        // Draw visible lines, supporting both plain and linked (OSC 8) spans
         let visible_count = (area.height as usize).min(count.saturating_sub(offset));
         for row in 0..visible_count {
             let line_idx = offset + row;
             let y = area.y + row as u16;
-            buf.set_line(area.x, y, &lines[line_idx], text_width);
+            render_linked_line(buf, area.x, y, &lines[line_idx], text_width);
         }
 
         // Draw sub-cell vertical scrollbar in rightmost column when content overflows

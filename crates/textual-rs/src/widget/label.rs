@@ -1,4 +1,4 @@
-//! Non-interactive label widget that renders a static text string.
+//! Non-interactive label widget that renders static text with optional OSC 8 hyperlinks.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use std::cell::Cell;
@@ -6,21 +6,56 @@ use std::cell::Cell;
 use super::context::AppContext;
 use super::{Widget, WidgetId};
 use crate::css::render_style::align_text;
+use crate::hyperlink::{render_linked_line, LinkedLine, LinkedSpan};
 
-/// A widget that renders static text.
+/// A widget that renders static text, optionally with clickable OSC 8 hyperlinks.
+///
+/// # Plain text (unchanged API)
+///
+/// ```no_run
+/// use textual_rs::Label;
+/// let label = Label::new("Hello, world!");
+/// ```
+///
+/// # Text with hyperlinks
+///
+/// ```no_run
+/// use textual_rs::Label;
+/// use textual_rs::hyperlink::LinkedSpan;
+///
+/// let label = Label::new_linked(vec![
+///     LinkedSpan::plain("Visit "),
+///     LinkedSpan::linked("docs.rs", "https://docs.rs"),
+/// ]);
+/// ```
+///
+/// # Breaking change (0.3.12)
+///
+/// The `text: String` public field has been replaced by `spans: LinkedLine`.
+/// Code that read `label.text` should call `label.text()` instead.
 pub struct Label {
-    /// The text string to display.
-    pub text: String,
+    /// The styled (and optionally linked) spans making up this label.
+    pub spans: LinkedLine,
     own_id: Cell<Option<WidgetId>>,
 }
 
 impl Label {
-    /// Create a new Label with the given text.
+    /// Create a new Label with plain text and no hyperlinks.
     pub fn new(text: impl Into<String>) -> Self {
         Self {
-            text: text.into(),
+            spans: vec![LinkedSpan::plain(text)],
             own_id: Cell::new(None),
         }
+    }
+
+    /// Create a new Label from a `Vec<LinkedSpan>`, enabling per-span hyperlinks.
+    pub fn new_linked(spans: Vec<LinkedSpan>) -> Self {
+        Self { spans, own_id: Cell::new(None) }
+    }
+
+    /// Return the concatenated plain text of all spans (strips URL data).
+    pub fn text(&self) -> String {
+        self.spans.iter().map(|s| s.text.as_str()).collect()
     }
 }
 
@@ -40,6 +75,10 @@ impl Widget for Label {
         "Label { min-height: 1; }"
     }
 
+    fn widget_default_css(&self) -> &'static str {
+        "Label { min-height: 1; }"
+    }
+
     fn on_mount(&self, id: WidgetId) {
         self.own_id.set(Some(id));
     }
@@ -52,24 +91,31 @@ impl Widget for Label {
         if area.height == 0 || area.width == 0 {
             return;
         }
-        let text: &str = &self.text;
-        let max_chars = area.width as usize;
-        let truncated: String = text.chars().take(max_chars).collect();
 
-        // Apply text-align from computed style
-        let text_align = self
-            .own_id
-            .get()
-            .and_then(|id| ctx.computed_styles.get(id))
-            .map(|cs| cs.text_align)
-            .unwrap_or(crate::css::types::TextAlign::Left);
-        let display = align_text(&truncated, max_chars, text_align);
+        // Single plain span: apply text-align (preserves existing behaviour).
+        // Multi-span or linked: render left-to-right without alignment padding.
+        let is_plain_single = self.spans.len() == 1 && self.spans[0].url.is_none();
 
-        // Inherit style from buffer (set by paint_chrome)
-        let style = buf
-            .cell((area.x, area.y))
-            .map(|c| c.style())
-            .unwrap_or_default();
-        buf.set_string(area.x, area.y, &display, style);
+        if is_plain_single {
+            let text = &self.spans[0].text;
+            let max_chars = area.width as usize;
+            let truncated: String = text.chars().take(max_chars).collect();
+
+            let text_align = self
+                .own_id
+                .get()
+                .and_then(|id| ctx.computed_styles.get(id))
+                .map(|cs| cs.text_align)
+                .unwrap_or(crate::css::types::TextAlign::Left);
+            let display = align_text(&truncated, max_chars, text_align);
+
+            let style = buf
+                .cell((area.x, area.y))
+                .map(|c| c.style())
+                .unwrap_or_default();
+            buf.set_string(area.x, area.y, &display, style);
+        } else {
+            render_linked_line(buf, area.x, area.y, &self.spans, area.width);
+        }
     }
 }

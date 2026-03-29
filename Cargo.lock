@@ -1960,7 +1960,7 @@ dependencies = [
 
 [[package]]
 name = "textual-rs"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "any_spawner",
  "anyhow",

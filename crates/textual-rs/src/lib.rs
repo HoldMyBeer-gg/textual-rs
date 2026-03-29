@@ -94,6 +94,7 @@ pub use event::AppEvent;
 pub use testing::pilot::Pilot;
 pub use testing::TestApp;
 pub use widget::{Widget, WidgetId};
+pub use hyperlink::{LinkedSpan, LinkedLine};
 // Re-export proc macros — derive macro Widget lives in a separate namespace from the Widget trait,
 // so `pub use textual_rs_macros::Widget` does not conflict with `pub use widget::Widget`.
 pub use command::{CommandPalette, CommandRegistry};
