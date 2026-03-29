@@ -176,6 +176,22 @@ pub fn push_screen(screen: Box<dyn Widget>, ctx: &mut AppContext) -> WidgetId {
     // Focus the first focusable widget on the new screen
     advance_focus(ctx);
 
+    // For modal screens: if nothing in the subtree is Tab-focusable, force-focus
+    // the modal's first child so its key_bindings and on_event are still reachable.
+    // Without this, every key event is silently dropped because the dispatch
+    // fallback dispatches to the ModalScreen root, which has no on_event handler.
+    if ctx.focused_widget.is_none() {
+        let is_modal = ctx.arena.get(id).is_some_and(|s| s.is_modal());
+        if is_modal {
+            if let Some(&first_child) = ctx.children.get(id).and_then(|c| c.first()) {
+                ctx.focused_widget = Some(first_child);
+                if let Some(ps) = ctx.pseudo_classes.get_mut(first_child) {
+                    ps.insert(crate::css::types::PseudoClass::Focus);
+                }
+            }
+        }
+    }
+
     id
 }
 
