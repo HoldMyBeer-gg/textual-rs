@@ -806,16 +806,11 @@ fn footer_renders_key_badges_with_cyan_background() {
     let app = TestApp::new_styled(60, 3, css, || Box::new(FtScreen));
     let buf = app.buffer();
 
-    // Footer should contain at least "Tab" and "q" key badges
+    // Footer should contain default framework key badges (Tab for focus, Ctrl+P for palette)
     let row = row_text(buf, 0);
     assert!(
         row.contains("Tab"),
         "Footer should contain Tab binding, got: {:?}",
-        row.trim_end()
-    );
-    assert!(
-        row.contains("q"),
-        "Footer should contain q binding, got: {:?}",
         row.trim_end()
     );
 

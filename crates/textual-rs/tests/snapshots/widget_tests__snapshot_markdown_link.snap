@@ -2,7 +2,7 @@
 source: crates/textual-rs/tests/widget_tests.rs
 expression: "format!(\"{}\", test_app.backend())"
 ---
-"click here [https://example.com]                            "
+"click here                                                  "
 "                                                            "
 "                                                            "
 "                                                            "

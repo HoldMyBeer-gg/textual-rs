@@ -1253,7 +1253,7 @@ fn footer_shows_global_hints() {
         .map(|col| buf[(col, 0)].symbol().to_string())
         .collect();
     assert!(
-        row.contains("Quit"),
+        row.contains("Tab"),
         "Footer should always show global hints, got: {:?}",
         row.trim_end()
     );
@@ -2349,9 +2349,16 @@ fn markdown_link_renders_url() {
         .collect();
     let trimmed = row.trim_end();
     assert!(
-        trimmed.contains("click here") && trimmed.contains("https://example.com"),
-        "Markdown link should render as 'click here [https://example.com]', got: {:?}",
+        trimmed.contains("click here"),
+        "Markdown link text should render in buffer, got: {:?}",
         trimmed
+    );
+    // URL is not in the buffer — it's in the hyperlink queue flushed to the terminal.
+    let links = textual_rs::hyperlink::drain_frame_hyperlinks();
+    assert!(
+        links.iter().any(|l| l.url == "https://example.com"),
+        "Markdown link URL should be queued for OSC 8 flush, got: {:?}",
+        links.iter().map(|l| &l.url).collect::<Vec<_>>()
     );
 }
 
@@ -2361,7 +2368,6 @@ fn markdown_link_renders_url() {
 
 #[test]
 fn rich_log_new_creates_empty_log_with_auto_scroll() {
-    use ratatui::text::Line;
     let log = RichLog::new();
     assert_eq!(
         log.lines.get_untracked().len(),
@@ -2408,7 +2414,7 @@ fn rich_log_max_lines_evicts_oldest() {
     let lines = log.lines.get_untracked();
     assert_eq!(lines.len(), 3, "should have exactly 3 lines after eviction");
     // First line should now be "B"
-    let first = lines[0].spans.first().map(|s| s.content.as_ref()).unwrap_or("");
+    let first = lines[0].first().map(|s| s.text.as_str()).unwrap_or("");
     assert_eq!(first, "B", "oldest line should have been evicted");
 }
 

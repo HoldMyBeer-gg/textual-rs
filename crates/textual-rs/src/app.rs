@@ -110,6 +110,9 @@ pub struct App {
     /// Receives the new theme name (e.g. `"tokyo-night"`).
     /// Use this to persist the user's theme choice across sessions.
     theme_changed_cb: Option<Box<dyn Fn(&str)>>,
+    /// When `true`, skip flushing OSC 8 hyperlinks to stdout after each frame.
+    /// Set by test harnesses that use TestBackend.
+    skip_hyperlink_flush: bool,
 }
 
 /// A CSS file being watched for changes (hot-reload support).
@@ -162,6 +165,7 @@ impl App {
             mouse_capture_active: true,
             theme_cycle_key: (KeyCode::F(5), KeyModifiers::NONE),
             theme_changed_cb: None,
+            skip_hyperlink_flush: false,
         }
     }
 
@@ -193,6 +197,7 @@ impl App {
             mouse_capture_active: true,
             theme_cycle_key: (KeyCode::F(5), KeyModifiers::NONE),
             theme_changed_cb: None,
+            skip_hyperlink_flush: true,
         }
     }
 
@@ -841,6 +846,13 @@ impl App {
                 render_widget_tree(sid, ctx_ref, bridge_ref, frame);
             }
         })?;
+
+        // Flush OSC 8 hyperlink overlays to the terminal after the frame is complete.
+        // Skipped for TestBackend paths (skip_hyperlink_flush = true) so the
+        // hyperlink queue remains readable by tests via drain_frame_hyperlinks().
+        if !self.skip_hyperlink_flush {
+            let _ = crate::hyperlink::flush_frame_hyperlinks_to_stdout();
+        }
 
         // Advance spinner tick for next frame (all loading overlays animate in sync)
         self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));

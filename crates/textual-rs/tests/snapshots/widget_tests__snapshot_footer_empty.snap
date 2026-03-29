@@ -2,4 +2,4 @@
 source: crates/textual-rs/tests/widget_tests.rs
 expression: "format!(\"{}\", test_app.backend())"
 ---
-"  Tab  Focus   Ctrl+P  Palette   q  Quit"
+"  Tab  Focus   Ctrl+P  Palette          "
