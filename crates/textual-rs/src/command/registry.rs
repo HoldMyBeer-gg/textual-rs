@@ -6,8 +6,11 @@ use crate::widget::WidgetId;
 /// A discoverable command for the command palette.
 #[derive(Clone)]
 pub struct Command {
-    /// Display name shown in the palette.
+    /// Display name shown in the palette (bold, first line).
     pub name: String,
+    /// Longer description shown below the name in the palette (dim, second line).
+    /// Empty string means no description line is rendered.
+    pub description: String,
     /// Source widget type name or "app" for app-level commands.
     pub source: String,
     /// Keybinding display string (e.g., "Ctrl+S") or None.
@@ -37,9 +40,10 @@ impl CommandRegistry {
     }
 
     /// Register an app-level command (beyond widget key bindings).
-    pub fn register(&mut self, name: &str, action: &str) {
+    pub fn register(&mut self, name: &str, description: &str, action: &str) {
         self.app_commands.push(Command {
             name: name.to_string(),
+            description: description.to_string(),
             source: "app".to_string(),
             keybinding: None,
             action: action.to_string(),
@@ -63,6 +67,7 @@ impl CommandRegistry {
                 let key_str = format_keybinding(binding.key, binding.modifiers);
                 commands.push(Command {
                     name: binding.description.to_string(),
+                    description: String::new(),
                     source: widget_type.to_string(),
                     keybinding: Some(key_str),
                     action: binding.action.to_string(),
@@ -158,11 +163,12 @@ mod tests {
     #[test]
     fn registry_register_adds_app_command() {
         let mut reg = CommandRegistry::new();
-        reg.register("Save File", "save");
+        reg.register("Save File", "Save the current file to disk", "save");
         let ctx = AppContext::new();
         let cmds = reg.discover_all(&ctx);
         assert_eq!(cmds.len(), 1);
         assert_eq!(cmds[0].name, "Save File");
+        assert_eq!(cmds[0].description, "Save the current file to disk");
         assert_eq!(cmds[0].action, "save");
         assert_eq!(cmds[0].source, "app");
         assert!(cmds[0].target_id.is_none());
