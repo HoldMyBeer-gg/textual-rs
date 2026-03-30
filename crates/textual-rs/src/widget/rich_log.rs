@@ -8,7 +8,7 @@ use std::cell::Cell;
 use super::context::AppContext;
 use super::{Widget, WidgetId};
 use crate::event::keybinding::KeyBinding;
-use crate::hyperlink::{linked_line_from, render_linked_line, LinkedLine, LinkedSpan};
+use crate::hyperlink::{linked_line_from, render_linked_line, LinkedLine};
 use crate::reactive::Reactive;
 
 /// A scrolling log display widget with full OSC 8 hyperlink support.
