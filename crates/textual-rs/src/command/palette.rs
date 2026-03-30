@@ -158,8 +158,6 @@ impl Widget for CommandPalette {
 
         // Colors
         let cyan = Color::Rgb(0, 212, 255); // #00d4ff
-        let green = Color::Rgb(0, 255, 163); // #00ffa3
-        let dark = Color::Rgb(10, 10, 15); // #0a0a0f
         let muted = Color::Rgb(74, 74, 90); // #4a4a5a
         let bg = Color::Rgb(18, 18, 26); // #12121a
         let normal = Color::Rgb(200, 200, 216); // ~#c8c8d8
@@ -246,12 +244,11 @@ impl Widget for CommandPalette {
             row += 1;
         }
 
-        // Command list
+        // Command list — two lines per entry: bold name + dim description
         let filtered = self.filtered_commands();
         let selected = self.selected_index.get();
 
         if filtered.is_empty() {
-            // No results
             if row < panel_bottom {
                 let query = self.query.borrow();
                 let msg = format!("No commands match '{}'", query);
@@ -265,48 +262,50 @@ impl Widget for CommandPalette {
                 }
 
                 let is_selected = i == selected;
-                let (fg, row_bg) = if is_selected {
-                    (dark, green)
+                let row_bg = if is_selected {
+                    Color::Rgb(26, 60, 100) // blue highlight, matches textual-python style
                 } else {
-                    (normal, bg)
+                    bg
                 };
-                let row_style = Style::default().fg(fg).bg(row_bg);
+                let name_fg = if is_selected { Color::White } else { normal };
+                let desc_fg = if is_selected {
+                    Color::Rgb(160, 190, 220)
+                } else {
+                    muted
+                };
 
-                // Clear the row
+                // Name line (bold)
                 let blank: String = " ".repeat(iw);
-                buf.set_string(inner_x, row, &blank, row_style);
+                buf.set_string(inner_x, row, &blank, Style::default().bg(row_bg));
+                let name_style = Style::default()
+                    .fg(name_fg)
+                    .bg(row_bg)
+                    .add_modifier(Modifier::BOLD);
+                let name_display: String = cmd.name.chars().take(iw.saturating_sub(10)).collect();
+                buf.set_string(inner_x, row, &name_display, name_style);
 
-                // Command name (left-aligned)
-                let name_display: String = cmd.name.chars().take(30).collect();
-                buf.set_string(inner_x, row, &name_display, row_style);
-
-                // Source type (muted, after name)
-                let source_x = inner_x + 32;
-                if (source_x as usize) < (inner_x + inner_w) as usize {
-                    let source_style = if is_selected {
-                        Style::default().fg(dark).bg(row_bg)
-                    } else {
-                        Style::default().fg(muted).bg(row_bg)
-                    };
-                    let source_display: String = cmd.source.chars().take(15).collect();
-                    buf.set_string(source_x, row, &source_display, source_style);
-                }
-
-                // Keybinding (right-aligned, cyan when not selected)
+                // Keybinding right-aligned on name line
                 if let Some(ref kb) = cmd.keybinding {
                     let kb_len = kb.chars().count();
                     let kb_x = (inner_x + inner_w).saturating_sub(kb_len as u16 + 1);
-                    if kb_x > source_x {
-                        let kb_style = if is_selected {
-                            Style::default().fg(dark).bg(row_bg)
-                        } else {
-                            Style::default().fg(cyan).bg(row_bg)
-                        };
-                        buf.set_string(kb_x, row, kb, kb_style);
-                    }
+                    let kb_style = if is_selected {
+                        Style::default().fg(Color::Rgb(160, 220, 255)).bg(row_bg)
+                    } else {
+                        Style::default().fg(cyan).bg(row_bg)
+                    };
+                    buf.set_string(kb_x, row, kb, kb_style);
                 }
-
                 row += 1;
+
+                // Description line (dim) — only if non-empty and space remains
+                if !cmd.description.is_empty() && row < panel_bottom {
+                    let blank2: String = " ".repeat(iw);
+                    buf.set_string(inner_x, row, &blank2, Style::default().bg(row_bg));
+                    let desc_style = Style::default().fg(desc_fg).bg(row_bg);
+                    let desc_display: String = cmd.description.chars().take(iw).collect();
+                    buf.set_string(inner_x, row, &desc_display, desc_style);
+                    row += 1;
+                }
             }
         }
     }

@@ -171,8 +171,8 @@ impl App {
 
     /// Register an app-level command in the command palette.
     /// Registered commands appear in the palette alongside widget key bindings.
-    pub fn register_command(&mut self, name: &str, action: &str) {
-        self.command_registry.register(name, action);
+    pub fn register_command(&mut self, name: &str, description: &str, action: &str) {
+        self.command_registry.register(name, description, action);
     }
 
     /// Create an App without built-in CSS. Used by TestApp so widget tests get raw rendering
