@@ -8,8 +8,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.claude
 .idea/
 .vscode/
+.cusor
 *.code-workspace
 .env
 .env.*
