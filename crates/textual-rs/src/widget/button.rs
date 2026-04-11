@@ -38,12 +38,19 @@ pub mod messages {
     impl Message for Pressed {}
 }
 
-/// A focusable button widget that emits `messages::Pressed` on Enter/Space.
+/// A focusable button widget that emits `messages::Pressed` on Enter/Space/click.
+///
+/// Optionally dispatches a named action to the parent widget via `with_action()`,
+/// enabling mouse clicks to trigger the same `on_action()` handlers as keybindings.
 pub struct Button {
     /// Text displayed in the center of the button.
     pub label: String,
     /// Visual style variant controlling border and text colors.
     pub variant: ButtonVariant,
+    /// Optional action name dispatched to parent on press (keyboard or mouse).
+    /// When set, the parent's `on_action(name, ctx)` is called in addition to
+    /// the `messages::Pressed` message. This unifies keyboard and mouse handling.
+    pub action_name: Option<String>,
     own_id: Cell<Option<WidgetId>>,
     /// Single-frame pressed state: set true on press action, cleared after render.
     pressed: Cell<bool>,
@@ -55,6 +62,7 @@ impl Button {
         Self {
             label: label.into(),
             variant: ButtonVariant::Default,
+            action_name: None,
             own_id: Cell::new(None),
             pressed: Cell::new(false),
         }
@@ -63,6 +71,13 @@ impl Button {
     /// Set the visual variant on this button.
     pub fn with_variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
+        self
+    }
+
+    /// Set an action name dispatched to the parent widget on press.
+    /// This enables mouse clicks to trigger the same `on_action()` handlers as keybindings.
+    pub fn with_action(mut self, action: impl Into<String>) -> Self {
+        self.action_name = Some(action.into());
         self
     }
 }
@@ -138,6 +153,21 @@ impl Widget for Button {
             self.pressed.set(true);
             if let Some(id) = self.own_id.get() {
                 ctx.post_message(id, messages::Pressed { label: self.label.clone() });
+                // If an action name is set, dispatch it to the parent widget's on_action.
+                // This unifies keyboard and mouse: both paths trigger the same handler.
+                if let Some(ref action_name) = self.action_name {
+                    if let Some(parent_id) = ctx.parent.get(id).and_then(|p| *p) {
+                        // Walk up to find the nearest screen/handler
+                        let mut target = Some(parent_id);
+                        while let Some(tid) = target {
+                            if let Some(widget) = ctx.arena.get(tid) {
+                                widget.on_action(action_name, ctx);
+                                break;
+                            }
+                            target = ctx.parent.get(tid).and_then(|p| *p);
+                        }
+                    }
+                }
             }
         }
     }
