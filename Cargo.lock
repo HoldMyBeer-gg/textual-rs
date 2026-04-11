@@ -1960,7 +1960,7 @@ dependencies = [
 
 [[package]]
 name = "textual-rs"
-version = "0.3.15"
+version = "0.3.16"
 dependencies = [
  "any_spawner",
  "anyhow",
@@ -1986,7 +1986,7 @@ dependencies = [
 
 [[package]]
 name = "textual-rs-macros"
-version = "0.3.15"
+version = "0.3.16"
 dependencies = [
  "proc-macro2",
  "quote",
