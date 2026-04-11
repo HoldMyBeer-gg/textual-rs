@@ -197,8 +197,8 @@ impl TextArea {
         let first_chars: Vec<char> = lines[sr].chars().collect();
         result.push(first_chars[sc..].iter().collect::<String>());
         // Middle lines: full lines
-        for row in (sr + 1)..er {
-            result.push(lines[row].clone());
+        for line in lines.iter().take(er).skip(sr + 1) {
+            result.push(line.clone());
         }
         // Last line: from start to ec
         let last_chars: Vec<char> = lines[er].chars().collect();

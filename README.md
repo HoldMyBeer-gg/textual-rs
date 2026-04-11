@@ -4,12 +4,13 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 
 ## Features
 
-### Widgets (28+)
+### Widgets (30+)
 
 | Widget | Description |
 |--------|-------------|
 | `Button` | Clickable with 3D depth, press animation |
 | `Input` | Single-line text field with clipboard (Ctrl+C/V), text selection, validation states |
+| `MaskedInput` | Password/secret input with configurable mask character |
 | `TextArea` | Multi-line editor with selection, clipboard, scroll |
 | `Checkbox` | Toggle with checked/unchecked/indeterminate states |
 | `Switch` | Animated pill-shaped sliding toggle |
@@ -18,9 +19,11 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 | `ListView` | Scrollable item list with keyboard navigation |
 | `DataTable` | Columns, zebra striping, sortable headers, cursor row |
 | `Tree` / `TreeView` | Hierarchical collapsible nodes |
+| `DirectoryTree` | File-system tree browser with lazy loading |
 | `Tabs` / `TabbedContent` | Tab bar with animated underline indicator |
 | `Markdown` | Rendered markdown with headings, lists, code blocks |
 | `Log` | Scrollable append-only message log |
+| `RichLog` | Scrollable rich-text log with styled lines |
 | `ProgressBar` | Determinate progress with half-block fill |
 | `Sparkline` | Braille-character mini charts |
 | `Collapsible` | Expandable/collapsible sections |
@@ -28,12 +31,12 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 | `ScrollView` | Scrollable container with eighth-block scrollbar |
 | `Header` / `Footer` | App chrome with key badges |
 | `Horizontal` / `Vertical` | Layout containers |
-| `ContextMenu` | Right-click floating overlay menus |
-| `CommandPalette` | Ctrl+P command discovery overlay |
 | `Label` | Static text display |
-| `RichLog` | Scrollable rich-text log with styled lines |
 | `LoadingIndicator` | Animated spinner overlay on any widget |
 | `Toast` | Stacked transient notifications with severity levels |
+| `ContextMenu` | Right-click floating overlay menus |
+| `ModalScreen` | Screen overlay for modal dialogs with dismiss result |
+| `CommandPalette` | Ctrl+P command discovery overlay |
 
 ### Styling
 
@@ -52,12 +55,19 @@ A Rust TUI framework inspired by [Python Textual](https://textual.textualize.io)
 - **Dock** -- `dock: top | bottom | left | right` for fixed chrome
 - **Responsive** -- recomputes on terminal resize
 
+### Screens
+
+- **Screen stack** -- push/pop screens with `push_screen()` and `pop_screen()`
+- **Modal screens** -- `ModalScreen` overlays that return a result via `push_screen_wait()`
+- **Screen lifecycle** -- mount/unmount callbacks on screen transitions
+
 ### Interaction
 
 - **Mouse** -- click, hover tracking, scroll wheel, right-click context menus
 - **Mouse capture stack** -- push/pop mouse-enabled state; Shift+click bypasses capture for native text selection
 - **Keyboard** -- key bindings, Tab/Shift+Tab focus cycling, Ctrl+C/X/V clipboard
 - **Focus system** -- visible focus indicators with border color changes
+- **Hyperlinks** -- clickable OSC 8 terminal hyperlinks via `LinkedLine` / `LinkedSpan`
 
 ### Reactive State
 
@@ -167,11 +177,13 @@ Button.primary {
 ```bash
 cargo run --example demo                  # Widget showcase (4 tabs)
 cargo run --example irc_demo              # IRC client demo
+cargo run --example screen_stack          # Screen push/pop/modal demo
 cargo run --example tutorial_01_hello     # Hello world
 cargo run --example tutorial_02_layout    # Layout system
 cargo run --example tutorial_03_events    # Event handling
 cargo run --example tutorial_04_reactive  # Reactive state
 cargo run --example tutorial_05_workers   # Background workers
+cargo run --example tutorial_06_screens   # Screen stack and modals
 ```
 
 ## Documentation

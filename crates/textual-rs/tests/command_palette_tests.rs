@@ -258,8 +258,16 @@ fn command_registry_app_commands() {
     use textual_rs::command::CommandRegistry;
 
     let mut reg = CommandRegistry::new();
-    reg.register("Toggle Dark Mode", "Switch between light and dark themes", "toggle_theme");
-    reg.register("Show Help", "Show keyboard shortcuts and usage guide", "help");
+    reg.register(
+        "Toggle Dark Mode",
+        "Switch between light and dark themes",
+        "toggle_theme",
+    );
+    reg.register(
+        "Show Help",
+        "Show keyboard shortcuts and usage guide",
+        "help",
+    );
 
     let ctx = AppContext::new();
     let commands = reg.discover_all(&ctx);

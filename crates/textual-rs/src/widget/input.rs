@@ -41,6 +41,7 @@ pub struct Input {
     pub placeholder: String,
     /// When `true`, characters are rendered as `*` to hide password content.
     pub password: bool,
+    #[allow(clippy::type_complexity)]
     validator: Option<Box<dyn Fn(&str) -> bool>>,
     valid: Cell<bool>,
     cursor_pos: Cell<usize>,

@@ -5,9 +5,9 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use std::cell::RefCell;
 
-use crate::hyperlink::render_hyperlink;
 use super::context::AppContext;
 use super::Widget;
+use crate::hyperlink::render_hyperlink;
 
 /// A styled text span within a rendered line.
 #[derive(Clone)]

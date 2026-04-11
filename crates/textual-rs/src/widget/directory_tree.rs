@@ -179,7 +179,7 @@ impl DirectoryTree {
     // ─── Tree mutation helpers ─────────────────────────────────────────────────
 
     fn node_at_path_mut<'a>(
-        children: &'a mut Vec<TreeNode>,
+        children: &'a mut [TreeNode],
         path: &[usize],
     ) -> Option<&'a mut TreeNode> {
         if path.is_empty() {
@@ -265,13 +265,8 @@ impl DirectoryTree {
                     {
                         let inner = self.inner.borrow();
                         let mut root = inner.root.borrow_mut();
-                        if let Some(node) =
-                            Self::node_at_path_mut(&mut root.children, node_path)
-                        {
-                            let base = node
-                                .label
-                                .trim_end_matches(" (cycle)")
-                                .to_string();
+                        if let Some(node) = Self::node_at_path_mut(&mut root.children, node_path) {
+                            let base = node.label.trim_end_matches(" (cycle)").to_string();
                             node.label = format!("{} (cycle)", base);
                             node.children = vec![];
                         }
@@ -313,13 +308,7 @@ impl DirectoryTree {
     /// Apply a completed worker result: find the matching loading path, update children.
     fn apply_worker_result(&self, entries: Vec<DirEntryInfo>) {
         // Find which path we were loading. Only one at a time in normal usage.
-        let dir_path = match self
-            .loading_paths
-            .borrow()
-            .iter()
-            .next()
-            .cloned()
-        {
+        let dir_path = match self.loading_paths.borrow().iter().next().cloned() {
             Some(p) => p,
             None => return,
         };
@@ -362,7 +351,7 @@ impl DirectoryTree {
     }
 
     fn replace_children_by_data(
-        children: &mut Vec<TreeNode>,
+        children: &mut [TreeNode],
         path_str: &str,
         new_children: Vec<TreeNode>,
     ) -> bool {
@@ -371,8 +360,7 @@ impl DirectoryTree {
                 child.children = new_children;
                 return true;
             }
-            if Self::replace_children_by_data(&mut child.children, path_str, new_children.clone())
-            {
+            if Self::replace_children_by_data(&mut child.children, path_str, new_children.clone()) {
                 return true;
             }
         }
@@ -453,14 +441,11 @@ impl Widget for DirectoryTree {
                     let inner = self.inner.borrow();
                     inner.cursor_path().and_then(|path| {
                         let root = inner.root.borrow();
-                        let data = Self::node_data_by_path(&root.children, &path)
-                            .map(PathBuf::from);
+                        let data =
+                            Self::node_data_by_path(&root.children, &path).map(PathBuf::from);
                         let has_children = {
                             // Check if node has children (is a directory placeholder or loaded dir).
-                            match Self::find_node_has_children(&root.children, &path) {
-                                Some(v) => v,
-                                None => false,
-                            }
+                            Self::find_node_has_children(&root.children, &path).unwrap_or_default()
                         };
                         data.map(|p| (p, has_children))
                     })
@@ -580,8 +565,14 @@ mod tests {
             !hidden_names.contains(&".hidden"),
             ".hidden should not appear with show_hidden=false"
         );
-        assert!(hidden_names.contains(&"visible.txt"), "visible.txt should appear");
-        assert!(shown_names.contains(&".hidden"), ".hidden should appear with show_hidden=true");
+        assert!(
+            hidden_names.contains(&"visible.txt"),
+            "visible.txt should appear"
+        );
+        assert!(
+            shown_names.contains(&".hidden"),
+            ".hidden should appear with show_hidden=true"
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 

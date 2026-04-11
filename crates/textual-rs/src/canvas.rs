@@ -156,6 +156,7 @@ pub fn progress_bar(
 /// `viewport_size` is the visible viewport size.
 /// `position` is the current scroll offset.
 /// `bar_color` is the thumb color, `track_color` is the background.
+#[allow(clippy::too_many_arguments)]
 pub fn vertical_scrollbar(
     buf: &mut Buffer,
     x: u16,
@@ -264,6 +265,7 @@ pub const RIGHT_BORDER_FALLBACK: &str = "\u{2595}";
 /// inside, and outside all have distinct colors in a single character cell.
 ///
 /// Returns the inner content area.
+#[allow(clippy::too_many_arguments)]
 pub fn mcgugan_box(
     buf: &mut Buffer,
     x: u16,
@@ -383,9 +385,9 @@ pub const BRAILLE_DOT_BITS: [u32; 8] = [
 /// `fg` is the dot color, `bg` is the background.
 pub fn braille_cell(buf: &mut Buffer, x: u16, y: u16, dots: u8, fg: Color, bg: Color) {
     let mut codepoint = BRAILLE_BASE;
-    for i in 0..8 {
+    for (i, &bit) in BRAILLE_DOT_BITS.iter().enumerate() {
         if dots & (1 << i) != 0 {
-            codepoint |= BRAILLE_DOT_BITS[i];
+            codepoint |= bit;
         }
     }
     if let Some(ch) = char::from_u32(codepoint) {
@@ -418,6 +420,7 @@ const HATCH_LEFT: &str = "\u{2571}"; // Box Drawings Light Diagonal Upper Right 
 const HATCH_RIGHT: &str = "\u{2572}"; // Box Drawings Light Diagonal Upper Left to Lower Right
 
 /// Render a hatch pattern fill over a rectangular area.
+#[allow(clippy::too_many_arguments)]
 pub fn render_hatch(
     buf: &mut Buffer,
     x: u16,

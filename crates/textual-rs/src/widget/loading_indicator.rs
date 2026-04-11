@@ -10,14 +10,7 @@ use super::Widget;
 /// At 30fps app tick with frame = tick/2, animation runs at ~15fps (one cycle per ~533ms).
 /// These are: ⣾ ⣽ ⣻ ⢿ ⡿ ⣟ ⣯ ⣷
 const SPINNER_FRAMES: [char; 8] = [
-    '\u{28FE}',
-    '\u{28FD}',
-    '\u{28FB}',
-    '\u{283F}',
-    '\u{285F}',
-    '\u{289F}',
-    '\u{28AF}',
-    '\u{28B7}',
+    '\u{28FE}', '\u{28FD}', '\u{28FB}', '\u{283F}', '\u{285F}', '\u{289F}', '\u{28AF}', '\u{28B7}',
 ];
 
 /// A standalone loading spinner widget.

@@ -618,7 +618,9 @@ mod tests {
         struct FocusableScreen;
         impl Widget for FocusableScreen {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![Box::new(SimpleWidget::new(true))]
             }
@@ -638,7 +640,9 @@ mod tests {
         struct BaseScreen;
         impl Widget for BaseScreen {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![Box::new(SimpleWidget::new(true))]
             }
@@ -647,8 +651,12 @@ mod tests {
         struct ModalScreenWidget;
         impl Widget for ModalScreenWidget {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Modal" }
-            fn is_modal(&self) -> bool { true }
+            fn widget_type_name(&self) -> &'static str {
+                "Modal"
+            }
+            fn is_modal(&self) -> bool {
+                true
+            }
             fn compose(&self) -> Vec<Box<dyn Widget>> {
                 vec![Box::new(SimpleWidget::new(true))]
             }
@@ -680,7 +688,9 @@ mod tests {
         struct AnyScreen;
         impl Widget for AnyScreen {
             fn render(&self, _ctx: &AppContext, _area: Rect, _buf: &mut Buffer) {}
-            fn widget_type_name(&self) -> &'static str { "Screen" }
+            fn widget_type_name(&self) -> &'static str {
+                "Screen"
+            }
         }
 
         push_screen(Box::new(AnyScreen), &mut ctx);

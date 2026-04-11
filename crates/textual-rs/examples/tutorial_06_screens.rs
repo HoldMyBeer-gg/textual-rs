@@ -151,8 +151,7 @@ impl Widget for MainContent {
                 let Some(self_id) = self.own_id.get() else {
                     return;
                 };
-                let rx =
-                    ctx.push_screen_wait(Box::new(ModalScreen::new(Box::new(ConfirmDialog))));
+                let rx = ctx.push_screen_wait(Box::new(ModalScreen::new(Box::new(ConfirmDialog))));
                 ctx.run_worker(self_id, async move {
                     match rx.await {
                         Ok(boxed) => *boxed.downcast::<bool>().unwrap_or(Box::new(false)),
@@ -215,9 +214,7 @@ impl Widget for ScreenDemoScreen {
 
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
-            Box::new(
-                Header::new("Tutorial 06: Screens").with_subtitle("push / pop / modal"),
-            ),
+            Box::new(Header::new("Tutorial 06: Screens").with_subtitle("push / pop / modal")),
             Box::new(MainContent::new()),
             Box::new(Footer),
         ]
