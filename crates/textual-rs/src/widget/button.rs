@@ -93,6 +93,16 @@ impl Widget for Button {
         true
     }
 
+    fn classes(&self) -> &[&str] {
+        match self.variant {
+            ButtonVariant::Primary => &["primary"],
+            ButtonVariant::Warning => &["warning"],
+            ButtonVariant::Error => &["error"],
+            ButtonVariant::Success => &["success"],
+            ButtonVariant::Default => &[],
+        }
+    }
+
     fn default_css() -> &'static str
     where
         Self: Sized,

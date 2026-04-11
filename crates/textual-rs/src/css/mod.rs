@@ -13,7 +13,7 @@ pub use cascade::{
 };
 pub use parser::{parse_stylesheet, Rule};
 pub use property::parse_declaration_block;
-pub use render_style::{paint_chrome, text_style, to_ratatui_color};
+pub use render_style::{paint_chrome, paint_chrome_with_caps, text_style, to_ratatui_color};
 pub use selector::{selector_matches, Selector, SelectorParser, Specificity};
 pub use theme::{builtin_themes, default_dark_theme, default_light_theme, theme_by_name, Theme};
 pub use types::*;

@@ -127,3 +127,4 @@ pub use widget::screen::ModalScreen;
 pub use widget::text_area::TextArea;
 pub use widget::tree_view::{Tree, TreeNode};
 pub use worker::{WorkerProgress, WorkerResult};
+pub use terminal::{ColorDepth, RenderingQuality, TerminalCaps};

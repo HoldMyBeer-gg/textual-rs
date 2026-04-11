@@ -37,6 +37,8 @@ pub struct Label {
     /// The styled (and optionally linked) spans making up this label.
     pub spans: LinkedLine,
     own_id: Cell<Option<WidgetId>>,
+    /// Optional CSS classes for styling via selectors (e.g., `.section-title`).
+    css_classes: Vec<&'static str>,
 }
 
 impl Label {
@@ -45,12 +47,19 @@ impl Label {
         Self {
             spans: vec![LinkedSpan::plain(text)],
             own_id: Cell::new(None),
+            css_classes: Vec::new(),
         }
     }
 
     /// Create a new Label from a `Vec<LinkedSpan>`, enabling per-span hyperlinks.
     pub fn new_linked(spans: Vec<LinkedSpan>) -> Self {
-        Self { spans, own_id: Cell::new(None) }
+        Self { spans, own_id: Cell::new(None), css_classes: Vec::new() }
+    }
+
+    /// Add a CSS class to this label (for styling via CSS selectors).
+    pub fn with_class(mut self, class: &'static str) -> Self {
+        self.css_classes.push(class);
+        self
     }
 
     /// Return the concatenated plain text of all spans (strips URL data).
@@ -66,6 +75,10 @@ impl Widget for Label {
 
     fn can_focus(&self) -> bool {
         false
+    }
+
+    fn classes(&self) -> &[&str] {
+        &self.css_classes
     }
 
     fn default_css() -> &'static str

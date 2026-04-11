@@ -16,35 +16,39 @@ use crate::css::cascade::{apply_cascade_to_tree, Stylesheet};
 /// so user stylesheets always win. This replaces the per-widget default_css()
 /// static method which was never actually collected by the framework.
 const BUILTIN_CSS: &str = r#"
-Button { border: heavy; min-width: 16; height: 3; text-align: center; }
+Button { border: inner; min-width: 16; height: 3; text-align: center; }
+Button.primary { color: $primary; }
+Button.warning { color: $warning; }
+Button.error { color: $error; }
+Button.success { color: $success; }
 Checkbox { height: 1; }
 Collapsible { min-height: 1; }
-DataTable { border: rounded; min-height: 5; }
+DataTable { border: inner; min-height: 5; }
 DirectoryTree { border: rounded; min-height: 5; flex-grow: 1; }
 Footer { height: 1; }
 Header { height: 1; }
 Horizontal { layout-direction: horizontal; }
-Input { border: rounded; height: 3; }
+Input { border: inner; height: 3; }
 Label { min-height: 1; }
 ListView { min-height: 3; flex-grow: 1; }
 Log { min-height: 3; flex-grow: 1; }
 Markdown { min-height: 3; }
-MaskedInput { border: rounded; height: 3; }
+MaskedInput { border: inner; height: 3; }
 Placeholder { border: rounded; min-height: 3; min-width: 10; }
 ProgressBar { height: 1; }
 RadioButton { height: 1; }
 RadioSet { layout-direction: vertical; }
 ScrollView { overflow: auto; }
-Select { border: rounded; height: 3; }
+Select { border: inner; height: 3; }
 Sparkline { height: 1; }
 Switch { height: 1; }
 TabbedContent { min-height: 3; layout-direction: vertical; }
 TabBar { height: 1; }
-TextArea { border: rounded; min-height: 5; }
-Tree { border: rounded; min-height: 5; }
+TextArea { border: inner; min-height: 5; }
+Tree { border: inner; min-height: 5; }
 Vertical { layout-direction: vertical; }
 "#;
-use crate::css::render_style::paint_chrome;
+use crate::css::render_style::paint_chrome_with_caps;
 use crate::event::dispatch::dispatch_message;
 use crate::event::AppEvent;
 use crate::layout::bridge::TaffyBridge;
@@ -1347,11 +1351,13 @@ fn render_widget_tree(
                     let widget_border_override =
                         ctx.arena.get(id).and_then(|w| w.border_color_override());
 
+                    let has_unicode = ctx.terminal_caps.unicode;
+
                     if let Some((r, g, b)) = widget_border_override {
                         // Widget override takes highest priority (invalid state)
                         let mut override_cs = cs.clone();
                         override_cs.color = TcssColor::Rgb(r, g, b);
-                        paint_chrome(&override_cs, rect, frame.buffer_mut())
+                        paint_chrome_with_caps(&override_cs, rect, frame.buffer_mut(), has_unicode)
                     } else if is_focused && cs.border != TcssBorder::None {
                         // Focused widget WITH border — upgrade border color to accent
                         let mut focused_cs = cs.clone();
@@ -1360,12 +1366,12 @@ fn render_widget_tree(
                         if cs.border != TcssBorder::Tall && cs.border != TcssBorder::McguganBox {
                             focused_cs.border = TcssBorder::Heavy;
                         }
-                        paint_chrome(&focused_cs, rect, frame.buffer_mut())
+                        paint_chrome_with_caps(&focused_cs, rect, frame.buffer_mut(), has_unicode)
                     } else if is_focused && cs.border == TcssBorder::None {
                         // Focused widget WITHOUT border — subtle left-edge accent bar.
                         // Don't tint the entire foreground (jarring on large content areas like Log).
-                        let content = paint_chrome(cs, rect, frame.buffer_mut());
-                        if rect.height > 0 {
+                        let content = paint_chrome_with_caps(cs, rect, frame.buffer_mut(), has_unicode);
+                        if rect.height > 0 && has_unicode {
                             let fg = ratatui::style::Color::Rgb(0, 255, 163);
                             for y in rect.y..rect.y + rect.height {
                                 if let Some(cell) = frame.buffer_mut().cell_mut((rect.x, y)) {
@@ -1379,9 +1385,9 @@ fn render_widget_tree(
                         // Hovered widget — lighten the border color for subtle feedback
                         let mut hover_cs = cs.clone();
                         hover_cs.color = TcssColor::Rgb(100, 180, 255); // light blue hover tint
-                        paint_chrome(&hover_cs, rect, frame.buffer_mut())
+                        paint_chrome_with_caps(&hover_cs, rect, frame.buffer_mut(), has_unicode)
                     } else {
-                        paint_chrome(cs, rect, frame.buffer_mut())
+                        paint_chrome_with_caps(cs, rect, frame.buffer_mut(), has_unicode)
                     }
                 } else {
                     rect

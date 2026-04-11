@@ -118,6 +118,22 @@ pub enum ColorDepth {
     TrueColor,
 }
 
+/// Rendering quality level, derived from terminal capabilities.
+///
+/// Widgets can inspect this to choose the best rendering strategy available.
+/// Ordered from lowest to highest fidelity — comparison operators work as expected.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RenderingQuality {
+    /// No unicode — ASCII borders (+--+), no block characters.
+    Ascii,
+    /// Unicode box-drawing (─│┌┐) but no sub-cell tricks. Limited color.
+    Basic,
+    /// Half-blocks, eighth-blocks, braille — the standard TUI experience.
+    Standard,
+    /// Full sub-cell rendering + true color. Best visual fidelity.
+    High,
+}
+
 /// Detected terminal capabilities.
 ///
 /// Use [`TerminalCaps::detect()`] to probe the current environment. Widgets and
@@ -133,6 +149,14 @@ pub struct TerminalCaps {
     pub mouse: bool,
     /// Whether the terminal supports setting the window title.
     pub title: bool,
+    /// Whether the Kitty graphics protocol is available (image rendering).
+    pub kitty_graphics: bool,
+    /// Whether Sixel graphics are available (image rendering).
+    pub sixel: bool,
+    /// Whether iTerm2 inline image protocol is available.
+    pub iterm_images: bool,
+    /// Overall rendering quality level, derived from other capabilities.
+    pub rendering_quality: RenderingQuality,
 }
 
 impl TerminalCaps {
@@ -158,12 +182,20 @@ impl TerminalCaps {
         let color_depth = detect_color_depth();
         let unicode = detect_unicode();
         let title = detect_title_support();
+        let kitty_graphics = detect_kitty_graphics();
+        let sixel = detect_sixel();
+        let iterm_images = detect_iterm_images();
+        let rendering_quality = derive_rendering_quality(color_depth, unicode);
 
         Self {
             color_depth,
             unicode,
             mouse: true, // crossterm always enables mouse capture
             title,
+            kitty_graphics,
+            sixel,
+            iterm_images,
+            rendering_quality,
         }
     }
 }
@@ -248,6 +280,73 @@ fn detect_title_support() -> bool {
     true
 }
 
+/// Detect Kitty graphics protocol support.
+/// Checks `TERM_PROGRAM=kitty` or `KITTY_WINDOW_ID` env var.
+fn detect_kitty_graphics() -> bool {
+    if let Ok(prog) = std::env::var("TERM_PROGRAM") {
+        if prog.eq_ignore_ascii_case("kitty") {
+            return true;
+        }
+    }
+    std::env::var("KITTY_WINDOW_ID").is_ok()
+}
+
+/// Detect Sixel graphics support via heuristics.
+/// True DA1 query requires async terminal I/O; we use env-based heuristics.
+fn detect_sixel() -> bool {
+    // Explicit opt-in via env var
+    if std::env::var("SIXEL_SUPPORT").is_ok() {
+        return true;
+    }
+    // Some terminals advertise via TERM_PROGRAM
+    if let Ok(prog) = std::env::var("TERM_PROGRAM") {
+        let prog_lower = prog.to_lowercase();
+        // Known sixel-capable terminals
+        if prog_lower == "mlterm"
+            || prog_lower == "contour"
+            || prog_lower == "foot"
+            || prog_lower == "wezterm"
+        {
+            return true;
+        }
+    }
+    false
+}
+
+/// Detect iTerm2 inline image protocol support.
+/// Checks `TERM_PROGRAM=iTerm.app` or `LC_TERMINAL=iTerm2`.
+fn detect_iterm_images() -> bool {
+    if let Ok(prog) = std::env::var("TERM_PROGRAM") {
+        if prog == "iTerm.app" {
+            return true;
+        }
+    }
+    if let Ok(lc) = std::env::var("LC_TERMINAL") {
+        if lc == "iTerm2" {
+            return true;
+        }
+    }
+    // WezTerm also supports the iTerm2 image protocol
+    if let Ok(prog) = std::env::var("TERM_PROGRAM") {
+        if prog.to_lowercase() == "wezterm" {
+            return true;
+        }
+    }
+    false
+}
+
+/// Derive the overall rendering quality from color depth and unicode support.
+fn derive_rendering_quality(color_depth: ColorDepth, unicode: bool) -> RenderingQuality {
+    if !unicode {
+        return RenderingQuality::Ascii;
+    }
+    match color_depth {
+        ColorDepth::NoColor | ColorDepth::Standard => RenderingQuality::Basic,
+        ColorDepth::EightBit => RenderingQuality::Standard,
+        ColorDepth::TrueColor => RenderingQuality::High,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -288,8 +387,47 @@ mod tests {
         assert_eq!(caps.unicode, cloned.unicode);
         assert_eq!(caps.mouse, cloned.mouse);
         assert_eq!(caps.title, cloned.title);
+        assert_eq!(caps.kitty_graphics, cloned.kitty_graphics);
+        assert_eq!(caps.sixel, cloned.sixel);
+        assert_eq!(caps.iterm_images, cloned.iterm_images);
+        assert_eq!(caps.rendering_quality, cloned.rendering_quality);
         // Debug formatting should not panic
         let _debug = format!("{:?}", caps);
+    }
+
+    #[test]
+    fn rendering_quality_ordering() {
+        assert!(RenderingQuality::Ascii < RenderingQuality::Basic);
+        assert!(RenderingQuality::Basic < RenderingQuality::Standard);
+        assert!(RenderingQuality::Standard < RenderingQuality::High);
+    }
+
+    #[test]
+    fn derive_quality_from_caps() {
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::NoColor, false),
+            RenderingQuality::Ascii
+        );
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::TrueColor, false),
+            RenderingQuality::Ascii
+        );
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::NoColor, true),
+            RenderingQuality::Basic
+        );
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::Standard, true),
+            RenderingQuality::Basic
+        );
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::EightBit, true),
+            RenderingQuality::Standard
+        );
+        assert_eq!(
+            derive_rendering_quality(ColorDepth::TrueColor, true),
+            RenderingQuality::High
+        );
     }
 
     #[test]

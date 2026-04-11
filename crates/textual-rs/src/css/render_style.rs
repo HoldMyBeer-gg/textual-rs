@@ -119,15 +119,32 @@ fn border_chars(style: &BorderStyle) -> Option<BorderChars> {
 
 /// Draw a border around the area using the ComputedStyle's border and color settings.
 /// Returns the inner content area (shrunk by 1 on each bordered side).
+///
+/// When `unicode` is false, Tall and McGugan borders degrade to ASCII (+--|).
+/// Pass `true` to get the full visual fidelity (default for most terminals).
 pub fn draw_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
-    // Tall border uses half-block characters for a thin, elegant frame
+    draw_border_with_caps(cs, area, buf, true)
+}
+
+/// Draw a border with explicit unicode capability flag.
+/// Tall and McGugan borders fall back to ASCII when `unicode` is false.
+pub fn draw_border_with_caps(cs: &ComputedStyle, area: Rect, buf: &mut Buffer, unicode: bool) -> Rect {
+    // Tall and McGugan require unicode half-block/eighth-block chars.
+    // Fall back to ASCII border on non-unicode terminals.
     if cs.border == BorderStyle::Tall {
-        return draw_tall_border(cs, area, buf);
+        if unicode {
+            return draw_tall_border(cs, area, buf);
+        } else {
+            return draw_ascii_border(cs, area, buf);
+        }
     }
 
-    // McGugan Box uses 1/8-thick borders with independent inside/outside colors
     if cs.border == BorderStyle::McguganBox {
-        return draw_mcgugan_border(cs, area, buf);
+        if unicode {
+            return draw_mcgugan_border(cs, area, buf);
+        } else {
+            return draw_ascii_border(cs, area, buf);
+        }
     }
 
     let chars = match border_chars(&cs.border) {
@@ -321,10 +338,76 @@ fn draw_mcgugan_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect
     }
 }
 
+/// Draw an ASCII-only border (+--|) as fallback for non-unicode terminals.
+/// Used when Tall or McGugan borders are requested but unicode is not available.
+fn draw_ascii_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
+    if area.width < 2 || area.height < 2 {
+        return area;
+    }
+
+    let border_style = {
+        let mut s = Style::default();
+        if let Some(fg) = to_ratatui_color(&cs.color) {
+            s = s.fg(fg);
+        }
+        if let Some(bg) = to_ratatui_color(&cs.background) {
+            s = s.bg(bg);
+        }
+        s
+    };
+
+    let x1 = area.x;
+    let y1 = area.y;
+    let x2 = area.x + area.width - 1;
+    let y2 = area.y + area.height - 1;
+
+    // Corners
+    buf.set_string(x1, y1, "+", border_style);
+    buf.set_string(x2, y1, "+", border_style);
+    buf.set_string(x1, y2, "+", border_style);
+    buf.set_string(x2, y2, "+", border_style);
+
+    // Top and bottom edges
+    for x in (x1 + 1)..x2 {
+        buf.set_string(x, y1, "-", border_style);
+        buf.set_string(x, y2, "-", border_style);
+    }
+
+    // Left and right edges
+    for y in (y1 + 1)..y2 {
+        buf.set_string(x1, y, "|", border_style);
+        buf.set_string(x2, y, "|", border_style);
+    }
+
+    // Border title
+    if let Some(ref title) = cs.border_title {
+        let max_len = (area.width as usize).saturating_sub(4);
+        let display: String = title.chars().take(max_len).collect();
+        if !display.is_empty() {
+            let title_style = border_style.add_modifier(ratatui::style::Modifier::BOLD);
+            buf.set_string(x1 + 2, y1, format!(" {} ", display), title_style);
+        }
+    }
+
+    Rect {
+        x: x1 + 1,
+        y: y1 + 1,
+        width: area.width.saturating_sub(2),
+        height: area.height.saturating_sub(2),
+    }
+}
+
 /// Paint background and borders for a widget. Returns the content area for the widget to render into.
 pub fn paint_chrome(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
     fill_background(cs, area, buf);
     draw_border(cs, area, buf)
+}
+
+/// Paint background and borders with explicit unicode capability.
+/// Non-unicode terminals get ASCII fallback for Tall/McGugan borders.
+pub fn paint_chrome_with_caps(cs: &ComputedStyle, area: Rect, buf: &mut Buffer, unicode: bool) -> Rect {
+    fill_background(cs, area, buf);
+    draw_border_with_caps(cs, area, buf, unicode)
 }
 
 /// Align text within a given width according to the text-align CSS property.
