@@ -286,7 +286,11 @@ impl Widget for RichLog {
         let count = lines.len();
 
         // Reserve last column for scrollbar when there is overflow
-        let text_width = if area.width > 1 { area.width - 1 } else { area.width };
+        let text_width = if area.width > 1 {
+            area.width - 1
+        } else {
+            area.width
+        };
 
         // Draw visible lines, supporting both plain and linked (OSC 8) spans
         let visible_count = (area.height as usize).min(count.saturating_sub(offset));

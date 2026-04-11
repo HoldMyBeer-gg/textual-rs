@@ -53,7 +53,11 @@ impl Label {
 
     /// Create a new Label from a `Vec<LinkedSpan>`, enabling per-span hyperlinks.
     pub fn new_linked(spans: Vec<LinkedSpan>) -> Self {
-        Self { spans, own_id: Cell::new(None), css_classes: Vec::new() }
+        Self {
+            spans,
+            own_id: Cell::new(None),
+            css_classes: Vec::new(),
+        }
     }
 
     /// Add a CSS class to this label (for styling via CSS selectors).

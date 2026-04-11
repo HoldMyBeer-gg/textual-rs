@@ -33,7 +33,9 @@ impl Widget for FilledScreen {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        let line: String = std::iter::repeat(self.ch).take(area.width as usize).collect();
+        let line: String = std::iter::repeat(self.ch)
+            .take(area.width as usize)
+            .collect();
         for y in area.y..area.y + area.height {
             buf.set_string(area.x, y, &line, ratatui::style::Style::default());
         }
@@ -204,7 +206,9 @@ struct NavScreen {
 
 impl NavScreen {
     fn new() -> Self {
-        Self { own_id: Cell::new(None) }
+        Self {
+            own_id: Cell::new(None),
+        }
     }
 }
 
@@ -281,7 +285,10 @@ fn key_event(code: KeyCode) -> AppEvent {
 fn screen_stack_initial_state() {
     let app = TestApp::new(80, 24, || Box::new(SingleFocusScreen));
     assert_eq!(app.ctx().screen_stack.len(), 1);
-    assert!(app.ctx().focused_widget.is_some(), "first focusable widget should be auto-focused");
+    assert!(
+        app.ctx().focused_widget.is_some(),
+        "first focusable widget should be auto-focused"
+    );
 }
 
 #[test]
@@ -293,15 +300,22 @@ fn screen_stack_keyboard_scoped_to_top_screen() {
     let second_received = Arc::new(Cell::new(None::<char>));
     let second_clone = second_received.clone();
 
-    let mut app = TestApp::new(80, 24, move || Box::new(KeyRecordingScreen::new(base_clone.clone())));
+    let mut app = TestApp::new(80, 24, move || {
+        Box::new(KeyRecordingScreen::new(base_clone.clone()))
+    });
 
     // Send 'a' to base screen — base should receive it
     app.process_event(key_event(KeyCode::Char('a')));
-    assert_eq!(base_received.get(), Some('a'), "base screen should receive 'a'");
+    assert_eq!(
+        base_received.get(),
+        Some('a'),
+        "base screen should receive 'a'"
+    );
 
     // Reset and push a second screen with its own recorder
     base_received.set(None);
-    app.ctx().push_screen_deferred(Box::new(KeyRecordingScreen::new(second_clone.clone())));
+    app.ctx()
+        .push_screen_deferred(Box::new(KeyRecordingScreen::new(second_clone.clone())));
     // Send a dummy event to trigger process_deferred_screens
     app.process_event(AppEvent::RenderRequest);
 
@@ -309,8 +323,16 @@ fn screen_stack_keyboard_scoped_to_top_screen() {
 
     // Send 'b' — only second screen should receive it (base is frozen)
     app.process_event(key_event(KeyCode::Char('b')));
-    assert_eq!(base_received.get(), None, "base screen must NOT receive keys when second screen is on top");
-    assert_eq!(second_received.get(), Some('b'), "second screen should receive 'b'");
+    assert_eq!(
+        base_received.get(),
+        None,
+        "base screen must NOT receive keys when second screen is on top"
+    );
+    assert_eq!(
+        second_received.get(),
+        Some('b'),
+        "second screen should receive 'b'"
+    );
 }
 
 #[test]
@@ -349,7 +371,11 @@ fn screen_stack_pop_last_screen_is_noop() {
     app.process_event(AppEvent::RenderRequest);
 
     // Stack should remain at 1
-    assert_eq!(app.ctx().screen_stack.len(), 1, "popping last screen must be a no-op");
+    assert_eq!(
+        app.ctx().screen_stack.len(),
+        1,
+        "popping last screen must be a no-op"
+    );
 }
 
 #[test]
@@ -379,8 +405,11 @@ fn screen_stack_focus_restored_after_pop() {
     assert_eq!(app.ctx().screen_stack.len(), 1);
 
     // Focus should be restored to base screen's focusable widget
-    assert_eq!(app.ctx().focused_widget, base_focus,
-        "focus should be restored to base screen widget after all pops");
+    assert_eq!(
+        app.ctx().focused_widget,
+        base_focus,
+        "focus should be restored to base screen widget after all pops"
+    );
 }
 
 #[test]
@@ -392,15 +421,26 @@ fn screen_stack_modal_dismissed_via_pop() {
 
     // Open modal via 'm' key
     app.process_event(key_event(KeyCode::Char('m')));
-    assert_eq!(app.ctx().screen_stack.len(), 2, "modal should be on stack after 'm'");
+    assert_eq!(
+        app.ctx().screen_stack.len(),
+        2,
+        "modal should be on stack after 'm'"
+    );
 
     // Dismiss via Escape
     app.process_event(key_event(KeyCode::Esc));
-    assert_eq!(app.ctx().screen_stack.len(), 1, "modal should be dismissed after Esc");
+    assert_eq!(
+        app.ctx().screen_stack.len(),
+        1,
+        "modal should be dismissed after Esc"
+    );
 
     // Focus restored
-    assert_eq!(app.ctx().focused_widget, pre_modal_focus,
-        "focus must restore to pre-modal widget after dismiss");
+    assert_eq!(
+        app.ctx().focused_widget,
+        pre_modal_focus,
+        "focus must restore to pre-modal widget after dismiss"
+    );
 }
 
 #[test]
@@ -411,31 +451,46 @@ fn screen_stack_multi_screen_renders_all_screens() {
     let mut app = TestApp::new(10, 5, || Box::new(FilledScreen::new('B')));
 
     // Verify background renders B
-    let content_initial: String = app.buffer().content().iter()
+    let content_initial: String = app
+        .buffer()
+        .content()
+        .iter()
         .map(|c: &ratatui::buffer::Cell| c.symbol().chars().next().unwrap_or(' '))
         .collect();
-    assert!(content_initial.contains('B'), "initial buffer should contain 'B'");
+    assert!(
+        content_initial.contains('B'),
+        "initial buffer should contain 'B'"
+    );
     assert!(!content_initial.contains('M'), "no 'M' before overlay push");
 
     // Push overlay screen filling with 'M'
-    app.ctx().push_screen_deferred(Box::new(FilledScreen::new('M')));
+    app.ctx()
+        .push_screen_deferred(Box::new(FilledScreen::new('M')));
     app.process_event(AppEvent::RenderRequest);
 
-    let content_after: String = app.buffer().content().iter()
+    let content_after: String = app
+        .buffer()
+        .content()
+        .iter()
         .map(|c: &ratatui::buffer::Cell| c.symbol().chars().next().unwrap_or(' '))
         .collect();
     // Top screen 'M' overwrites 'B' — all cells should be 'M'
     assert!(content_after.contains('M'), "top screen should render 'M'");
     // Confirm no 'B' remains visible (top screen covered the whole terminal)
-    assert!(!content_after.contains('B'),
-        "background 'B' should be covered by top 'M' screen");
+    assert!(
+        !content_after.contains('B'),
+        "background 'B' should be covered by top 'M' screen"
+    );
 }
 
 #[test]
 fn screen_stack_is_modal_returns_true_for_modal_screen() {
     // Verify ModalScreen.is_modal() returns true (used by framework for future use)
     let modal = ModalScreen::new(Box::new(FocusableWidget));
-    assert!(modal.is_modal(), "ModalScreen must report is_modal() == true");
+    assert!(
+        modal.is_modal(),
+        "ModalScreen must report is_modal() == true"
+    );
 }
 
 // ---------------------------------------------------------------------------

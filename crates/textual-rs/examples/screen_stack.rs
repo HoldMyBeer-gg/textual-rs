@@ -28,11 +28,11 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 
 use textual_rs::event::keybinding::KeyBinding;
+use textual_rs::widget::button::messages::Pressed;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::screen::ModalScreen;
 use textual_rs::widget::{EventPropagation, WidgetId};
 use textual_rs::{App, Button, ButtonVariant, Footer, Header, Label, Widget};
-use textual_rs::widget::button::messages::Pressed;
 
 // ---------------------------------------------------------------------------
 // CSS
@@ -217,9 +217,7 @@ impl Widget for ModalDialog {
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![
             Box::new(Label::new("Press Enter or Esc to dismiss")),
-            Box::new(
-                Button::new("  OK  ").with_variant(ButtonVariant::Primary),
-            ),
+            Box::new(Button::new("  OK  ").with_variant(ButtonVariant::Primary)),
         ]
     }
 }
@@ -302,11 +300,19 @@ struct NavButtons {
 
 impl NavButtons {
     fn main_screen() -> Self {
-        Self { show_push: true, show_back: false, show_modal: true }
+        Self {
+            show_push: true,
+            show_back: false,
+            show_modal: true,
+        }
     }
 
     fn back_and_modal() -> Self {
-        Self { show_push: false, show_back: true, show_modal: true }
+        Self {
+            show_push: false,
+            show_back: true,
+            show_modal: true,
+        }
     }
 }
 
@@ -336,9 +342,7 @@ impl Widget for NavButtons {
             ));
         }
         if self.show_modal {
-            buttons.push(Box::new(
-                Button::new("Open Modal (m)"),
-            ));
+            buttons.push(Box::new(Button::new("Open Modal (m)")));
         }
         buttons
     }

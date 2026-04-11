@@ -1,4 +1,5 @@
 //! Application context passed to every widget for state and service access.
+use super::toast::{push_toast, ToastEntry, ToastSeverity};
 use super::Widget;
 use super::WidgetId;
 use crate::css::cascade::Stylesheet;
@@ -12,7 +13,6 @@ use slotmap::{DenseSlotMap, SecondaryMap};
 use std::any::Any;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
-use super::toast::{ToastEntry, ToastSeverity, push_toast};
 
 /// Shared application state passed by reference to every widget callback.
 ///
@@ -102,10 +102,17 @@ pub struct AppContext {
     pub toast_entries: RefCell<Vec<ToastEntry>>,
     /// Deferred push_screen_wait requests: each entry is `(screen_box, oneshot_sender)`.
     /// Drained by `process_deferred_screens`; the sender is stored keyed by the new screen's WidgetId.
-    pub pending_screen_wait_pushes: RefCell<Vec<(Box<dyn Widget>, tokio::sync::oneshot::Sender<Box<dyn Any + Send>>)>>,
+    #[allow(clippy::type_complexity)]
+    pub pending_screen_wait_pushes: RefCell<
+        Vec<(
+            Box<dyn Widget>,
+            tokio::sync::oneshot::Sender<Box<dyn Any + Send>>,
+        )>,
+    >,
     /// Maps screen WidgetId -> oneshot sender for typed result delivery.
     /// Populated when `push_screen_wait` processes a deferred push; consumed when `pop_screen_with` fires.
-    pub screen_result_senders: RefCell<HashMap<WidgetId, tokio::sync::oneshot::Sender<Box<dyn Any + Send>>>>,
+    pub screen_result_senders:
+        RefCell<HashMap<WidgetId, tokio::sync::oneshot::Sender<Box<dyn Any + Send>>>>,
     /// Single-slot typed result for the next `pop_screen_with` call.
     /// Set by `pop_screen_with`, consumed by `process_deferred_screens` when the pop fires.
     pub pending_pop_result: RefCell<Option<Box<dyn Any + Send>>>,
@@ -279,7 +286,9 @@ impl AppContext {
         screen: Box<dyn Widget>,
     ) -> tokio::sync::oneshot::Receiver<Box<dyn Any + Send>> {
         let (tx, rx) = tokio::sync::oneshot::channel();
-        self.pending_screen_wait_pushes.borrow_mut().push((screen, tx));
+        self.pending_screen_wait_pushes
+            .borrow_mut()
+            .push((screen, tx));
         rx
     }
 

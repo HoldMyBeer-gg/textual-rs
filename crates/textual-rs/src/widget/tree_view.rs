@@ -596,7 +596,7 @@ impl Tree {
     /// Helper to navigate into root.children by path (path[0] indexes root.children,
     /// path[1] indexes that node's children, etc.).
     fn node_at_path_in_children<'a>(
-        children: &'a mut Vec<TreeNode>,
+        children: &'a mut [TreeNode],
         path: &[usize],
     ) -> Option<&'a mut TreeNode> {
         if path.is_empty() {

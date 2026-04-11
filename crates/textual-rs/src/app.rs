@@ -113,6 +113,7 @@ pub struct App {
     /// Optional callback invoked whenever the active theme changes.
     /// Receives the new theme name (e.g. `"tokyo-night"`).
     /// Use this to persist the user's theme choice across sessions.
+    #[allow(clippy::type_complexity)]
     theme_changed_cb: Option<Box<dyn Fn(&str)>>,
     /// When `true`, skip flushing OSC 8 hyperlinks to stdout after each frame.
     /// Set by test harnesses that use TestBackend.
@@ -859,7 +860,9 @@ impl App {
         }
 
         // Advance spinner tick for next frame (all loading overlays animate in sync)
-        self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));
+        self.ctx
+            .spinner_tick
+            .set(self.ctx.spinner_tick.get().wrapping_add(1));
 
         // Advance toast countdowns and remove expired toasts
         {
@@ -909,7 +912,9 @@ impl App {
             .expect("failed to draw to TestBackend");
 
         // Advance spinner tick for next frame (all loading overlays animate in sync)
-        self.ctx.spinner_tick.set(self.ctx.spinner_tick.get().wrapping_add(1));
+        self.ctx
+            .spinner_tick
+            .set(self.ctx.spinner_tick.get().wrapping_add(1));
 
         terminal.backend().buffer().clone()
     }
@@ -1188,7 +1193,9 @@ impl App {
                 // If there was a pending result and a registered sender for the popped screen,
                 // deliver the result through the oneshot channel now.
                 if let (Some(top_id), Some(value)) = (top_screen_id, result) {
-                    if let Some(sender) = self.ctx.screen_result_senders.borrow_mut().remove(&top_id) {
+                    if let Some(sender) =
+                        self.ctx.screen_result_senders.borrow_mut().remove(&top_id)
+                    {
                         let _ = sender.send(value);
                     }
                 }
@@ -1207,11 +1214,22 @@ impl App {
         }
 
         // Process push_screen_wait requests: push the screen and record the sender keyed by the new screen id.
-        let wait_pushes: Vec<(Box<dyn Widget>, tokio::sync::oneshot::Sender<Box<dyn std::any::Any + Send>>)> =
-            self.ctx.pending_screen_wait_pushes.borrow_mut().drain(..).collect();
+        #[allow(clippy::type_complexity)]
+        let wait_pushes: Vec<(
+            Box<dyn Widget>,
+            tokio::sync::oneshot::Sender<Box<dyn std::any::Any + Send>>,
+        )> = self
+            .ctx
+            .pending_screen_wait_pushes
+            .borrow_mut()
+            .drain(..)
+            .collect();
         for (screen, sender) in wait_pushes {
             let screen_id = push_screen(screen, &mut self.ctx);
-            self.ctx.screen_result_senders.borrow_mut().insert(screen_id, sender);
+            self.ctx
+                .screen_result_senders
+                .borrow_mut()
+                .insert(screen_id, sender);
             self.needs_full_sync = true;
         }
 
@@ -1370,7 +1388,8 @@ fn render_widget_tree(
                     } else if is_focused && cs.border == TcssBorder::None {
                         // Focused widget WITHOUT border — subtle left-edge accent bar.
                         // Don't tint the entire foreground (jarring on large content areas like Log).
-                        let content = paint_chrome_with_caps(cs, rect, frame.buffer_mut(), has_unicode);
+                        let content =
+                            paint_chrome_with_caps(cs, rect, frame.buffer_mut(), has_unicode);
                         if rect.height > 0 && has_unicode {
                             let fg = ratatui::style::Color::Rgb(0, 255, 163);
                             for y in rect.y..rect.y + rect.height {
@@ -1398,7 +1417,7 @@ fn render_widget_tree(
                 // Draw loading overlay if this widget is in loading state
                 if ctx.loading_widgets.borrow().contains_key(id) {
                     crate::widget::loading_indicator::draw_loading_spinner_overlay(
-                        rect,  // Use full rect (including borders) for overlay
+                        rect, // Use full rect (including borders) for overlay
                         frame.buffer_mut(),
                         ctx.spinner_tick.get(),
                         ctx.skip_animations,

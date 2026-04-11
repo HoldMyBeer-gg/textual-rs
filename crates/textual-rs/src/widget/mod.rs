@@ -3,7 +3,6 @@
 #![allow(missing_docs)]
 pub mod button;
 pub mod checkbox;
-pub mod screen;
 pub mod collapsible;
 pub mod context;
 pub mod context_menu;
@@ -23,6 +22,7 @@ pub mod placeholder;
 pub mod progress_bar;
 pub mod radio;
 pub mod rich_log;
+pub mod screen;
 pub mod scroll_region;
 pub mod scroll_view;
 pub mod select;
@@ -40,8 +40,8 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use slotmap::new_key_type;
 
-/// Unique identifier for a widget in the arena (slotmap generational index).
-/// Passed to `on_mount`, `on_action`, `post_message`, and `run_worker`.
+// Unique identifier for a widget in the arena (slotmap generational index).
+// Passed to `on_mount`, `on_action`, `post_message`, and `run_worker`.
 new_key_type! { pub struct WidgetId; }
 
 /// Controls whether an event continues bubbling up the widget tree after being handled.

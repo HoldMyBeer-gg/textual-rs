@@ -128,7 +128,12 @@ pub fn draw_border(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
 
 /// Draw a border with explicit unicode capability flag.
 /// Tall and McGugan borders fall back to ASCII when `unicode` is false.
-pub fn draw_border_with_caps(cs: &ComputedStyle, area: Rect, buf: &mut Buffer, unicode: bool) -> Rect {
+pub fn draw_border_with_caps(
+    cs: &ComputedStyle,
+    area: Rect,
+    buf: &mut Buffer,
+    unicode: bool,
+) -> Rect {
     // Tall and McGugan require unicode half-block/eighth-block chars.
     // Fall back to ASCII border on non-unicode terminals.
     if cs.border == BorderStyle::Tall {
@@ -405,7 +410,12 @@ pub fn paint_chrome(cs: &ComputedStyle, area: Rect, buf: &mut Buffer) -> Rect {
 
 /// Paint background and borders with explicit unicode capability.
 /// Non-unicode terminals get ASCII fallback for Tall/McGugan borders.
-pub fn paint_chrome_with_caps(cs: &ComputedStyle, area: Rect, buf: &mut Buffer, unicode: bool) -> Rect {
+pub fn paint_chrome_with_caps(
+    cs: &ComputedStyle,
+    area: Rect,
+    buf: &mut Buffer,
+    unicode: bool,
+) -> Rect {
     fill_background(cs, area, buf);
     draw_border_with_caps(cs, area, buf, unicode)
 }

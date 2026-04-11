@@ -174,9 +174,8 @@ fn render_braille(data: &[f64], area: Rect, buf: &mut Buffer, fg: Color, bg: Col
 
     // Render the grid
     let _style = ratatui::style::Style::default().fg(fg).bg(bg);
-    for row in 0..cell_rows {
-        for col in 0..cell_cols {
-            let dots = grid[row][col];
+    for (row, grid_row) in grid.iter().enumerate().take(cell_rows) {
+        for (col, &dots) in grid_row.iter().enumerate().take(cell_cols) {
             if dots != 0 {
                 crate::canvas::braille_cell(
                     buf,

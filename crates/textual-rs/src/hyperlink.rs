@@ -38,8 +38,8 @@
 //! ```
 //!
 //! Widgets that accept `LinkedLine`:
-//! - [`textual_rs::Label`] — via `Label::new_linked()`
-//! - [`textual_rs::RichLog`] — via `RichLog::write_linked_line()`; `write_line(Line)` still works
+//! - [`Label`](crate::Label) — via `Label::new_linked()`
+//! - [`RichLog`](crate::RichLog) — via `RichLog::write_linked_line()`; `write_line(Line)` still works
 //!
 //! ## Low-level API: `render_hyperlink`
 //!
@@ -86,7 +86,7 @@ pub struct HyperlinkRecord {
 }
 
 thread_local! {
-    static FRAME_HYPERLINKS: RefCell<Vec<HyperlinkRecord>> = RefCell::new(Vec::new());
+    static FRAME_HYPERLINKS: RefCell<Vec<HyperlinkRecord>> = const { RefCell::new(Vec::new()) };
 }
 
 /// Flush all hyperlink records collected during the last render frame to `writer`.
@@ -109,7 +109,11 @@ pub fn flush_frame_hyperlinks(writer: &mut impl Write) -> std::io::Result<()> {
         // Apply the stored style so the overprint is visually identical.
         write_style(writer, link.style)?;
         // Emit OSC 8 open + label + OSC 8 close.
-        write!(writer, "\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\", link.url, link.label)?;
+        write!(
+            writer,
+            "\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\",
+            link.url, link.label
+        )?;
     }
     // Reset SGR and restore saved cursor (position + visibility).
     writer.write_all(b"\x1b[0m\x1b8")?;
@@ -154,17 +158,29 @@ pub struct LinkedSpan {
 impl LinkedSpan {
     /// Create a plain (no URL) span with default style.
     pub fn plain(text: impl Into<String>) -> Self {
-        Self { text: text.into(), style: Style::default(), url: None }
+        Self {
+            text: text.into(),
+            style: Style::default(),
+            url: None,
+        }
     }
 
     /// Create a clickable linked span with default style.
     pub fn linked(text: impl Into<String>, url: impl Into<String>) -> Self {
-        Self { text: text.into(), style: Style::default(), url: Some(url.into()) }
+        Self {
+            text: text.into(),
+            style: Style::default(),
+            url: Some(url.into()),
+        }
     }
 
     /// Create a plain styled span with no URL.
     pub fn styled(text: impl Into<String>, style: Style) -> Self {
-        Self { text: text.into(), style, url: None }
+        Self {
+            text: text.into(),
+            style,
+            url: None,
+        }
     }
 }
 
@@ -182,7 +198,11 @@ impl From<String> for LinkedSpan {
 
 impl From<Span<'static>> for LinkedSpan {
     fn from(span: Span<'static>) -> Self {
-        Self { text: span.content.into_owned(), style: span.style, url: None }
+        Self {
+            text: span.content.into_owned(),
+            style: span.style,
+            url: None,
+        }
     }
 }
 
@@ -350,12 +370,8 @@ fn write_color(writer: &mut impl Write, color: Color, bg: bool) -> std::io::Resu
         Color::LightMagenta => write!(writer, "\x1b[{}m", base_fg + 65)?,
         Color::LightCyan => write!(writer, "\x1b[{}m", base_fg + 66)?,
         Color::White => write!(writer, "\x1b[{}m", base_fg + 67)?,
-        Color::Rgb(r, g, b) => {
-            write!(writer, "\x1b[{};2;{r};{g};{b}m", if bg { 48 } else { 38 })?
-        }
-        Color::Indexed(n) => {
-            write!(writer, "\x1b[{};5;{n}m", if bg { 48 } else { 38 })?
-        }
+        Color::Rgb(r, g, b) => write!(writer, "\x1b[{};2;{r};{g};{b}m", if bg { 48 } else { 38 })?,
+        Color::Indexed(n) => write!(writer, "\x1b[{};5;{n}m", if bg { 48 } else { 38 })?,
     }
     Ok(())
 }

@@ -209,8 +209,7 @@ impl Widget for ScrollView {
         let mut virtual_buf = Buffer::empty(virtual_area);
 
         // Render each child into the virtual buffer, stacking vertically (1 child per row for v1)
-        let mut child_y: u16 = 0;
-        for child in &self.children {
+        for (child_y, child) in (0_u16..).zip(self.children.iter()) {
             if child_y >= vbuf_h {
                 break;
             }
@@ -221,7 +220,6 @@ impl Widget for ScrollView {
                 height: 1,
             };
             child.render(ctx, child_area, &mut virtual_buf);
-            child_y += 1;
         }
 
         // Blit the visible portion of the virtual buffer into the actual buffer

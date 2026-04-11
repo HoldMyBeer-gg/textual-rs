@@ -78,9 +78,7 @@ pub fn render_toasts(
 
     // Iterate in reverse so newest (last in vec) is at the bottom
     for (i, toast) in toasts.iter().rev().enumerate() {
-        let row_bottom = area
-            .bottom()
-            .saturating_sub((i as u16 + 1) * toast_height);
+        let row_bottom = area.bottom().saturating_sub((i as u16 + 1) * toast_height);
         if row_bottom < area.y {
             break; // No vertical room for more toasts
         }
@@ -179,7 +177,10 @@ pub fn render_toasts(
         // Truncate message to fit
         let msg: &str = &toast.message;
         let truncated: String = if msg.chars().count() > max_msg_chars {
-            msg.chars().take(max_msg_chars.saturating_sub(1)).collect::<String>() + "…"
+            msg.chars()
+                .take(max_msg_chars.saturating_sub(1))
+                .collect::<String>()
+                + "…"
         } else {
             msg.to_string()
         };
@@ -222,12 +223,7 @@ mod tests {
     fn push_toast_overflow_drops_oldest() {
         let mut toasts: Vec<ToastEntry> = Vec::new();
         for i in 0..5 {
-            push_toast(
-                &mut toasts,
-                format!("msg-{}", i),
-                ToastSeverity::Info,
-                3000,
-            );
+            push_toast(&mut toasts, format!("msg-{}", i), ToastSeverity::Info, 3000);
         }
         assert_eq!(toasts.len(), 5);
         // Adding a 6th should drop index 0 ("msg-0")
@@ -319,7 +315,11 @@ mod tests {
         // Check that something was written at the content position
         let cell = &buf[(content_x_start, content_y)];
         // "Hello world" should be written starting here
-        assert_ne!(cell.symbol(), " ", "Expected text content at toast position");
+        assert_ne!(
+            cell.symbol(),
+            " ",
+            "Expected text content at toast position"
+        );
     }
 
     #[test]
@@ -358,15 +358,27 @@ mod tests {
 
         // Newest at bottom
         let newest_cell = &buf[(msg_x, 22u16)];
-        assert_ne!(newest_cell.symbol(), " ", "Newest toast (toast-2) should be at bottom");
+        assert_ne!(
+            newest_cell.symbol(),
+            " ",
+            "Newest toast (toast-2) should be at bottom"
+        );
 
         // Middle toast
         let mid_cell = &buf[(msg_x, 19u16)];
-        assert_ne!(mid_cell.symbol(), " ", "Middle toast (toast-1) should stack above newest");
+        assert_ne!(
+            mid_cell.symbol(),
+            " ",
+            "Middle toast (toast-1) should stack above newest"
+        );
 
         // Oldest at top
         let oldest_cell = &buf[(msg_x, 16u16)];
-        assert_ne!(oldest_cell.symbol(), " ", "Oldest toast (toast-0) should be highest");
+        assert_ne!(
+            oldest_cell.symbol(),
+            " ",
+            "Oldest toast (toast-0) should be highest"
+        );
     }
 
     #[test]
@@ -384,6 +396,10 @@ mod tests {
         let content_y = 8u16;
         let toast_x = 1u16;
         let cell = &buf[(toast_x, content_y)]; // left border
-        assert_ne!(cell.symbol(), " ", "Expected border at left edge of narrow toast");
+        assert_ne!(
+            cell.symbol(),
+            " ",
+            "Expected border at left edge of narrow toast"
+        );
     }
 }

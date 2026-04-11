@@ -152,19 +152,19 @@ impl Widget for Button {
         if action == "press" {
             self.pressed.set(true);
             if let Some(id) = self.own_id.get() {
-                ctx.post_message(id, messages::Pressed { label: self.label.clone() });
-                // If an action name is set, dispatch it to the parent widget's on_action.
+                ctx.post_message(
+                    id,
+                    messages::Pressed {
+                        label: self.label.clone(),
+                    },
+                );
+                // If an action name is set, dispatch it to the active screen.
+                // The screen is the top-level widget that handles navigation actions.
                 // This unifies keyboard and mouse: both paths trigger the same handler.
                 if let Some(ref action_name) = self.action_name {
-                    if let Some(parent_id) = ctx.parent.get(id).and_then(|p| *p) {
-                        // Walk up to find the nearest screen/handler
-                        let mut target = Some(parent_id);
-                        while let Some(tid) = target {
-                            if let Some(widget) = ctx.arena.get(tid) {
-                                widget.on_action(action_name, ctx);
-                                break;
-                            }
-                            target = ctx.parent.get(tid).and_then(|p| *p);
+                    if let Some(&screen_id) = ctx.screen_stack.last() {
+                        if let Some(screen) = ctx.arena.get(screen_id) {
+                            screen.on_action(action_name, ctx);
                         }
                     }
                 }

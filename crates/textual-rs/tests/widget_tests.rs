@@ -449,7 +449,9 @@ fn input_placeholder_renders() {
     // Use a screen with a non-focusable Label before Input so Input stays unfocused
     struct InputScreen;
     impl Widget for InputScreen {
-        fn widget_type_name(&self) -> &'static str { "InputScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "InputScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![Box::new(Input::new("Type here"))]
         }
@@ -459,7 +461,9 @@ fn input_placeholder_renders() {
     // Verify unfocused state by using a wrapper where focus goes to a Button instead.
     struct WrapperScreen;
     impl Widget for WrapperScreen {
-        fn widget_type_name(&self) -> &'static str { "WrapperScreen" }
+        fn widget_type_name(&self) -> &'static str {
+            "WrapperScreen"
+        }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
             vec![
                 Box::new(Button::new("Steal Focus")), // auto-focused
@@ -2400,7 +2404,10 @@ fn rich_log_auto_scrolls_when_content_exceeds_viewport() {
     }
     let offset = log.scroll_offset.get_untracked();
     assert!(offset > 0, "scroll_offset should be > 0, got {}", offset);
-    assert_eq!(offset, 7, "scroll_offset should be line_count - viewport_h = 7");
+    assert_eq!(
+        offset, 7,
+        "scroll_offset should be line_count - viewport_h = 7"
+    );
 }
 
 #[test]
@@ -2430,7 +2437,11 @@ fn rich_log_eviction_decrements_scroll_offset() {
     log.scroll_offset.set(2);
     log.write_line(Line::raw("D")); // evicts "A", should decrement offset
     let offset = log.scroll_offset.get_untracked();
-    assert_eq!(offset, 1, "eviction should decrement scroll_offset, got {}", offset);
+    assert_eq!(
+        offset, 1,
+        "eviction should decrement scroll_offset, got {}",
+        offset
+    );
 }
 
 #[test]
@@ -2446,7 +2457,11 @@ fn rich_log_scroll_up_disables_auto_scroll() {
 
     let ctx = AppContext::new();
     log.on_action("scroll_up", &ctx);
-    assert_eq!(log.scroll_offset.get_untracked(), 6, "scroll_up should decrement offset");
+    assert_eq!(
+        log.scroll_offset.get_untracked(),
+        6,
+        "scroll_up should decrement offset"
+    );
 
     // write_line should NOT change offset when auto_scroll=false
     log.write_line(Line::raw("New Line"));
@@ -2559,14 +2574,19 @@ fn loading_indicator_skip_animations() {
 /// LoadingIndicator renders a braille spinner character when skip_animations=false.
 #[test]
 fn loading_indicator_animated_spinner() {
-    use textual_rs::widget::context::AppContext;
     use ratatui::layout::Rect;
+    use textual_rs::widget::context::AppContext;
 
     let mut ctx = AppContext::new();
     ctx.skip_animations = false;
     // spinner_tick=0 → frame_idx = 0/2 % 8 = 0 → first spinner char ⣾ (U+28FE)
     let widget = LoadingIndicator::new();
-    let area = Rect { x: 0, y: 0, width: 10, height: 3 };
+    let area = Rect {
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 3,
+    };
     let mut buf = Buffer::empty(area);
     widget.render(&ctx, area, &mut buf);
 
@@ -2633,8 +2653,13 @@ fn loading_overlay_multiple_widgets() {
     // Use a screen that composes two Labels — compose() is how children are mounted.
     struct TwoLabelScreen;
     impl Widget for TwoLabelScreen {
-        fn widget_type_name(&self) -> &'static str { "TwoLabelScreen" }
-        fn default_css() -> &'static str where Self: Sized {
+        fn widget_type_name(&self) -> &'static str {
+            "TwoLabelScreen"
+        }
+        fn default_css() -> &'static str
+        where
+            Self: Sized,
+        {
             "TwoLabelScreen { layout: vertical; width: 100%; height: 100%; }"
         }
         fn compose(&self) -> Vec<Box<dyn Widget>> {
@@ -2685,7 +2710,10 @@ fn loading_overlay_multiple_widgets() {
 
     // Verify both IDs are still in loading_widgets after re-render
     let loading_count = test_app.ctx().loading_widgets.borrow().len();
-    assert_eq!(loading_count, 2, "Both loading states should persist after render");
+    assert_eq!(
+        loading_count, 2,
+        "Both loading states should persist after render"
+    );
 
     let buf_text = collect_buffer_text(test_app.buffer());
     assert!(

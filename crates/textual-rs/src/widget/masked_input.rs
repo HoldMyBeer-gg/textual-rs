@@ -425,10 +425,8 @@ impl Widget for MaskedInput {
                 break;
             }
 
-            let is_separator = matches!(
-                self.mask_slots.get(disp_idx),
-                Some(MaskSlot::Separator(_))
-            );
+            let is_separator =
+                matches!(self.mask_slots.get(disp_idx), Some(MaskSlot::Separator(_)));
 
             let is_cursor_here = focused && disp_idx == cursor_col;
 
@@ -451,10 +449,14 @@ impl Widget for MaskedInput {
 
         // If cursor is past the last char (at end position), show cursor as a space
         if focused && cursor_col >= display_chars.len() {
-            let cursor_x =
-                (area.x + cursor_col as u16).min(area.x + area.width.saturating_sub(1));
+            let cursor_x = (area.x + cursor_col as u16).min(area.x + area.width.saturating_sub(1));
             if cursor_x < area.x + area.width {
-                buf.set_string(cursor_x, area.y, " ", base_style.add_modifier(Modifier::REVERSED));
+                buf.set_string(
+                    cursor_x,
+                    area.y,
+                    " ",
+                    base_style.add_modifier(Modifier::REVERSED),
+                );
             }
         }
 
