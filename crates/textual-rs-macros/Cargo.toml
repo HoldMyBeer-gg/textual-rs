@@ -1,6 +1,6 @@
 [package]
 name = "textual-rs-macros"
-version = "0.3.15"
+version = "0.3.16"
 edition.workspace = true
 description = "Procedural macros for the textual-rs TUI framework"
 license = "MIT"
