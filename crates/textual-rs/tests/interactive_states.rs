@@ -139,9 +139,10 @@ fn button_press_shows_reversed_modifier() {
         for x in 0..buf.area.width {
             let cell = &buf[(x, y)];
             if (cell.symbol() == "O" || cell.symbol() == "K")
-                && cell.modifier.contains(Modifier::REVERSED) {
-                    found_reversed = true;
-                }
+                && cell.modifier.contains(Modifier::REVERSED)
+            {
+                found_reversed = true;
+            }
         }
     }
     // The pressed flash is a single-frame effect. After the first render

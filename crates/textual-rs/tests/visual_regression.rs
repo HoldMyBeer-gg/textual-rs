@@ -820,11 +820,10 @@ fn footer_renders_key_badges_with_cyan_background() {
     // The key badge is rendered as " Tab " with padding, check cells around the Tab text
     let mut found_cyan = false;
     for x in tab_pos.saturating_sub(1)..tab_pos + 5 {
-        if x < buf.area.width
-            && buf[(x, 0)].bg == cyan_bg {
-                found_cyan = true;
-                break;
-            }
+        if x < buf.area.width && buf[(x, 0)].bg == cyan_bg {
+            found_cyan = true;
+            break;
+        }
     }
     assert!(
         found_cyan,

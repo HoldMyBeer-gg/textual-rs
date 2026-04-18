@@ -72,7 +72,6 @@ mod tests {
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use std::any::Any;
-    
 
     /// Test message type
     struct PingMsg;

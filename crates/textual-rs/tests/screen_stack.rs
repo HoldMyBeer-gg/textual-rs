@@ -35,8 +35,7 @@ impl Widget for FilledScreen {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        let line: String = std::iter::repeat_n(self.ch, area.width as usize)
-            .collect();
+        let line: String = std::iter::repeat_n(self.ch, area.width as usize).collect();
         for y in area.y..area.y + area.height {
             buf.set_string(area.x, y, &line, ratatui::style::Style::default());
         }
