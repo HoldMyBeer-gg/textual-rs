@@ -38,7 +38,7 @@ impl Widget for ValidatedInputScreen {
     }
     fn compose(&self) -> Vec<Box<dyn Widget>> {
         vec![Box::new(Input::new("Type a letter...").with_validator(
-            |s: &str| s.is_empty() || s.chars().next().map_or(false, |c| c.is_alphabetic()),
+            |s: &str| s.is_empty() || s.chars().next().is_some_and(|c| c.is_alphabetic()),
         ))]
     }
 }
@@ -138,11 +138,10 @@ fn button_press_shows_reversed_modifier() {
     for y in 0..buf.area.height {
         for x in 0..buf.area.width {
             let cell = &buf[(x, y)];
-            if cell.symbol() == "O" || cell.symbol() == "K" {
-                if cell.modifier.contains(Modifier::REVERSED) {
+            if (cell.symbol() == "O" || cell.symbol() == "K")
+                && cell.modifier.contains(Modifier::REVERSED) {
                     found_reversed = true;
                 }
-            }
         }
     }
     // The pressed flash is a single-frame effect. After the first render
@@ -256,7 +255,7 @@ fn hover_sets_pseudo_class_on_hovered_widget() {
     if let Some(hovered_id) = hovered {
         let pcs = test_app.ctx().pseudo_classes.get(hovered_id);
         assert!(
-            pcs.map_or(false, |p| p.contains(&PseudoClass::Hover)),
+            pcs.is_some_and(|p| p.contains(&PseudoClass::Hover)),
             "Hovered widget should have Hover pseudo-class set"
         );
     }
@@ -275,7 +274,7 @@ fn hover_sets_pseudo_class_on_hovered_widget() {
         if test_app.ctx().hovered_widget != Some(prev_hovered_id) {
             let pcs = test_app.ctx().pseudo_classes.get(prev_hovered_id);
             assert!(
-                pcs.map_or(true, |p| !p.contains(&PseudoClass::Hover)),
+                pcs.is_none_or(|p| !p.contains(&PseudoClass::Hover)),
                 "Previously hovered widget should have Hover pseudo-class cleared"
             );
         }

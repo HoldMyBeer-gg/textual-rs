@@ -4,9 +4,7 @@ use ratatui::{buffer::Buffer, layout::Rect};
 use textual_rs::testing::assertions::assert_buffer_lines;
 use textual_rs::testing::TestApp;
 use textual_rs::widget::button::messages::Pressed as ButtonPressed;
-use textual_rs::widget::collapsible::messages::{
-    Collapsed as CollapsibleCollapsed, Expanded as CollapsibleExpanded,
-};
+use textual_rs::widget::collapsible::messages::Collapsed as CollapsibleCollapsed;
 use textual_rs::widget::context::AppContext;
 use textual_rs::widget::data_table::messages::{RowSelected, SortChanged};
 use textual_rs::widget::input::messages::Submitted as InputSubmitted;
@@ -447,6 +445,7 @@ fn input_placeholder_renders() {
     use ratatui::buffer::Buffer as RatBuf;
     use ratatui::layout::Rect;
     // Use a screen with a non-focusable Label before Input so Input stays unfocused
+    #[allow(dead_code)]
     struct InputScreen;
     impl Widget for InputScreen {
         fn widget_type_name(&self) -> &'static str {
@@ -2498,7 +2497,7 @@ fn rich_log_scroll_bottom_reenables_auto_scroll() {
 
 #[test]
 fn snapshot_rich_log_styled_lines() {
-    use ratatui::style::{Color, Modifier, Style};
+    use ratatui::style::{Color, Style};
     use ratatui::text::{Line, Span};
 
     let log = RichLog::new();

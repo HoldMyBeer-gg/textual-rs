@@ -453,9 +453,11 @@ mod tests {
     fn tall_border_renders_half_blocks() {
         let area = Rect::new(0, 0, 6, 4);
         let mut buf = Buffer::empty(area);
-        let mut cs = ComputedStyle::default();
-        cs.border = BorderStyle::Tall;
-        cs.color = TcssColor::Rgb(255, 255, 255);
+        let cs = ComputedStyle {
+            border: BorderStyle::Tall,
+            color: TcssColor::Rgb(255, 255, 255),
+            ..Default::default()
+        };
 
         let inner = draw_border(&cs, area, &mut buf);
 
@@ -487,8 +489,10 @@ mod tests {
     fn tall_border_too_small_returns_full_area() {
         let area = Rect::new(0, 0, 1, 1);
         let mut buf = Buffer::empty(Rect::new(0, 0, 2, 2));
-        let mut cs = ComputedStyle::default();
-        cs.border = BorderStyle::Tall;
+        let cs = ComputedStyle {
+            border: BorderStyle::Tall,
+            ..Default::default()
+        };
 
         let inner = draw_border(&cs, area, &mut buf);
         assert_eq!(inner, area); // too small, returns unchanged

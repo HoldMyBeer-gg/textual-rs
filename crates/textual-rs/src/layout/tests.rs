@@ -420,8 +420,8 @@ mod bridge_tests {
 
         // Mark clean, then change child style (but dirty_sync should skip it)
         clear_dirty_subtree(screen, &mut ctx);
-        assert_eq!(ctx.dirty[screen], false);
-        assert_eq!(ctx.dirty[child], false);
+        assert!(!ctx.dirty[screen]);
+        assert!(!ctx.dirty[child]);
 
         // Change the child's style but don't mark dirty
         ctx.computed_styles[child] = ComputedStyle {

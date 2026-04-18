@@ -72,7 +72,7 @@ mod tests {
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use std::any::Any;
-    use std::cell::Cell;
+    
 
     /// Test message type
     struct PingMsg;

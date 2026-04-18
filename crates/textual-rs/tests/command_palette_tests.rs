@@ -31,6 +31,7 @@ impl TestWidget {
         }
     }
 
+    #[allow(dead_code)]
     fn last_action(&self) -> Option<String> {
         self.last_action.borrow().clone()
     }
@@ -97,7 +98,7 @@ impl Widget for TestWidget {
 async fn command_palette_opens() {
     let mut test_app = TestApp::new(80, 24, || Box::new(TestWidget::new()));
 
-    let initial_screen_count = test_app.ctx().screen_stack.len();
+    let _initial_screen_count = test_app.ctx().screen_stack.len();
 
     // Press Ctrl+P
     let ctrl_p = AppEvent::Key(KeyEvent {
@@ -154,7 +155,7 @@ fn command_palette_fuzzy_search() {
 async fn command_palette_esc_dismisses() {
     let mut test_app = TestApp::new(80, 24, || Box::new(TestWidget::new()));
 
-    let initial_screen_count = test_app.ctx().screen_stack.len();
+    let _initial_screen_count = test_app.ctx().screen_stack.len();
 
     // Open palette
     let ctrl_p = AppEvent::Key(KeyEvent {

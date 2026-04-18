@@ -100,7 +100,7 @@ async fn pilot_press_tab_advances_focus() {
         test_app.ctx().focused_widget.is_some(),
         "Focus should be set after mount (push_screen auto-focuses)"
     );
-    let first_focus = test_app.ctx().focused_widget;
+    let _first_focus = test_app.ctx().focused_widget;
 
     let mut pilot = test_app.pilot();
     pilot.press(KeyCode::Tab).await;

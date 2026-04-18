@@ -1,7 +1,7 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use textual_rs::widget::context::AppContext;
-use textual_rs::{App, Footer, Header, Input, ListView, Log, Widget};
+use textual_rs::{App, Header, ListView, Log, Widget};
 
 struct ChannelPane;
 impl Widget for ChannelPane {

@@ -238,7 +238,7 @@ mod tests {
 
     #[test]
     fn resolve_cascade_id_overrides_class() {
-        let (ctx, id) = setup_single_widget(btn_with_id("main"));
+        let (_ctx, _id) = setup_single_widget(btn_with_id("main"));
         let css = ".active { color: #0000ff; } #main { color: #00ff00; }";
         // Only #main matches since this widget has no class "active"
         // But let's make a widget with both to test ID beats class
@@ -327,7 +327,7 @@ mod tests {
         assert!(errors.is_empty(), "errors: {:?}", errors);
 
         // Without focus — should be red
-        let style = resolve_cascade(id, &[stylesheet.clone()], &ctx);
+        let style = resolve_cascade(id, std::slice::from_ref(&stylesheet), &ctx);
         assert_eq!(
             style.color,
             TcssColor::Rgb(255, 0, 0),

@@ -1,6 +1,8 @@
 //! Integration tests for the screen stack: push, pop, modal, focus restore,
 //! input scoping, and multi-screen layered rendering.
 
+#![allow(clippy::arc_with_non_send_sync)]
+
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 use ratatui::{buffer::Buffer, layout::Rect};
 use std::cell::Cell;
@@ -33,8 +35,7 @@ impl Widget for FilledScreen {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        let line: String = std::iter::repeat(self.ch)
-            .take(area.width as usize)
+        let line: String = std::iter::repeat_n(self.ch, area.width as usize)
             .collect();
         for y in area.y..area.y + area.height {
             buf.set_string(area.x, y, &line, ratatui::style::Style::default());
@@ -136,7 +137,7 @@ impl Widget for ModalLaunchScreen {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        let line: String = std::iter::repeat('B').take(area.width as usize).collect();
+        let line: String = std::iter::repeat_n('B', area.width as usize).collect();
         for y in area.y..area.y + area.height {
             buf.set_string(area.x, y, &line, ratatui::style::Style::default());
         }
@@ -182,7 +183,7 @@ impl Widget for ModalContent {
     }
 
     fn render(&self, _ctx: &AppContext, area: Rect, buf: &mut Buffer) {
-        let line: String = std::iter::repeat('M').take(area.width as usize).collect();
+        let line: String = std::iter::repeat_n('M', area.width as usize).collect();
         for y in area.y..area.y + area.height {
             buf.set_string(area.x, y, &line, ratatui::style::Style::default());
         }

@@ -2,7 +2,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use textual_rs::widget::context::AppContext;
 use textual_rs::{
-    App, Button, ButtonVariant, Checkbox, Footer, Header, Input, Label, TabbedContent, Widget,
+    App, Button, ButtonVariant, Checkbox, Header, Input, Label, TabbedContent, Widget,
 };
 
 struct DemoScreen;

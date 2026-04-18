@@ -147,6 +147,6 @@ mod tests {
         let tween = Tween::new(0.0, 1.0, Duration::from_nanos(1), linear);
         std::thread::sleep(Duration::from_millis(1));
         let v = tween.value();
-        assert!(v >= 0.0 && v <= 1.0, "value {} out of range", v);
+        assert!((0.0..=1.0).contains(&v), "value {} out of range", v);
     }
 }

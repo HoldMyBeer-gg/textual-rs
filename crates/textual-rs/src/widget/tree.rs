@@ -371,7 +371,7 @@ mod tests {
         assert!(ctx.children.contains_key(id));
         assert_eq!(ctx.parent[id], None);
         assert!(ctx.computed_styles.contains_key(id));
-        assert_eq!(ctx.dirty[id], true);
+        assert!(ctx.dirty[id]);
     }
 
     #[test]
@@ -585,15 +585,15 @@ mod tests {
 
         // Clear all dirty flags first
         clear_dirty_subtree(root_id, &mut ctx);
-        assert_eq!(ctx.dirty[root_id], false);
-        assert_eq!(ctx.dirty[child_id], false);
-        assert_eq!(ctx.dirty[leaf_id], false);
+        assert!(!ctx.dirty[root_id]);
+        assert!(!ctx.dirty[child_id]);
+        assert!(!ctx.dirty[leaf_id]);
 
         // Mark leaf dirty
         mark_widget_dirty(leaf_id, &mut ctx);
-        assert_eq!(ctx.dirty[leaf_id], true);
-        assert_eq!(ctx.dirty[child_id], true);
-        assert_eq!(ctx.dirty[root_id], true);
+        assert!(ctx.dirty[leaf_id]);
+        assert!(ctx.dirty[child_id]);
+        assert!(ctx.dirty[root_id]);
     }
 
     #[test]
@@ -603,12 +603,12 @@ mod tests {
         let child_id = mount_widget(Box::new(SimpleWidget::new(false)), Some(root_id), &mut ctx);
 
         // All should be dirty after mount
-        assert_eq!(ctx.dirty[root_id], true);
-        assert_eq!(ctx.dirty[child_id], true);
+        assert!(ctx.dirty[root_id]);
+        assert!(ctx.dirty[child_id]);
 
         clear_dirty_subtree(root_id, &mut ctx);
-        assert_eq!(ctx.dirty[root_id], false);
-        assert_eq!(ctx.dirty[child_id], false);
+        assert!(!ctx.dirty[root_id]);
+        assert!(!ctx.dirty[child_id]);
     }
 
     #[test]

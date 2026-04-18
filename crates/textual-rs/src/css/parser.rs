@@ -164,7 +164,7 @@ Label { display: flex; }"#;
         );
         // The valid rules before/after the error should still be parsed
         assert!(
-            rules.len() >= 1,
+            !rules.is_empty(),
             "should have parsed at least one valid rule"
         );
     }
