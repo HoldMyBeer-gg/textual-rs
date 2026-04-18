@@ -668,8 +668,9 @@ impl Widget for Input {
 
         let is_invalid = !self.valid.get() && !val.is_empty();
 
-        let mut col = area.x;
-        for (char_idx, ch) in display_chars.iter().enumerate().skip(view_start) {
+        for (col, (char_idx, ch)) in
+            (area.x..).zip(display_chars.iter().enumerate().skip(view_start))
+        {
             if col >= area.x + area.width {
                 break;
             }
@@ -697,7 +698,6 @@ impl Widget for Input {
                 base_style
             };
             buf.set_string(col, area.y, ch.to_string(), style);
-            col += 1;
         }
 
         // If cursor is at end of string (or string is empty), show cursor indicator

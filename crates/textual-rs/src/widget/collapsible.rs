@@ -136,8 +136,7 @@ impl Widget for Collapsible {
                 height: area.height - 1,
             };
 
-            let mut child_y = children_area.y;
-            for child in &self.children {
+            for (child_y, child) in (children_area.y..).zip(self.children.iter()) {
                 if child_y >= children_area.y + children_area.height {
                     break;
                 }
@@ -148,7 +147,6 @@ impl Widget for Collapsible {
                     height: 1,
                 };
                 child.render(ctx, child_area, buf);
-                child_y += 1;
             }
         }
     }
