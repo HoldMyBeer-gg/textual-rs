@@ -418,9 +418,8 @@ impl Widget for MaskedInput {
         // A char at display index i is filled if it corresponds to a raw char
         // (i.e., it's a separator or a filled input slot).
         let mut filled_up_to = 0usize; // count of filled input slots
-        let mut col_x = area.x;
 
-        for (disp_idx, &ch) in display_chars.iter().enumerate() {
+        for (col_x, (disp_idx, &ch)) in (area.x..).zip(display_chars.iter().enumerate()) {
             if col_x >= area.x + area.width {
                 break;
             }
@@ -444,7 +443,6 @@ impl Widget for MaskedInput {
             }
 
             buf.set_string(col_x, area.y, ch.to_string(), style);
-            col_x += 1;
         }
 
         // If cursor is past the last char (at end position), show cursor as a space

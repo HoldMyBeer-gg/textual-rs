@@ -186,66 +186,58 @@ impl Widget for ListView {
         let count = self.items.len();
 
         match action {
-            "cursor_up" => {
-                if current > 0 {
-                    let new_selected = current - 1;
-                    self.selected.set(new_selected);
-                    // Scroll up if selected moves above the viewport
-                    if new_selected < offset {
-                        self.scroll_offset.set(new_selected);
-                    }
-                    ctx.post_message(
-                        id,
-                        messages::Highlighted {
-                            index: new_selected,
-                        },
-                    );
+            "cursor_up" if current > 0 => {
+                let new_selected = current - 1;
+                self.selected.set(new_selected);
+                // Scroll up if selected moves above the viewport
+                if new_selected < offset {
+                    self.scroll_offset.set(new_selected);
                 }
+                ctx.post_message(
+                    id,
+                    messages::Highlighted {
+                        index: new_selected,
+                    },
+                );
             }
-            "cursor_down" => {
-                if count > 0 && current < count - 1 {
-                    let new_selected = current + 1;
-                    self.selected.set(new_selected);
-                    // Scroll down if selected moves below the viewport
-                    if viewport_h > 0 && new_selected >= offset + viewport_h {
-                        self.scroll_offset.set(new_selected - viewport_h + 1);
-                    }
-                    ctx.post_message(
-                        id,
-                        messages::Highlighted {
-                            index: new_selected,
-                        },
-                    );
+            "cursor_down" if count > 0 && current < count - 1 => {
+                let new_selected = current + 1;
+                self.selected.set(new_selected);
+                // Scroll down if selected moves below the viewport
+                if viewport_h > 0 && new_selected >= offset + viewport_h {
+                    self.scroll_offset.set(new_selected - viewport_h + 1);
                 }
+                ctx.post_message(
+                    id,
+                    messages::Highlighted {
+                        index: new_selected,
+                    },
+                );
             }
-            "select" => {
-                if count > 0 {
-                    let value = self.items[current].clone();
-                    ctx.post_message(
-                        id,
-                        messages::Selected {
-                            index: current,
-                            value,
-                        },
-                    );
-                }
+            "select" if count > 0 => {
+                let value = self.items[current].clone();
+                ctx.post_message(
+                    id,
+                    messages::Selected {
+                        index: current,
+                        value,
+                    },
+                );
             }
             "cursor_home" => {
                 self.selected.set(0);
                 self.scroll_offset.set(0);
                 ctx.post_message(id, messages::Highlighted { index: 0 });
             }
-            "cursor_end" => {
-                if count > 0 {
-                    let last = count - 1;
-                    self.selected.set(last);
-                    if viewport_h > 0 && last >= viewport_h {
-                        self.scroll_offset.set(last - viewport_h + 1);
-                    } else {
-                        self.scroll_offset.set(0);
-                    }
-                    ctx.post_message(id, messages::Highlighted { index: last });
+            "cursor_end" if count > 0 => {
+                let last = count - 1;
+                self.selected.set(last);
+                if viewport_h > 0 && last >= viewport_h {
+                    self.scroll_offset.set(last - viewport_h + 1);
+                } else {
+                    self.scroll_offset.set(0);
                 }
+                ctx.post_message(id, messages::Highlighted { index: last });
             }
             "scroll_up" => {
                 let offset = self.scroll_offset.get_untracked();
