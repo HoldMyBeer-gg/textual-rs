@@ -40,9 +40,11 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use slotmap::new_key_type;
 
-// Unique identifier for a widget in the arena (slotmap generational index).
-// Passed to `on_mount`, `on_action`, `post_message`, and `run_worker`.
-new_key_type! { pub struct WidgetId; }
+new_key_type! {
+    /// Unique identifier for a widget in the arena (slotmap generational index).
+    /// Passed to `on_mount`, `on_action`, `post_message`, and `run_worker`.
+    pub struct WidgetId;
+}
 
 /// Controls whether an event continues bubbling up the widget tree after being handled.
 ///
