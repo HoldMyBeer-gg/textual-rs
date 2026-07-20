@@ -29,3 +29,6 @@ vendor/
 coverage/
 .cache/
 tmp/
+
+# Planning artifacts - do not reintroduce
+.planning/
