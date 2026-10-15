@@ -1439,7 +1439,7 @@ fn sparkline_flat_renders_same_char_for_all_points() {
     assert!(
         data_chars.windows(2).all(|w| w[0] == w[1]),
         "Sparkline with flat data should render same char for all points, got: {:?}",
-        &data_chars
+        data_chars
     );
 }
 
