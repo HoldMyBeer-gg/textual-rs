@@ -66,3 +66,7 @@ path = "examples/tutorial_05_workers.rs"
 [[example]]
 name = "tutorial_06_screens"
 path = "examples/tutorial_06_screens.rs"
+
+[[example]]
+name = "pacman"
+path = "examples/pacman.rs"
