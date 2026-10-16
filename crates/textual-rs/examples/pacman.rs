@@ -461,7 +461,7 @@ fn advance_game(s: &mut GameState) {
     } else {
         let new_idx = s.mode_index + 1;
         if new_idx < MODE_DURATIONS.len() {
-            let new_mode = if new_idx % 2 == 0 {
+            let new_mode = if new_idx.is_multiple_of(2) {
                 GhostMode::Scatter
             } else {
                 GhostMode::Chase
@@ -667,7 +667,7 @@ fn ghost_sprite(g: &Ghost, tick: u64, frightened_ticks: u32) -> (&'static str, C
     match g.mode {
         GhostMode::Eyes => ("◌", Color::White),
         GhostMode::Frightened => {
-            let flash = frightened_ticks <= FRIGHTENED_FLASH_AT && (tick / 3) % 2 == 0;
+            let flash = frightened_ticks <= FRIGHTENED_FLASH_AT && (tick / 3).is_multiple_of(2);
             let color = if flash {
                 Color::White
             } else {
@@ -832,7 +832,7 @@ impl Widget for PacManGame {
 
     fn on_event(&self, event: &dyn std::any::Any, _ctx: &AppContext) -> EventPropagation {
         if event.downcast_ref::<WorkerProgress<()>>().is_some() {
-            self.state.update(|s| advance_game(s));
+            self.state.update(advance_game);
             return EventPropagation::Stop;
         }
         EventPropagation::Continue
@@ -894,7 +894,7 @@ impl Widget for PacManGame {
                     Tile::GhostDoor => ("─", Color::Rgb(255, 183, 197), Color::Black),
                     Tile::Dot => ("·", Color::Rgb(255, 183, 197), Color::Black),
                     Tile::PowerDot => {
-                        if (s.tick / 6) % 2 == 0 {
+                        if (s.tick / 6).is_multiple_of(2) {
                             ("●", Color::White, Color::Black)
                         } else {
                             (" ", Color::Black, Color::Black)
@@ -978,17 +978,15 @@ impl Widget for PacManGame {
                     );
                 }
             }
-            GamePhase::GameOver => {
-                if mid_y < area.bottom() {
-                    let msg = " GAME OVER  Press R ";
-                    let x = maze_x + (MAZE_W as u16).saturating_sub(msg.len() as u16) / 2;
-                    buf.set_string(
-                        x,
-                        mid_y,
-                        msg,
-                        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                    );
-                }
+            GamePhase::GameOver if mid_y < area.bottom() => {
+                let msg = " GAME OVER  Press R ";
+                let x = maze_x + (MAZE_W as u16).saturating_sub(msg.len() as u16) / 2;
+                buf.set_string(
+                    x,
+                    mid_y,
+                    msg,
+                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                );
             }
             _ => {}
         }
