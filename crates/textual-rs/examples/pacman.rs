@@ -148,7 +148,12 @@ struct Ghost {
 impl Ghost {
     fn new(kind: GhostKind) -> Self {
         let (pos, leave_delay, bounce_dir, mode) = match kind {
-            GhostKind::Blinky => ((GHOST_HOME_COL, GHOST_EXIT_ROW), 0u32, 1i8, GhostMode::Scatter),
+            GhostKind::Blinky => (
+                (GHOST_HOME_COL, GHOST_EXIT_ROW),
+                0u32,
+                1i8,
+                GhostMode::Scatter,
+            ),
             GhostKind::Pinky => ((GHOST_HOME_COL, 14), 15, 1, GhostMode::InHouse),
             GhostKind::Inky => ((GHOST_HOME_COL - 2, 14), 35, -1, GhostMode::InHouse),
             GhostKind::Clyde => ((GHOST_HOME_COL + 2, 14), 55, 1, GhostMode::InHouse),
@@ -348,13 +353,7 @@ fn choose_dir(
             .iter()
             .copied()
             .filter(|&d| {
-                d != reverse
-                    && ghost_passable(
-                        maze,
-                        pos.0 + d.0 as i16,
-                        pos.1 + d.1 as i16,
-                        mode,
-                    )
+                d != reverse && ghost_passable(maze, pos.0 + d.0 as i16, pos.1 + d.1 as i16, mode)
             })
             .collect();
         if valid.is_empty() {
@@ -400,10 +399,7 @@ fn chase_target(
                 pac_pos.0 + 2 * pac_dir.0 as i16,
                 pac_pos.1 + 2 * pac_dir.1 as i16,
             );
-            (
-                2 * pivot.0 - blinky_pos.0,
-                2 * pivot.1 - blinky_pos.1,
-            )
+            (2 * pivot.0 - blinky_pos.0, 2 * pivot.1 - blinky_pos.1)
         }
         GhostKind::Clyde => {
             if sq_dist(ghost.pos, pac_pos) > 64 {
@@ -729,15 +725,69 @@ impl PacManGame {
 }
 
 static BINDINGS: &[KeyBinding] = &[
-    KeyBinding { key: KeyCode::Up,           modifiers: KeyModifiers::NONE, action: "up",      description: "Up",      show: false },
-    KeyBinding { key: KeyCode::Down,         modifiers: KeyModifiers::NONE, action: "down",    description: "Down",    show: false },
-    KeyBinding { key: KeyCode::Left,         modifiers: KeyModifiers::NONE, action: "left",    description: "Left",    show: false },
-    KeyBinding { key: KeyCode::Right,        modifiers: KeyModifiers::NONE, action: "right",   description: "Right",   show: false },
-    KeyBinding { key: KeyCode::Char('w'),    modifiers: KeyModifiers::NONE, action: "up",      description: "Up",      show: false },
-    KeyBinding { key: KeyCode::Char('s'),    modifiers: KeyModifiers::NONE, action: "down",    description: "Down",    show: false },
-    KeyBinding { key: KeyCode::Char('a'),    modifiers: KeyModifiers::NONE, action: "left",    description: "Left",    show: false },
-    KeyBinding { key: KeyCode::Char('d'),    modifiers: KeyModifiers::NONE, action: "right",   description: "Right",   show: false },
-    KeyBinding { key: KeyCode::Char('r'),    modifiers: KeyModifiers::NONE, action: "restart", description: "Restart", show: true  },
+    KeyBinding {
+        key: KeyCode::Up,
+        modifiers: KeyModifiers::NONE,
+        action: "up",
+        description: "Up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Down,
+        modifiers: KeyModifiers::NONE,
+        action: "down",
+        description: "Down",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Left,
+        modifiers: KeyModifiers::NONE,
+        action: "left",
+        description: "Left",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Right,
+        modifiers: KeyModifiers::NONE,
+        action: "right",
+        description: "Right",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Char('w'),
+        modifiers: KeyModifiers::NONE,
+        action: "up",
+        description: "Up",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Char('s'),
+        modifiers: KeyModifiers::NONE,
+        action: "down",
+        description: "Down",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Char('a'),
+        modifiers: KeyModifiers::NONE,
+        action: "left",
+        description: "Left",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Char('d'),
+        modifiers: KeyModifiers::NONE,
+        action: "right",
+        description: "Right",
+        show: false,
+    },
+    KeyBinding {
+        key: KeyCode::Char('r'),
+        modifiers: KeyModifiers::NONE,
+        action: "restart",
+        description: "Restart",
+        show: true,
+    },
 ];
 
 impl Widget for PacManGame {
@@ -821,7 +871,12 @@ impl Widget for PacManGame {
             lives_str.trim_end(),
         );
         if maze_y < area.bottom() {
-            buf.set_string(maze_x, maze_y, &score_str, Style::default().fg(Color::White));
+            buf.set_string(
+                maze_x,
+                maze_y,
+                &score_str,
+                Style::default().fg(Color::White),
+            );
         }
 
         let game_y = maze_y + 1;
@@ -899,21 +954,40 @@ impl Widget for PacManGame {
                 if y < area.bottom() {
                     let msg = " READY! ";
                     let x = maze_x + (MAZE_W as u16).saturating_sub(msg.len() as u16) / 2;
-                    buf.set_string(x, y, msg, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+                    buf.set_string(
+                        x,
+                        y,
+                        msg,
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    );
                 }
             }
             GamePhase::Win => {
                 if mid_y < area.bottom() {
                     let msg = " YOU WIN!  Press R ";
                     let x = maze_x + (MAZE_W as u16).saturating_sub(msg.len() as u16) / 2;
-                    buf.set_string(x, mid_y, msg, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+                    buf.set_string(
+                        x,
+                        mid_y,
+                        msg,
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    );
                 }
             }
             GamePhase::GameOver => {
                 if mid_y < area.bottom() {
                     let msg = " GAME OVER  Press R ";
                     let x = maze_x + (MAZE_W as u16).saturating_sub(msg.len() as u16) / 2;
-                    buf.set_string(x, mid_y, msg, Style::default().fg(Color::Red).add_modifier(Modifier::BOLD));
+                    buf.set_string(
+                        x,
+                        mid_y,
+                        msg,
+                        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                    );
                 }
             }
             _ => {}
@@ -962,7 +1036,5 @@ PacManGame {
 "#;
 
 fn main() -> anyhow::Result<()> {
-    App::new(|| Box::new(PacManScreen))
-        .with_css(CSS)
-        .run()
+    App::new(|| Box::new(PacManScreen)).with_css(CSS).run()
 }
