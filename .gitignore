@@ -32,3 +32,6 @@ tmp/
 
 # Planning artifacts - do not reintroduce
 .planning/
+
+# Local Claude instructions
+CLAUDE.md
